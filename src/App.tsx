@@ -1,14 +1,18 @@
-import { Footer } from "./Footer"
-import { Header } from "./Header"
-import Home from "./Home"
+import { BrowserRouter } from "react-router-dom"
+import Router from "./Router"
+import { Header, Footer } from "./Structure"
 
 function App() {
 
   return (
     <>
-      <Header />
-      <Home />
-      <Footer />
+      <div className="h-screen flex flex-col">
+        <BrowserRouter>
+          <Header />
+          <Router />
+          <Footer />
+        </BrowserRouter>
+      </div>
     </>
   )
 }
