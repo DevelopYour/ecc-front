@@ -2,6 +2,8 @@ import img from '../assets/full-logo.png'
 
 export default function Home() {
     return (
-        <img src={img} alt="ECC" className="h-[100%] object-cover" />
-    )
+        <div className="flex flex-col h-[100%] items-center justify-center">
+            <img src={img} alt="ECC" className="h-[90%]" />
+        </div>
+    );
 }
