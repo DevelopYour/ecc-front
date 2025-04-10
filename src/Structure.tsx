@@ -5,9 +5,9 @@ import { useNavigate } from 'react-router-dom';
 export const Header = () => {
     const navigate = useNavigate();
     return (
-        <header className="w-full h-[10%] bg-c-beige px-10 py-4 flex justify-between items-center">
-            <img src={logo} alt="ECC 로고" className="h-[100%]" onClick={() => navigate("/")} />
-            <img src={slogan} alt="Let's Study English Together!" className="h-[90%]" />
+        <header className="w-full bg-c-beige px-10 py-4 flex justify-between items-center shadow-md">
+            <img src={logo} alt="ECC 로고" className="h-12 cursor-pointer" onClick={() => navigate("/")} />
+            <img src={slogan} alt="Let's Study English Together!" className="h-10" />
             <button className="bg-c-green text-white px-7 py-3 rounded-xl font-semibold" onClick={() => navigate("/login")}>
                 Sign in / up
             </button>

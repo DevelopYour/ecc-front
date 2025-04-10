@@ -21,7 +21,7 @@ const Login: React.FC = () => {
 
 
     return (
-        <div className="flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center min-h-full">
             <div className="p-8 rounded shadow-md w-96">
                 <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
                 <div className="mb-4">

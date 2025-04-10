@@ -7,7 +7,9 @@ function App() {
     <div className="h-screen flex flex-col">
       <BrowserRouter>
         <Header />
-        <Router />
+        <main className="flex-1 overflow-y-auto py-10 px-4 sm:px-10">
+          <Router />
+        </main>
         {/* <Footer /> */}
       </BrowserRouter>
     </div>
