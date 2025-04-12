@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { createUser } from "../api/user";
 import { College, COLLEGE_LABELS, IMajor, IUserCreate } from "../types/user";
 import axios from 'axios';
+import { useModal } from "../context/ModalContext";
+import { useNavigate } from "react-router-dom";
 
 export default function Join() {
     const [formData, setFormData] = useState<IUserCreate>({
@@ -21,6 +23,8 @@ export default function Join() {
     const [selectedCollege, setSelectedCollege] = useState<College | "">("");
     const [collegeDropdownOpen, setCollegeDropdownOpen] = useState(false);
     const [majorDropdownOpen, setMajorDropdownOpen] = useState(false);
+    const navigate = useNavigate();
+    const { showModal, closeModal } = useModal();
 
 
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -65,7 +69,6 @@ export default function Join() {
             const result = await response.json();
 
             if (result.success && result.data === true) {
-                alert("사용 가능한 학번입니다.");
                 setIsStudentIdChecked(true);
             } else if (result.success && result.data === false) {
                 alert("이미 존재하는 학번입니다. 다른 학번을 입력해주세요.");
@@ -98,12 +101,27 @@ export default function Join() {
                 level: Number(formData.level),
                 majorId: Number(formData.majorId),
             };
-            const response = await createUser(user);
-            alert("회원가입이 완료되었습니다.");
+            await createUser(user);
+            joinSuccess();
         } catch (error) {
             console.error("회원가입 실패:", error);
-            alert("회원가입에 실패했습니다. 다시 시도해주세요.");
         }
+    };
+
+    const joinSuccess = () => {
+        showModal({
+            title: "가입 성공 및 지원 완료",
+            content: <p>합격 시 단톡방에 초대해드립니다.</p>,
+            buttons: [
+                {
+                    label: "확인",
+                    onClick: () => {
+                        closeModal();
+                        navigate('/');
+                    }
+                },
+            ],
+        });
     };
 
     const renderField = (
