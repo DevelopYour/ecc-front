@@ -1,103 +1,100 @@
-import Image from "next/image";
+// app/page.tsx
+"use client";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/auth-context";
+import { ROUTES } from "@/lib/constants";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+export default function HomePage() {
+    const { isLoggedIn, isLoading } = useAuth();
+    const router = useRouter();
+
+    // 이미 로그인한 사용자는 홈 대시보드로 리다이렉트
+    useEffect(() => {
+        if (!isLoading && isLoggedIn) {
+            router.push(ROUTES.MAIN_HOME);
+        }
+    }, [isLoading, isLoggedIn, router]);
+
+    // 로딩 중이거나 로그인한 경우 빈 화면 표시 (리다이렉트 전)
+    if (isLoading || isLoggedIn) {
+        return null;
+    }
+
+    return (
+        <div className="flex min-h-screen flex-col">
+            {/* 헤더 */}
+            <header className="py-6 border-b">
+                <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                    <Link href="/" className="flex items-center">
+                        <img
+                            src="/images/logo.png"
+                            alt="ECC 스터디 로고"
+                            className="h-20 w-auto"
+                        />
+                    </Link>
+                    <div className="space-x-4">
+                        <Link href={ROUTES.LOGIN}>
+                            <Button variant="ghost">로그인</Button>
+                        </Link>
+                        <Link href={ROUTES.SIGNUP}>
+                            <Button>회원가입</Button>
+                        </Link>
+                    </div>
+                </div>
+            </header>
+
+            {/* 메인 콘텐츠 */}
+            <main className="flex-1">
+                {/* 중앙 로고 섹션 */}
+                <div className="w-full flex justify-center items-center py-16">
+                    <img
+                        src="/images/full-logo.png"
+                        alt="ECC 스터디 로고"
+                        className="max-w-full h-auto max-h-[300px]" // 높이 조정 가능
+                    />
+                </div>
+
+                <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {/* 특징 1 */}
+                        <div className="bg-card rounded-lg p-6 shadow-sm">
+                            <h3 className="text-xl font-semibold mb-4">정규 스터디</h3>
+                            <p className="text-muted-foreground">
+                                정기적인 만남을 통해 체계적으로 영어 실력을 향상시킬 수 있습니다.
+                                수준별 학습 자료와 전문 관리자의 도움을 받을 수 있어요.
+                            </p>
+                        </div>
+                        {/* 특징 2 */}
+                        <div className="bg-card rounded-lg p-6 shadow-sm">
+                            <h3 className="text-xl font-semibold mb-4">번개 스터디</h3>
+                            <p className="text-muted-foreground">
+                                단기간에 집중적으로 공부하고 싶을 때 참여할 수 있는 번개 스터디.
+                                다양한 주제와 시간대를 선택할 수 있습니다.
+                            </p>
+                        </div>
+                        {/* 특징 3 */}
+                        <div className="bg-card rounded-lg p-6 shadow-sm">
+                            <h3 className="text-xl font-semibold mb-4">복습 시스템</h3>
+                            <p className="text-muted-foreground">
+                                스터디 내용을 효과적으로 복습할 수 있는 시스템을 제공합니다.
+                                테스트를 통해 본인의 학습 성취도를 확인하세요.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            {/* 푸터 */}
+            <footer className="py-8 border-t">
+                <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-muted-foreground">
+                    <p>&copy; {new Date().getFullYear()} ECC 스터디. All rights reserved.</p>
+                </div>
+            </footer>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    );
 }
