@@ -1,26 +1,164 @@
 @import "tailwindcss";
 
 :root {
+  /* ECC 브랜드 컬러 */
+  --ecc-primary: #4F6F75;
+  --ecc-primary-dark: #3d5659;
+  --ecc-primary-light: #6b8389;
+
+  /* 보조 컬러 */
+  --ecc-mint: #E8F5F3;
+  --ecc-yellow: #FFF9C4;
+  --ecc-pink: #FCE4EC;
+  --ecc-blue-light: #E3F2FD;
+  --ecc-purple-light: #F3E5F5;
+
+  /* 그레이 스케일 */
+  --ecc-gray-50: #F9FAFB;
+  --ecc-gray-100: #F3F4F6;
+  --ecc-gray-200: #E5E7EB;
+  --ecc-gray-300: #D1D5DB;
+  --ecc-gray-400: #9CA3AF;
+  --ecc-gray-500: #6B7280;
+  --ecc-gray-600: #4B5563;
+  --ecc-gray-700: #374151;
+  --ecc-gray-800: #1F2937;
+  --ecc-gray-900: #111827;
+
+  /* 배경 및 전경색 */
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: var(--ecc-gray-900);
+  --muted: var(--ecc-gray-100);
+  --muted-foreground: var(--ecc-gray-500);
+  --border: var(--ecc-gray-200);
+
+  /* 폰트 - 폰트가 로드되지 않은 경우 대체 폰트 사용 */
+  --font-sans: var(--font-geist-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  --font-mono: var(--font-geist-mono, "JetBrains Mono", Consolas, "Liberation Mono", Menlo, monospace);
+
+  /* 그림자 */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* 라운딩 */
+  --radius-sm: 0.375rem;
+  --radius: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
 }
 
 @theme inline {
+  /* 커스텀 컬러 정의 */
+  --color-ecc-primary: var(--ecc-primary);
+  --color-ecc-primary-dark: var(--ecc-primary-dark);
+  --color-ecc-primary-light: var(--ecc-primary-light);
+  --color-ecc-mint: var(--ecc-mint);
+  --color-ecc-yellow: var(--ecc-yellow);
+  --color-ecc-pink: var(--ecc-pink);
+  --color-ecc-blue-light: var(--ecc-blue-light);
+  --color-ecc-purple-light: var(--ecc-purple-light);
+
+  /* 그레이 스케일 */
+  --color-ecc-gray-50: var(--ecc-gray-50);
+  --color-ecc-gray-100: var(--ecc-gray-100);
+  --color-ecc-gray-200: var(--ecc-gray-200);
+  --color-ecc-gray-300: var(--ecc-gray-300);
+  --color-ecc-gray-400: var(--ecc-gray-400);
+  --color-ecc-gray-500: var(--ecc-gray-500);
+  --color-ecc-gray-600: var(--ecc-gray-600);
+  --color-ecc-gray-700: var(--ecc-gray-700);
+  --color-ecc-gray-800: var(--ecc-gray-800);
+  --color-ecc-gray-900: var(--ecc-gray-900);
+
+  /* 기본 스타일 */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+
+  /* 폰트 패밀리 - 폰트가 로드되지 않은 경우 대체 폰트 사용 */
+  --font-sans: var(--font-geist-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  --font-mono: var(--font-geist-mono, "JetBrains Mono", Consolas, "Liberation Mono", Menlo, monospace);
 }
 
+/* 다크 모드 (필요시 사용) */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: var(--ecc-gray-900);
+    --foreground: var(--ecc-gray-50);
+    --muted: var(--ecc-gray-800);
+    --muted-foreground: var(--ecc-gray-400);
+    --border: var(--ecc-gray-700);
   }
 }
 
+/* 기본 스타일 */
+* {
+  box-sizing: border-box;
+}
+
+html,
 body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.6;
+}
+
+/* 스크롤바 스타일링 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--ecc-gray-100);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ecc-gray-300);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ecc-gray-400);
+}
+
+/* 포커스 스타일 */
+:focus-visible {
+  outline: 2px solid var(--ecc-primary);
+  outline-offset: 2px;
+}
+
+/* 애니메이션 */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 유틸리티 클래스 */
+.text-balance {
+  text-wrap: balance;
+}
+
+.text-pretty {
+  text-wrap: pretty;
 }
