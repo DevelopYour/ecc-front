@@ -44,6 +44,7 @@ export const API_ENDPOINTS = {
 export const STORAGE_KEYS = {
     TOKEN: "ecc-token",
     USER: "ecc-user",
+    REFRESH_TOKEN: "ecc-refresh-token",
 };
 
 // 스터디 유형

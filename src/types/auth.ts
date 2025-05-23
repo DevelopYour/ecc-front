@@ -1,13 +1,26 @@
 import { User } from "./user"; // User 타입을 types/user.ts에서 가져옴
 
+export interface ApiResponse<T> {
+    success: boolean;
+    message: string;
+    data: T;
+}
+
 export interface LoginRequest {
     username: string;
     password: string;
 }
 
 export interface LoginResponse {
-    token: string;
-    user: User;
+    accessToken: string;
+    refreshToken: string;
+    tokenType: string;
+    accessTokenExpiresIn: number;
+    uuid: string;
+    studentId: string;
+    name: string;
+    status: string;
+    role: string;
 }
 
 export interface SignupRequest {
