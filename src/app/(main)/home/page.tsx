@@ -38,13 +38,19 @@ export default function HomePage() {
                 // 예정된 스터디 및 최근 복습 자료 로드 (가정)
                 // 실제 API가 있다면 해당 API를 호출
                 const teamResponse = await teamApi.getMyTeams();
-                const activeTeams = teamResponse.data.filter(
-                    team => team.status === "ACTIVE" || team.status === "RECRUITING"
-                );
-                setUpcomingStudies(activeTeams.slice(0, 3));
+                // const activeTeams = teamResponse.data.filter(
+                //     team => team.status === "ACTIVE" || team.status === "RECRUITING"
+                // );
+                // setUpcomingStudies(activeTeams.slice(0, 3));
 
                 const reviewResponse = await reviewApi.getMyReviews();
-                setRecentReviews(reviewResponse.data.slice(0, 3));
+                if (reviewResponse.success && reviewResponse.data) {
+                    setRecentReviews(reviewResponse.data.slice(0, 3));
+                } else {
+                    console.error("복습 조회 실패:", reviewResponse.error);
+                    setRecentReviews([]);
+                }
+
             } catch (error) {
                 console.error("Failed to load dashboard data:", error);
             } finally {
@@ -206,7 +212,7 @@ export default function HomePage() {
                                 </CardHeader>
                                 <CardContent>
                                     <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                                        {review.content.substring(0, 100)}...
+                                        {/* TODO{review?.content?.substring(0, 100)}... */}
                                     </p>
                                     <div className="flex justify-end">
                                         <Link href={`${ROUTES.REVIEW}/${review.id}`}>

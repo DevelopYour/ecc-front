@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { ROUTES } from "@/lib/constants";
+import { authApi } from "@/lib/api";
 
 // 로그인 폼 검증 스키마
 const loginSchema = z.object({
@@ -50,15 +51,25 @@ export function LoginForm() {
 
     const onSubmit = async (values: LoginFormValues) => {
         try {
+            // context의 login 함수를 호출하여 전체 로그인 프로세스 처리
             await login(values.username, values.password);
+
             toast.success("로그인 성공", {
                 description: "환영합니다!",
             });
+
             router.push(ROUTES.MAIN_HOME);
         } catch (error) {
             console.error("Login error:", error);
+
+            // 에러 메시지 처리
+            let errorMessage = "아이디 또는 비밀번호가 올바르지 않습니다.";
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            }
+
             toast.error("로그인 실패", {
-                description: "아이디 또는 비밀번호가 올바르지 않습니다.",
+                description: errorMessage,
             });
         }
     };
