@@ -2,8 +2,7 @@
 import axios from "axios";
 import { STORAGE_KEYS } from "./constants";
 import {
-    LoginRequest, LoginResponse, SignupRequest, CheckIdRequest, Major,
-    ApiResponse
+    LoginRequest, LoginResponse, SignupRequest, Major
 } from "@/types/auth";
 import {
     Team, RegularApplyRequest, OneTimeCreateRequest, OneTimeApplyRequest
@@ -12,6 +11,7 @@ import { ExpressionToAsk, Review, ReviewTest, StudyRedis, TopicRecommendation, W
 import { User } from "@/types/user";
 import { getToken, setToken } from "./auth";
 import { ReportDocument, Topic } from "@/types/study";
+import { ApplyRegularStudyListResponse, RegularStudyApplyRequest, Subject, TimeSlot } from "@/types/apply-regular";
 
 interface ResponseDto<T> {
     success: boolean;
@@ -195,21 +195,30 @@ export const userApi = {
 
 // 팀 관련 API
 export const teamApi = {
+
     // 정규 스터디 신청
-    applyRegular: (data: RegularApplyRequest): Promise<ResponseDto<void>> =>
+    applyRegular: (data: RegularStudyApplyRequest): Promise<ResponseDto<ApplyRegularStudyListResponse>> =>
         api.post("/teams/regular/apply", data),
 
     // 정규 스터디 신청 내역 조회
-    getRegularApplication: (): Promise<ResponseDto<RegularApplyRequest>> =>
+    getRegularApplication: (): Promise<ResponseDto<ApplyRegularStudyListResponse>> =>
         api.get("/teams/regular/apply"),
 
     // 정규 스터디 신청 내역 수정
-    updateRegularApplication: (data: RegularApplyRequest): Promise<ResponseDto<void>> =>
+    updateRegularApplication: (data: RegularStudyApplyRequest): Promise<ResponseDto<ApplyRegularStudyListResponse>> =>
         api.put("/teams/regular/apply", data),
 
     // 정규 스터디 신청 취소
     cancelRegularApplication: (): Promise<ResponseDto<void>> =>
         api.delete("/teams/regular/apply"),
+
+    // 과목 목록 조회
+    getSubjects: (): Promise<ResponseDto<Subject[]>> =>
+        api.get("/teams/subjects"),
+
+    // 시간 목록 조회
+    getTimeSlots: (): Promise<ResponseDto<TimeSlot[]>> =>
+        api.get("/teams/time-slots"),
 
     // 번개 스터디 목록 조회
     getOneTimeTeams: (): Promise<ResponseDto<Team[]>> =>
@@ -336,5 +345,26 @@ export const handleApiResponse = <T>(
         console.error('API Error:', errorMsg, response.code);
     }
 };
+
+// 시간 목록 생성 헬퍼 함수
+export const generateTimeSlots = (): TimeSlot[] => {
+    const days: TimeSlot['day'][] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    const timeSlots: TimeSlot[] = [];
+    let timeId = 1;
+
+    days.forEach(day => {
+        for (let startTime = 6; startTime <= 22; startTime++) {
+            timeSlots.push({
+                timeId,
+                day,
+                startTime,
+            });
+            timeId++;
+        }
+    });
+
+    return timeSlots;
+};
+
 
 export default api;
