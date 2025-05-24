@@ -1,5 +1,5 @@
-// app/(main)/layout.tsx
-import { Header } from "@/components/layout/header";
+import { Sidebar } from "@/components/layout/sidebar";
+import { TopHeader } from "@/components/layout/top-header";
 import { Footer } from "@/components/layout/footer";
 
 export default function MainLayout({
@@ -8,14 +8,18 @@ export default function MainLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">
-                <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex min-h-screen">
+            {/* 사이드바 */}
+            <Sidebar />
+
+            {/* 메인 콘텐츠 영역 */}
+            <div className="flex-1 flex flex-col lg:ml-64">
+                <TopHeader />
+                <main className="flex-1 p-4 lg:p-8">
                     {children}
-                </div>
-            </main>
-            <Footer />
+                </main>
+                <Footer />
+            </div>
         </div>
     );
 }

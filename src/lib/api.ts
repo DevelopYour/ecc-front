@@ -8,12 +8,10 @@ import {
 import {
     Team, RegularApplyRequest, OneTimeCreateRequest, OneTimeApplyRequest
 } from "@/types/team";
-import {
-    Study, StudyGuide, StudyTopic, StudyExpression, StudyReport
-} from "@/types/study";
-import { Review, ReviewTest } from "@/types/review";
+import { ExpressionToAsk, Review, ReviewTest, StudyRedis, TopicRecommendation, WeeklySummary } from "@/types/review";
 import { User } from "@/types/user";
 import { getToken, setToken } from "./auth";
+import { ReportDocument, Topic } from "@/types/study";
 
 interface ResponseDto<T> {
     success: boolean;
@@ -268,45 +266,41 @@ export const teamApi = {
 
 // 스터디 관련 API
 export const studyApi = {
-    // 팀별 공부방 입장 (진행상황 조회)
-    getStudyOverview: (teamId: string): Promise<ResponseDto<Study>> =>
-        api.get(`/study/overview/${teamId}`),
+    // 팀별 메인페이지 입장 (진행상황 조회)
+    getTeamProgress: (teamId: string): Promise<ResponseDto<WeeklySummary[]>> =>
+        api.get(`/study/${teamId}/overview`),
 
-    // 공부방 생성 또는 입장
-    createOrJoinStudy: (teamId: string): Promise<ResponseDto<Study>> =>
+    // 공부방 입장
+    enterStudyRoom: (teamId: string): Promise<ResponseDto<StudyRedis>> =>
         api.post(`/study/${teamId}`),
 
-    // 가이드라인 조회
-    getStudyGuide: (studyId: string): Promise<ResponseDto<StudyGuide>> =>
-        api.get(`/study/${studyId}/guide`),
-
-    // 추천 주제 조회
-    getStudyTopics: (studyId: string): Promise<ResponseDto<StudyTopic[]>> =>
+    // 추천 주제 목록 조회
+    getTopicRecommendations: (studyId: string): Promise<ResponseDto<TopicRecommendation[]>> =>
         api.get(`/study/${studyId}/topic`),
 
-    // 주제 저장
-    saveStudyTopic: (studyId: string, topic: Partial<StudyTopic>): Promise<ResponseDto<StudyTopic>> =>
-        api.post(`/study/${studyId}/topic`, topic),
+    // 주제 선정
+    saveTopics: (studyId: string, topics: Topic[]): Promise<ResponseDto<StudyRedis>> =>
+        api.post(`/study/${studyId}/topic`, topics),
 
-    // 표현 저장
-    saveExpression: (studyId: string, topicId: string, question: string): Promise<ResponseDto<StudyExpression>> =>
-        api.post(`/study/${studyId}/${topicId}/expression`, { question }),
+    // AI 도움 받기
+    getAiHelp: (studyId: string, question: ExpressionToAsk): Promise<ResponseDto<StudyRedis>> =>
+        api.post(`/study/${studyId}/ai-help`, question),
 
-    // 공부방 정보 조회
-    getStudy: (studyId: string): Promise<ResponseDto<Study>> =>
-        api.get(`/study/${studyId}`),
+    // 스터디 종료
+    finishStudy: (studyId: string): Promise<ResponseDto<string>> =>
+        api.put(`/study/${studyId}`),
 
     // 보고서 조회
-    getReport: (reportId: string): Promise<ResponseDto<StudyReport>> =>
+    getReport: (reportId: string): Promise<ResponseDto<ReportDocument>> =>
         api.get(`/study/report/${reportId}`),
 
-    // 보고서 제출
-    submitReport: (reportId: string, content: string): Promise<ResponseDto<void>> =>
-        api.patch(`/study/report/${reportId}`, { content, isSubmitted: true }),
+    // 보고서 업데이트 (최종 코멘트 등)
+    updateReport: (reportId: string, data: { finalComments?: string }): Promise<ResponseDto<ReportDocument>> =>
+        api.patch(`/study/report/${reportId}/update`, data),
 
-    // 복습자료 생성
-    createReviewMaterial: (teamId: string, week: number): Promise<ResponseDto<Review>> =>
-        api.post(`/study/me/${teamId}/${week}`),
+    // 보고서 제출
+    submitReport: (reportId: string): Promise<ResponseDto<string>> =>
+        api.patch(`/study/report/${reportId}`),
 };
 
 // 복습 관련 API
