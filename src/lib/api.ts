@@ -7,10 +7,10 @@ import {
 import {
     Team
 } from "@/types/team";
-import { ExpressionToAsk, Review, ReviewTest, StudyRedis, TopicRecommendation, WeeklySummary } from "@/types/review";
+import { Review, ReviewTest } from "@/types/review";
 import { User } from "@/types/user";
 import { getToken, setToken } from "./auth";
-import { ReportDocument, Topic } from "@/types/study";
+import { ExpressionToAsk, ReportDocument, StudyRedis, Topic, TopicRecommendation, WeeklySummary } from "@/types/study";
 import { ApplyRegularStudyListResponse, RegularStudyApplyRequest, Subject, TimeSlot } from "@/types/apply-regular";
 import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
 
@@ -327,9 +327,9 @@ export const reviewApi = {
     getReviewTest: (reviewId: string): Promise<ResponseDto<ReviewTest>> =>
         api.post(`/review/me/${reviewId}/test`),
 
-    // 복습 테스트 제출
-    submitReviewTest: (reviewId: string, answers: { [key: string]: number }): Promise<ResponseDto<ReviewTest>> =>
-        api.patch(`/review/me/${reviewId}/test`, { answers }),
+    // 복습 테스트 제출 - 수정됨
+    submitReviewTest: (reviewId: string, test: ReviewTest): Promise<ResponseDto<ReviewTest>> =>
+        api.patch(`/review/me/${reviewId}/test`, test),
 };
 
 // API 응답 처리 헬퍼 함수
