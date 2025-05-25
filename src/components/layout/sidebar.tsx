@@ -54,18 +54,7 @@ export function Sidebar() {
     );
 
     const SidebarContent = () => (
-        <div className="flex flex-col h-full">
-            {/* 로고 */}
-            <div className="p-6 border-b">
-                <Link href={ROUTES.MAIN_HOME}>
-                    <img
-                        src="/images/logo.png"
-                        alt="ECC 스터디 로고"
-                        className="h-8 w-auto"
-                    />
-                </Link>
-            </div>
-
+        <div className="bg-mybeige flex flex-col h-full">
             {/* 네비게이션 */}
             <nav className="flex-1 px-4 py-6 space-y-2">
                 {/* 홈 */}
@@ -194,42 +183,38 @@ export function Sidebar() {
                     복습
                 </NavItem>
             </nav>
+            <p className="text-xs text-muted-foreground">
+                &copy; {new Date().getFullYear()} ECC 스터디. All rights reserved.
+            </p>
         </div>
     );
 
     return (
         <>
             {/* 데스크톱 사이드바 */}
-            <div className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-background border-r">
+            <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-background border-r">
                 <SidebarContent />
-            </div>
+            </aside>
 
             {/* 모바일 메뉴 버튼 */}
             <Button
                 variant="ghost"
                 size="icon"
-                className="fixed top-4 left-4 z-50 lg:hidden"
+                className="fixed top-20 left-4 z-40 lg:hidden"
                 onClick={() => setIsMobileOpen(true)}
             >
                 <Menu className="h-6 w-6" />
             </Button>
 
-            {/* 모바일 사이드바 */}
+            {/* 모바일 사이드바 오버레이 */}
             {isMobileOpen && (
                 <>
                     <div
                         className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
                         onClick={() => setIsMobileOpen(false)}
                     />
-                    <div className="fixed inset-y-0 left-0 w-64 bg-background border-r z-50 lg:hidden">
-                        <div className="flex items-center justify-between p-4 border-b">
-                            <Link href={ROUTES.MAIN_HOME}>
-                                <img
-                                    src="/images/logo.png"
-                                    alt="ECC 스터디 로고"
-                                    className="h-8 w-auto"
-                                />
-                            </Link>
+                    <div className="fixed inset-y-0 left-0 w-64 bg-background border-r z-50 lg:hidden flex flex-col">
+                        <div className="flex items-center justify-end p-4 border-b">
                             <Button
                                 variant="ghost"
                                 size="icon"

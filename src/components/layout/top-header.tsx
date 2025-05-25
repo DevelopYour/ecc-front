@@ -1,4 +1,3 @@
-// components/layout/top-header.tsx
 "use client";
 
 import Link from "next/link";
@@ -23,8 +22,17 @@ export function TopHeader() {
     };
 
     return (
-        <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="flex h-16 items-center justify-end px-4 lg:px-8">
+        <header className="flex-shrink-0 border-b bg-mybeige">
+            <div className="flex h-16 items-center justify-between px-4 lg:px-8">
+                {/* 로고 */}
+                <Link href={ROUTES.MAIN_HOME}>
+                    <img
+                        src="/images/logo.png"
+                        alt="ECC 스터디 로고"
+                        className="h-8 w-auto"
+                    />
+                </Link>
+
                 {/* 사용자 프로필 드롭다운 */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>

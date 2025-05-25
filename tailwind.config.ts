@@ -1,11 +1,12 @@
-/** @type {import('tailwindcss').Config} */
-module.exports = {
+import type { Config } from 'tailwindcss'
+
+const config: Config = {
     darkMode: ["class"],
     content: [
-        './pages/**/*.{ts,tsx}',
-        './components/**/*.{ts,tsx}',
-        './app/**/*.{ts,tsx}',
-        './src/**/*.{ts,tsx}',
+        './pages/**/*.{js,ts,jsx,tsx,mdx}',
+        './components/**/*.{js,ts,jsx,tsx,mdx}',
+        './app/**/*.{js,ts,jsx,tsx,mdx}',
+        './src/**/*.{js,ts,jsx,tsx,mdx}',
     ],
     theme: {
         container: {
@@ -17,6 +18,8 @@ module.exports = {
         },
         extend: {
             colors: {
+                mybeige: "#F2ECE6",
+                mygreen: "#45646B",
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
                 ring: "hsl(var(--ring))",
@@ -50,12 +53,6 @@ module.exports = {
                     DEFAULT: "hsl(var(--card))",
                     foreground: "hsl(var(--card-foreground))",
                 },
-                // 프로젝트 전용 색상 추가
-                brand: {
-                    DEFAULT: "#0070f3", // 예시 색상
-                    light: "#3291ff",
-                    dark: "#0761d1",
-                },
             },
             borderRadius: {
                 lg: "var(--radius)",
@@ -64,12 +61,12 @@ module.exports = {
             },
             keyframes: {
                 "accordion-down": {
-                    from: { height: 0 },
+                    from: { height: "0" },
                     to: { height: "var(--radix-accordion-content-height)" },
                 },
                 "accordion-up": {
                     from: { height: "var(--radix-accordion-content-height)" },
-                    to: { height: 0 },
+                    to: { height: "0" },
                 },
             },
             animation: {
@@ -78,5 +75,7 @@ module.exports = {
             },
         },
     },
-    plugins: [require("tailwindcss-animate")],
+    plugins: [],
 }
+
+export default config
