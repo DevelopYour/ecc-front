@@ -111,6 +111,15 @@ export const TEAM_STATUS = {
     CANCELED: "canceled", // 취소
 };
 
+// 번개 스터디 팀 상태
+export const ONE_TIME_STATUS_STYLE = {
+    RECRUITING: { text: '모집중', color: 'bg-green-500' },
+    UPCOMING: { text: '확정', color: 'bg-blue-500' },
+    IN_PROGRESS: { text: '진행중', color: 'bg-yellow-500' },
+    COMPLETED: { text: '완료', color: 'bg-gray-500' },
+    CANCELED: { text: '취소', color: 'bg-red-500' }
+};
+
 // 스터디 상태
 export const STUDY_STATUS = {
     PREPARING: "preparing", // 준비 중

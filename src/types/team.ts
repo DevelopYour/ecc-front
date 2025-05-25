@@ -31,28 +31,3 @@ export interface TeamMember {
     };
     joinedAt: string;
 }
-
-export interface RegularApplyRequest {
-    subject: string;
-    day: string;
-    time: string;
-    isOnline: boolean;
-    location?: string;
-}
-
-export interface OneTimeCreateRequest {
-    name: string;
-    subject: string;
-    startDate: string;
-    endDate: string;
-    day: string;
-    time: string;
-    isOnline: boolean;
-    location?: string;
-    description?: string;
-    maxMembers: number;
-}
-
-export interface OneTimeApplyRequest {
-    teamId: string;
-}

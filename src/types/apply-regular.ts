@@ -33,9 +33,3 @@ export interface ApplyRegularStudyResponse {
 export interface ApplyRegularStudyListResponse {
     applications: ApplyRegularStudyResponse[];
 }
-
-export interface ResponseDto<T> {
-    success: boolean;
-    message: string;
-    data: T;
-}

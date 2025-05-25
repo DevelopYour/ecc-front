@@ -1,5 +1,3 @@
-import { User } from "./user"; // User 타입을 types/user.ts에서 가져옴
-
 export interface ApiResponse<T> {
     success: boolean;
     message: string;

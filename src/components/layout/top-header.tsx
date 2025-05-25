@@ -38,7 +38,7 @@ export function TopHeader() {
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="flex items-center space-x-2">
                             <Avatar className="h-8 w-8">
-                                <AvatarImage src="/placeholder-user.jpg" alt={user?.name} />
+                                <AvatarImage src="/images/logo.png" alt={user?.name} />
                                 <AvatarFallback>{user?.name?.slice(0, 2) || "??"}</AvatarFallback>
                             </Avatar>
                             <span className="text-sm font-medium hidden sm:inline-block">{user?.name}</span>

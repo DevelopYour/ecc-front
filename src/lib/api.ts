@@ -5,13 +5,14 @@ import {
     LoginRequest, LoginResponse, SignupRequest, Major
 } from "@/types/auth";
 import {
-    Team, RegularApplyRequest, OneTimeCreateRequest, OneTimeApplyRequest
+    Team
 } from "@/types/team";
 import { ExpressionToAsk, Review, ReviewTest, StudyRedis, TopicRecommendation, WeeklySummary } from "@/types/review";
 import { User } from "@/types/user";
 import { getToken, setToken } from "./auth";
 import { ReportDocument, Topic } from "@/types/study";
 import { ApplyRegularStudyListResponse, RegularStudyApplyRequest, Subject, TimeSlot } from "@/types/apply-regular";
+import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
 
 interface ResponseDto<T> {
     success: boolean;
@@ -221,19 +222,23 @@ export const teamApi = {
         api.get("/teams/time-slots"),
 
     // 번개 스터디 목록 조회
-    getOneTimeTeams: (): Promise<ResponseDto<Team[]>> =>
+    getOneTimeTeams: (): Promise<ResponseDto<{ teams: OneTimeTeam[] }>> =>
         api.get("/teams/one-time"),
 
+    // 상태별 번개 스터디 조회  
+    getOneTimeTeamsByStatus: (status: string): Promise<ResponseDto<{ teams: OneTimeTeam[] }>> =>
+        api.get(`/teams/one-time/status/${status}`),
+
     // 번개 스터디 생성
-    createOneTime: (data: OneTimeCreateRequest): Promise<ResponseDto<Team>> =>
+    createOneTime: (data: CreateOneTimeRequest): Promise<ResponseDto<Team>> =>
         api.post("/teams/one-time", data),
 
     // 특정 번개 스터디 상세 조회
-    getOneTimeTeam: (teamId: string): Promise<ResponseDto<Team>> =>
+    getOneTimeTeam: (teamId: string): Promise<ResponseDto<OneTimeStudyDetail>> =>
         api.get(`/teams/one-time/${teamId}`),
 
     // 번개 스터디 정보 수정
-    updateOneTime: (teamId: string, data: Partial<OneTimeCreateRequest>): Promise<ResponseDto<Team>> =>
+    updateOneTime: (teamId: string, data: Partial<OneTimeTeam>): Promise<ResponseDto<Team>> =>
         api.put(`/teams/one-time/${teamId}`, data),
 
     // 번개 스터디 취소
@@ -247,10 +252,6 @@ export const teamApi = {
     // 번개 스터디 신청 취소
     cancelOneTimeApplication: (teamId: string): Promise<ResponseDto<void>> =>
         api.delete(`/teams/one-time/${teamId}/apply`),
-
-    // 상태별 번개 스터디 조회
-    getOneTimeTeamsByStatus: (status: string): Promise<ResponseDto<Team[]>> =>
-        api.get(`/teams/one-time/status/${status}`),
 
     // 내 팀 목록 조회
     getMyTeams: (): Promise<ResponseDto<Team[]>> =>
