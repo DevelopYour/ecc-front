@@ -7,11 +7,13 @@ import { teamApi } from '@/lib/api';
 import { Clock, Users, MapPin, Calendar, Edit, Trash2, UserMinus, UserPlus } from 'lucide-react';
 import { OneTimeStudyDetail } from '@/types/apply-onetime';
 import { ONE_TIME_STATUS_STYLE } from '@/lib/constants';
+import { useTeams } from '@/context/teams-context';
 
-export default function LightningStudyDetailPage() {
+export default function OneTimeStudyDetailPage() {
     const router = useRouter();
     const params = useParams();
     const teamId = Number(params.teamId);
+    const { currentUserId, refreshTeams } = useTeams();
 
     const [team, setTeam] = useState<OneTimeStudyDetail>();
     const [isLoading, setIsLoading] = useState(true); // true로 시작해서 로딩 상태 표시
@@ -47,6 +49,12 @@ export default function LightningStudyDetailPage() {
         }
     };
 
+    // 현재 사용자가 해당 팀에 참여했는지 확인하는 함수
+    const isUserJoined = (): boolean => {
+        if (!currentUserId || !team?.members) return false;
+        return team.members.some(member => member.id === currentUserId);
+    };
+
     const handleApply = async () => {
         if (!team) return;
 
@@ -58,7 +66,8 @@ export default function LightningStudyDetailPage() {
                 toast.success('신청 완료', {
                     description: '번개 스터디 신청이 완료되었습니다.',
                 });
-                loadTeamDetail(); // 데이터 새로고침
+                await loadTeamDetail(); // 데이터 새로고침
+                await refreshTeams(); // context 데이터도 새로고침
             } else {
                 toast.error('신청 실패', {
                     description: response.message || '신청에 실패했습니다.',
@@ -85,7 +94,8 @@ export default function LightningStudyDetailPage() {
                 toast.success('취소 완료', {
                     description: '번개 스터디 신청이 취소되었습니다.',
                 });
-                loadTeamDetail(); // 데이터 새로고침
+                await loadTeamDetail(); // 데이터 새로고침
+                await refreshTeams(); // context 데이터도 새로고침
             } else {
                 toast.error('취소 실패', {
                     description: response.message || '취소에 실패했습니다.',
@@ -112,6 +122,7 @@ export default function LightningStudyDetailPage() {
                 toast.success('삭제 완료', {
                     description: '번개 스터디가 삭제되었습니다.',
                 });
+                await refreshTeams(); // context 데이터 새로고침
                 router.push('/lightning');
             } else {
                 toast.error('삭제 실패', {
@@ -180,7 +191,7 @@ export default function LightningStudyDetailPage() {
                                 {ONE_TIME_STATUS_STYLE[team.status].text}
                             </span>
                         </div>
-                        <p className="text-lg text-blue-600 font-medium">{team.subjectName}</p>
+                        <p className="text-lg text-mygreen font-medium">{team.subjectName}</p>
                     </div>
 
                     {team.isCreator && (
@@ -242,13 +253,13 @@ export default function LightningStudyDetailPage() {
                         <div className="space-y-2">
                             {team.members && team.members.length > 0 ? (
                                 team.members.map((member, index) => (
-                                    <div key={`member-${member.uuid || index}`} className="flex items-center gap-2">
+                                    <div key={`member-${member.id || index}`} className="flex items-center gap-2">
                                         <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm font-medium text-blue-600">
                                             {member.name ? member.name.charAt(0) : '?'}
                                         </div>
                                         <span className="text-sm">
                                             {member.name || '알 수 없음'}
-                                            {member.uuid === team.createdBy && (
+                                            {member.id === team.createdBy && (
                                                 <span className="ml-1 text-xs bg-blue-100 text-blue-600 px-1 rounded">
                                                     생성자
                                                 </span>
@@ -277,7 +288,7 @@ export default function LightningStudyDetailPage() {
                 <div className="flex gap-4 pt-6 border-t">
                     {!team.isCreator && team.status === 'RECRUITING' && (
                         <>
-                            {team.canJoin ? (
+                            {!isUserJoined() ? (
                                 <button
                                     onClick={handleApply}
                                     disabled={isApplying}

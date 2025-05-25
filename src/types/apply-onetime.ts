@@ -25,6 +25,7 @@ export interface OneTimeTeam {
     location?: string;
     createdBy: number;
     createdAt: string;
+    members: MemberIdAndName[];
 }
 
 export interface LightningStudyResponse {
@@ -32,7 +33,7 @@ export interface LightningStudyResponse {
 }
 
 export interface MemberIdAndName {
-    uuid: number;
+    id: number;
     name: string;
 }
 

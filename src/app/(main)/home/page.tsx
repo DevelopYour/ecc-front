@@ -64,7 +64,7 @@ export default function HomePage() {
 
                 // 최근 복습 자료 로드
                 const reviewResponse = await reviewApi.getMyReviews();
-                setRecentReviews(reviewResponse.data?.slice(0, 4) || []);
+                setRecentReviews(reviewResponse.data?.slice(0, 3) || []);
             } catch (error) {
                 console.error("Failed to load dashboard data:", error);
             } finally {
@@ -122,7 +122,7 @@ export default function HomePage() {
                                                     }`}>
                                                     {event.type === 'regular' ? '정규' : '번개'}
                                                 </span>
-                                                <Link href={`/${event.type === 'regular' ? 'regular' : 'one-time'}/${event.teamId}`}>
+                                                <Link href={`/team/${event.teamId}`}>
                                                     <Button variant="ghost" size="sm">
                                                         <ArrowRight className="h-4 w-4" />
                                                     </Button>
@@ -218,42 +218,6 @@ export default function HomePage() {
                     )}
                 </div>
             </div>
-
-            {/* 빠른 액션 */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-lg">빠른 액션</CardTitle>
-                    <CardDescription>자주 사용하는 기능들에 빠르게 접근하세요.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <Link href={`${ROUTES.REGULAR}/apply`}>
-                            <Button variant="outline" className="w-full h-20 flex-col gap-2">
-                                <Calendar className="h-6 w-6" />
-                                <span className="text-sm">정규 신청</span>
-                            </Button>
-                        </Link>
-                        <Link href={`${ROUTES.ONE_TIME}/apply`}>
-                            <Button variant="outline" className="w-full h-20 flex-col gap-2">
-                                <Clock className="h-6 w-6" />
-                                <span className="text-sm">번개 신청</span>
-                            </Button>
-                        </Link>
-                        <Link href={ROUTES.REVIEW}>
-                            <Button variant="outline" className="w-full h-20 flex-col gap-2">
-                                <BookText className="h-6 w-6" />
-                                <span className="text-sm">복습하기</span>
-                            </Button>
-                        </Link>
-                        <Link href={ROUTES.MY}>
-                            <Button variant="outline" className="w-full h-20 flex-col gap-2">
-                                <CheckCircle2 className="h-6 w-6" />
-                                <span className="text-sm">내 정보</span>
-                            </Button>
-                        </Link>
-                    </div>
-                </CardContent>
-            </Card>
         </div>
     );
 }

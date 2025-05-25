@@ -5,7 +5,7 @@ export interface ResponseDto<T> {
 }
 
 export interface User {
-    id: string;
+    uuid: number;
     username: string;
     name: string;
     email: string;

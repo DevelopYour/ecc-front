@@ -8,9 +8,11 @@ import { Clock, Users, MapPin, Calendar, Plus } from 'lucide-react';
 import { OneTimeTeam } from '@/types/apply-onetime';
 import { Subject } from '@/types/apply-regular';
 import { ONE_TIME_STATUS_STYLE } from '@/lib/constants';
+import { useTeams } from '@/context/teams-context';
 
 export default function OneTimeApplyPage() {
     const router = useRouter();
+    const { currentUserId, isUserInOneTimeTeam, getOneTimeTeamParticipationStatus } = useTeams();
     const [teams, setTeams] = useState<OneTimeTeam[]>([]);
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -31,7 +33,6 @@ export default function OneTimeApplyPage() {
             ]);
 
             if (teamsResponse.success && teamsResponse.data) {
-                // API는 { teams: OneTimeTeam[] } 구조로 반환
                 setTeams(teamsResponse.data.teams || []);
             }
 
@@ -146,7 +147,7 @@ export default function OneTimeApplyPage() {
                 <h1 className="text-3xl font-bold">번개 스터디</h1>
                 <button
                     onClick={handleCreateClick}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-mygreen text-white rounded-lg hover:bg-mygreen transition-colors"
                 >
                     <Plus size={20} />
                     번개스터디 만들기
@@ -168,7 +169,7 @@ export default function OneTimeApplyPage() {
                             key={status.key}
                             onClick={() => handleStatusChange(status.key)}
                             className={`px-4 py-2 rounded-lg transition-colors ${selectedStatus === status.key
-                                ? 'bg-blue-600 text-white'
+                                ? 'bg-mygreen text-white'
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                         >
@@ -237,9 +238,12 @@ export default function OneTimeApplyPage() {
                                 <span>
                                     {new Date(team.createdAt).toLocaleDateString('ko-KR')} 생성
                                 </span>
-                                {team.status === 'RECRUITING' && (
-                                    <span className="text-green-600 font-medium">
-                                        참여 가능
+                                {getOneTimeTeamParticipationStatus(team) && (
+                                    <span className={`font-medium ${isUserInOneTimeTeam(team)
+                                        ? 'text-mygreen'
+                                        : 'text-green-600'
+                                        }`}>
+                                        {getOneTimeTeamParticipationStatus(team)}
                                     </span>
                                 )}
                             </div>

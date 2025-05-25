@@ -219,7 +219,7 @@ export default function OneTimeStudyCreatePage() {
                         value={formData.name}
                         onChange={handleInputChange}
                         placeholder="스터디 이름을 입력하세요"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mygreen"
                         maxLength={50}
                         required
                     />
@@ -234,7 +234,7 @@ export default function OneTimeStudyCreatePage() {
                         name="subjectId"
                         value={formData.subjectId}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mygreen"
                         required
                     >
                         <option value={0}>과목을 선택하세요</option>
@@ -256,7 +256,7 @@ export default function OneTimeStudyCreatePage() {
                             name="minMembers"
                             value={formData.minMembers}
                             onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mygreen"
                         >
                             {[2, 3, 4, 5].map(num => (
                                 <option key={num} value={num}>{num}명</option>
@@ -271,7 +271,7 @@ export default function OneTimeStudyCreatePage() {
                             name="maxMembers"
                             value={formData.maxMembers}
                             onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mygreen"
                         >
                             {[2, 3, 4, 5].map(num => (
                                 <option key={num} value={num}>{num}명</option>
@@ -291,7 +291,7 @@ export default function OneTimeStudyCreatePage() {
                             name="startTime"
                             value={formData.startTime}
                             onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mygreen"
                             required
                         />
                     </div>
@@ -304,7 +304,7 @@ export default function OneTimeStudyCreatePage() {
                             name="endTime"
                             value={formData.endTime}
                             onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mygreen"
                             required
                         />
                     </div>
@@ -319,7 +319,7 @@ export default function OneTimeStudyCreatePage() {
                         value={formData.location}
                         onChange={handleInputChange}
                         placeholder="스터디 장소를 입력하세요 (선택사항)"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mygreen"
                         maxLength={100}
                     />
                 </div>
@@ -333,7 +333,7 @@ export default function OneTimeStudyCreatePage() {
                         onChange={handleInputChange}
                         placeholder="스터디에 대한 설명을 입력하세요 (선택사항)"
                         rows={4}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mygreen resize-none"
                         maxLength={500}
                     />
                     <div className="text-right text-sm text-gray-500 mt-1">
@@ -346,7 +346,7 @@ export default function OneTimeStudyCreatePage() {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                        className="flex-1 px-6 py-3 bg-mygreen text-white rounded-lg hover:bg-mygreen disabled:opacity-50 transition-colors"
                     >
                         {isLoading ? '생성 중...' : '번개 스터디 만들기'}
                     </button>
