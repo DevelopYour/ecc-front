@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { userApi } from "@/lib/api";
+import router from "next/router";
 
 // 비밀번호 변경 폼 검증 스키마
 const passwordSchema = z
@@ -64,6 +65,7 @@ export function PasswordForm() {
             });
 
             form.reset();
+            router.push('/my');
         } catch (error) {
             console.error("Password update error:", error);
             toast.error("비밀번호 변경 실패", {

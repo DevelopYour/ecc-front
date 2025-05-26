@@ -20,11 +20,15 @@ import {
 import { useAuth } from "@/context/auth-context";
 import { useTeams } from "@/context/teams-context";
 import { ROUTES } from "@/lib/constants";
+import { authApi } from "@/lib/api";
+import { toast } from "sonner"; // toast 라이브러리 사용 (또는 사용하는 알림 라이브러리)
+import router from "next/router";
 
 export function Header() {
     const { user, isLoggedIn, logout } = useAuth();
     const { myRegularTeams, myOneTimeTeams, isLoading: isTeamsLoading } = useTeams();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const pathname = usePathname();
 
     const toggleMenu = () => {
@@ -36,8 +40,36 @@ export function Header() {
     };
 
     const handleLogout = async () => {
-        await logout();
-        closeMenu();
+        if (isLoggingOut) return; // 중복 요청 방지
+
+        setIsLoggingOut(true);
+
+        try {
+            // API 로그아웃 호출
+            await authApi.logout();
+
+            // 로컬 상태 정리 (auth context의 logout 함수 호출)
+            await logout();
+
+            // 메뉴 닫기
+            closeMenu();
+
+            // 성공 메시지 (선택사항)
+            toast?.success?.("로그아웃되었습니다.");
+            router.push('/');
+        } catch (error) {
+            console.error('로그아웃 중 오류 발생:', error);
+
+            // API 호출 실패해도 로컬 상태는 정리
+            await logout();
+            closeMenu();
+
+            // 에러 메시지 (선택사항)
+            toast?.error?.("로그아웃 처리 중 문제가 발생했지만 로그아웃되었습니다.");
+
+        } finally {
+            setIsLoggingOut(false);
+        }
     };
 
     // 활성 메뉴 항목 스타일 적용
@@ -50,8 +82,8 @@ export function Header() {
         <Link
             href={href}
             className={`flex items-center px-4 py-2 rounded-md ${isActive(href)
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-muted"
+                ? "bg-primary text-primary-foreground"
+                : "hover:bg-muted"
                 }`}
             onClick={closeMenu}
         >
@@ -179,9 +211,17 @@ export function Header() {
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-                                        <LogOut className="mr-2 h-4 w-4" />
-                                        로그아웃
+                                    <DropdownMenuItem
+                                        onClick={handleLogout}
+                                        className="text-destructive"
+                                        disabled={isLoggingOut}
+                                    >
+                                        {isLoggingOut ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <LogOut className="mr-2 h-4 w-4" />
+                                        )}
+                                        {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -291,11 +331,18 @@ export function Header() {
                                     <NavItem href={ROUTES.MY} icon={<UserIcon className="h-5 w-5" />}>내 정보</NavItem>
 
                                     <button
-                                        className="flex w-full items-center px-4 py-2 text-left rounded-md hover:bg-muted text-destructive"
+                                        className="flex w-full items-center px-4 py-2 text-left rounded-md hover:bg-muted text-destructive disabled:opacity-50 disabled:cursor-not-allowed"
                                         onClick={handleLogout}
+                                        disabled={isLoggingOut}
                                     >
-                                        <LogOut className="h-5 w-5" />
-                                        <span className="ml-2">로그아웃</span>
+                                        {isLoggingOut ? (
+                                            <Loader2 className="h-5 w-5 animate-spin" />
+                                        ) : (
+                                            <LogOut className="h-5 w-5" />
+                                        )}
+                                        <span className="ml-2">
+                                            {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
+                                        </span>
                                     </button>
                                 </>
                             ) : (

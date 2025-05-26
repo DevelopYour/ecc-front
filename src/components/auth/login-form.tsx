@@ -137,7 +137,7 @@ export function LoginForm() {
 
                     <Button
                         type="submit"
-                        className="w-full"
+                        className="w-full bg-mygreen hover:bg-mygreen1"
                         disabled={form.formState.isSubmitting}
                     >
                         {form.formState.isSubmitting ? (

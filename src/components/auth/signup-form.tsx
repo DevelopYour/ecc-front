@@ -360,7 +360,7 @@ export function SignupForm() {
 
                     <Button
                         type="submit"
-                        className="w-full mt-6"
+                        className="w-full mt-6 bg-mygreen hover:bg-mygreen1"
                         disabled={form.formState.isSubmitting}
                     >
                         {form.formState.isSubmitting ? (

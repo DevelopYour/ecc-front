@@ -20,6 +20,8 @@ const config: Config = {
             colors: {
                 mybeige: "#F2ECE6",
                 mygreen: "#45646B",
+                mygreen1: "#26383C",
+                mybrown: "#82736E",
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
                 ring: "hsl(var(--ring))",

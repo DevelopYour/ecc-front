@@ -150,7 +150,7 @@ export const authApi = {
 
     // 전공 목록 조회
     getMajors: (): Promise<ResponseDto<Major[]>> =>
-        publicApi.get("/auth/major"),
+        publicApi.get("/major"),
 
     // 토큰 검증
     verifyToken: (): Promise<ResponseDto<{ valid: boolean }>> =>

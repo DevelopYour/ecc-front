@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User } from "@/types/user"; // types/user.ts에서 User 타입 가져오기
+import { User } from "@/types/user";
 import { authApi } from "@/lib/api";
 import { login as loginAuth, logout as logoutAuth, getUser, setToken } from "@/lib/auth";
 import { STORAGE_KEYS } from "@/lib/constants";
@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // 3. 사용자 정보 구성 및 저장
             const user = {
-                id: loginData.uuid,
+                uuid: loginData.uuid,
                 username: loginData.studentId,
                 name: loginData.name,
                 email: "", // 기본값

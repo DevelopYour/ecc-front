@@ -14,7 +14,7 @@ export interface LoginResponse {
     refreshToken: string;
     tokenType: string;
     accessTokenExpiresIn: number;
-    uuid: string;
+    uuid: number;
     studentId: string;
     name: string;
     status: string;
