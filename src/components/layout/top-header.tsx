@@ -22,7 +22,7 @@ export function TopHeader() {
     };
 
     return (
-        <header className="flex-shrink-0 border-b bg-mybeige">
+        <header className="flex-shrink-0 border-b bg-mybeige shadow-[0_2px_8px_rgba(139,118,93,0.15)] relative z-10">
             <div className="flex h-16 items-center justify-between px-4 lg:px-8">
                 {/* 로고 */}
                 <Link href={ROUTES.MAIN_HOME}>
