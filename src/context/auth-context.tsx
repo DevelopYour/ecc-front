@@ -5,6 +5,8 @@ import { User } from "@/types/user";
 import { authApi } from "@/lib/api";
 import { login as loginAuth, logout as logoutAuth, getUser, setToken } from "@/lib/auth";
 import { STORAGE_KEYS } from "@/lib/constants";
+import { useRouter } from "next/navigation";
+import { ROUTES } from "@/lib/constants";
 
 interface AuthContextType {
     user: User | null;
@@ -20,6 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const router = useRouter();
 
     useEffect(() => {
         // 페이지 로드 시 로컬 스토리지에서 사용자 정보 가져오기
@@ -28,7 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
     }, []);
 
-    // context/auth-context.tsx
     const login = async (username: string, password: string): Promise<void> => {
         try {
             // 1. API 호출로 로그인 처리
@@ -38,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 throw new Error(response.message || response.error || "로그인 실패");
             }
 
-            const loginData = response.data; // 이제 타입 에러 없음
+            const loginData = response.data;
 
             // 2. 토큰 저장
             setToken(loginData.accessToken);
@@ -68,15 +70,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-
     const logout = async () => {
         try {
+            // API 로그아웃 호출
             await authApi.logout();
         } catch (error) {
             console.error("Logout API failed:", error);
         } finally {
+            // 로컬 상태 및 스토리지 정리
             logoutAuth();
             setUser(null);
+
+            // 홈페이지로 리다이렉트
+            router.push(ROUTES.HOME);
         }
     };
 
@@ -84,6 +90,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (user) {
             const newUser = { ...user, ...updatedUser };
             setUser(newUser as User);
+            // localStorage도 업데이트
+            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(newUser));
         }
     };
 

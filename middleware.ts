@@ -5,31 +5,76 @@ import type { NextRequest } from "next/server";
 const AUTH_PATHS = [
     "/home",
     "/regular",
-    "/one-time", // 'onetime'에서 'one-time'으로 수정
+    "/one-time",
     "/review",
     "/my",
 ];
 
-// 로그인한 사용자가 접근하면 리다이렉트할 경로 패턴
+// 로그인한 사용자가 접근하면 리다이렉트할 경로 패턴 (인증된 사용자 접근 불가)
 const PUBLIC_ONLY_PATHS = [
     "/login",
     "/signup",
 ];
 
 export function middleware(request: NextRequest) {
-    const token = request.cookies.get("ecc-token")?.value;
     const { pathname } = request.nextUrl;
 
-    // 인증된 사용자가 로그인/회원가입 페이지에 접근하면 홈으로 리다이렉트
-    if (token && PUBLIC_ONLY_PATHS.some(path => pathname.startsWith(path))) {
+    // API 경로는 미들웨어에서 처리하지 않음
+    if (pathname.startsWith("/api")) {
+        return NextResponse.next();
+    }
+
+    // 정적 파일들은 처리하지 않음
+    if (pathname.startsWith("/_next") ||
+        pathname.startsWith("/images") ||
+        pathname.startsWith("/favicon") ||
+        pathname.includes(".")) {
+        return NextResponse.next();
+    }
+
+    // 토큰 확인 - 여러 방법으로 시도
+    const token = request.cookies.get("ecc-token")?.value;
+    const refreshToken = request.cookies.get("ecc-refresh-token")?.value;
+
+    // 디버깅을 위한 로그
+    console.log(`[Middleware] Path: ${pathname}`);
+    console.log(`[Middleware] Token: ${token ? "present" : "missing"}`);
+    console.log(`[Middleware] RefreshToken: ${refreshToken ? "present" : "missing"}`);
+    console.log(`[Middleware] All cookies:`, request.cookies.getAll().map(c => `${c.name}=${c.value}`));
+
+    // 인증 상태 확인 - access token 또는 refresh token 중 하나라도 있으면 인증된 것으로 간주
+    const isAuthenticated = !!(token || refreshToken);
+
+    // 1. 인증된 사용자가 로그인/회원가입 페이지에 접근하면 홈으로 리다이렉트
+    if (isAuthenticated && PUBLIC_ONLY_PATHS.some(path => pathname === path || pathname.startsWith(`${path}/`))) {
+        console.log(`[Middleware] Authenticated user accessing public-only path, redirecting to /home`);
         return NextResponse.redirect(new URL("/home", request.url));
     }
 
-    // 인증이 필요한 페이지에 접근할 때 토큰이 없으면 로그인 페이지로 리다이렉트
-    if (!token && AUTH_PATHS.some(path => pathname.startsWith(path))) {
-        return NextResponse.redirect(new URL("/login", request.url));
+    // 2. 인증이 필요한 페이지에 접근할 때 토큰이 없으면 로그인 페이지로 리다이렉트
+    if (!isAuthenticated && AUTH_PATHS.some(path => pathname === path || pathname.startsWith(`${path}/`))) {
+        console.log(`[Middleware] Unauthenticated user accessing protected path, redirecting to /login`);
+
+        // 원래 요청한 URL을 쿼리 파라미터로 저장 (로그인 후 리다이렉트용)
+        const loginUrl = new URL("/login", request.url);
+        loginUrl.searchParams.set("callbackUrl", pathname);
+
+        return NextResponse.redirect(loginUrl);
     }
 
+    // 3. 루트 경로 처리
+    if (pathname === "/") {
+        if (isAuthenticated) {
+            // 로그인된 사용자는 홈 대시보드로
+            console.log(`[Middleware] Authenticated user at root, redirecting to /home`);
+            return NextResponse.redirect(new URL("/home", request.url));
+        }
+        // 로그인되지 않은 사용자는 랜딩 페이지 표시
+        console.log(`[Middleware] Unauthenticated user at root, showing landing page`);
+        return NextResponse.next();
+    }
+
+    console.log(`[Middleware] Allowing request to proceed`);
     return NextResponse.next();
 }
 
@@ -39,14 +84,11 @@ export const config = {
         /*
          * 매치할 경로:
          * - 모든 인증이 필요한 경로
-         * - 로그인/회원가입 페이지
+         * - 로그인/회원가입 페이지  
+         * - 루트 경로
+         * - API 경로 제외
+         * - 정적 파일 제외
          */
-        "/home/:path*",
-        "/regular/:path*",
-        "/one-time/:path*", // 'onetime'에서 'one-time'으로 수정
-        "/review/:path*",
-        "/my/:path*",
-        "/login",
-        "/signup",
+        "/((?!api|_next/static|_next/image|favicon.ico|images).*)",
     ],
 };

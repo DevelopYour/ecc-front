@@ -57,12 +57,55 @@ export function login(response: LoginResponse): void {
     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
 }
 
-// 로그아웃 처리
+// 로그아웃 처리 - 모든 인증 관련 데이터 삭제
 export function logout(): void {
     if (typeof window !== "undefined") {
-        localStorage.removeItem(STORAGE_KEYS.TOKEN);
-        localStorage.removeItem(STORAGE_KEYS.USER);
-        deleteCookie(STORAGE_KEYS.TOKEN);
+        // 1. localStorage 완전 정리
+        const keysToRemove = [
+            STORAGE_KEYS.TOKEN,
+            STORAGE_KEYS.USER,
+            STORAGE_KEYS.REFRESH_TOKEN,
+        ];
+
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+        });
+
+        // 2. 쿠키 삭제 - 여러 설정으로 확실히 삭제
+        const cookieOptions = [
+            { path: "/" },
+            { path: "/", domain: window.location.hostname },
+            { path: "/", domain: `.${window.location.hostname}` },
+        ];
+
+        keysToRemove.forEach(key => {
+            cookieOptions.forEach(options => {
+                deleteCookie(key, options);
+                // 브라우저 API로도 직접 삭제
+                document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${options.path}; ${options.domain ? `domain=${options.domain};` : ''}`;
+            });
+        });
+
+        // 3. 세션 스토리지도 정리 (혹시 있다면)
+        try {
+            sessionStorage.clear();
+        } catch (e) {
+            console.warn('Could not clear sessionStorage:', e);
+        }
+
+        // 4. 브라우저 캐시 무효화를 위한 추가 작업
+        try {
+            // Cache API가 있다면 정리
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => {
+                        caches.delete(name);
+                    });
+                });
+            }
+        } catch (e) {
+            console.warn('Could not clear cache:', e);
+        }
     }
 }
 
@@ -90,6 +133,9 @@ export function getUser(): User | null {
             try {
                 return JSON.parse(userStr) as User;
             } catch (e) {
+                // JSON 파싱 오류 시 로그아웃 처리
+                console.error('User data parsing error, clearing storage:', e);
+                logout();
                 return null;
             }
         }

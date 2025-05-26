@@ -6,7 +6,6 @@ import { useAuth } from "@/context/auth-context";
 import { ROUTES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, BookOpen, Sparkles, Users, Zap } from "lucide-react";
 
 export default function HomePage() {
     const { isLoggedIn, isLoading } = useAuth();
