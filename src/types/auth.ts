@@ -22,12 +22,14 @@ export interface LoginResponse {
 }
 
 export interface SignupRequest {
-    username: string;
-    password: string;
     name: string;
+    studentId: string;
+    majorId: number;
+    tel: string;
+    kakaoTel: string;
     email: string;
-    level: string;
-    majorId: string;
+    level: number;
+    motivation: string;
 }
 
 export interface CheckIdRequest {

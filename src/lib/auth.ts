@@ -6,7 +6,7 @@ import { LoginResponse } from "@/types/auth";
 
 // 사용자 정보 타입 가져오기 위해 User 타입 확장
 export interface AuthUser extends User {
-    uuid: string;
+    uuid: number;
     studentId: string; // username을 studentId로 변경
     status: string;
     role: string;
@@ -40,7 +40,6 @@ export function login(response: LoginResponse): void {
 
     // 사용자 정보 객체 생성
     const user: AuthUser = {
-        id: response.uuid, // UUID를 ID로 사용
         uuid: response.uuid,
         studentId: response.studentId,
         username: response.studentId, // 기존 코드와의 호환성을 위해 studentId를 username으로도 저장

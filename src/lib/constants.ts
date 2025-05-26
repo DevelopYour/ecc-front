@@ -55,10 +55,9 @@ export const STUDY_TYPES = {
 
 // 영어 레벨
 export const ENGLISH_LEVELS = [
-    { value: "beginner", label: "입문" },
-    { value: "elementary", label: "초급" },
-    { value: "intermediate", label: "중급" },
-    { value: "advanced", label: "고급" },
+    { value: 1, name: "beginner", label: "입문" },
+    { value: 2, name: "intermediate", label: "중급" },
+    { value: 3, name: "advanced", label: "고급" },
 ];
 
 // 요일 

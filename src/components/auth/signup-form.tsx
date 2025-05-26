@@ -6,8 +6,7 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { debounce } from "lodash";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -27,61 +26,47 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { authApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { ROUTES, ENGLISH_LEVELS } from "@/lib/constants";
 
 // 회원가입 폼 검증 스키마
 const signupSchema = z.object({
-    username: z
+    name: z.string().min(1, "이름은 필수 입력 항목입니다"),
+    studentId: z
         .string()
-        .min(4, "아이디는 4자 이상이어야 합니다")
-        .max(20, "아이디는 20자 이하여야 합니다")
-        .regex(/^[a-zA-Z0-9_-]+$/, "아이디는 영문, 숫자, 하이픈, 언더스코어만 가능합니다"),
-    password: z
+        .regex(/^\d{8}$/, "학번은 8자리 숫자여야 합니다"),
+    majorId: z.string().min(1, "전공은 필수 입력 항목입니다"),
+    tel: z
         .string()
-        .min(8, "비밀번호는 8자 이상이어야 합니다")
-        .regex(
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-            "비밀번호는 대소문자, 숫자, 특수문자를 포함해야 합니다"
-        ),
-    confirmPassword: z.string().min(1, "비밀번호 확인을 입력하세요"),
-    name: z.string().min(2, "이름은 2자 이상이어야 합니다"),
-    email: z.string().email("유효한 이메일을 입력하세요"),
-    level: z.string().min(1, "영어 실력을 선택하세요"),
-    majorId: z.string().min(1, "전공을 선택하세요"),
+        .regex(/^01(?:0|1|[6-9])(?:\d{3}|\d{4})\d{4}$/, "올바른 형식의 전화번호를 입력해주세요"),
+    kakaoTel: z.string().min(1, "카카오톡 아이디는 필수 입력 항목입니다"),
+    email: z.string().email("올바른 이메일 형식을 입력해주세요"),
+    level: z.string().min(1, "영어 실력은 필수 선택 항목입니다"),
+    motivation: z.string().min(1, "지원 동기는 필수 입력 항목입니다"),
 });
-
-// 비밀번호 확인 일치 검사
-const signupSchemaWithPasswordCheck = signupSchema.refine(
-    (data) => data.password === data.confirmPassword,
-    {
-        message: "비밀번호가 일치하지 않습니다",
-        path: ["confirmPassword"],
-    }
-);
 
 type SignupFormValues = z.infer<typeof signupSchema>;
 
 export function SignupForm() {
     const router = useRouter();
     const { toast } = useToast();
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [isCheckingUsername, setIsCheckingUsername] = useState(false);
     const [majors, setMajors] = useState<{ id: string; name: string }[]>([]);
+    const [isStudentIdChecked, setIsStudentIdChecked] = useState(false);
 
     // react-hook-form 설정
     const form = useForm<SignupFormValues>({
-        resolver: zodResolver(signupSchemaWithPasswordCheck),
+        resolver: zodResolver(signupSchema),
         defaultValues: {
-            username: "",
-            password: "",
-            confirmPassword: "",
             name: "",
+            studentId: "",
+            majorId: "",
+            tel: "",
+            kakaoTel: "",
             email: "",
             level: "",
-            majorId: "",
+            motivation: "",
         },
     });
 
@@ -89,56 +74,60 @@ export function SignupForm() {
     const loadMajors = async () => {
         try {
             const response = await authApi.getMajors();
-            setMajors(response.data);
+            // response.data가 undefined일 경우 빈 배열로 처리
+            setMajors(response.data || []);
         } catch (error) {
             console.error("Failed to load majors:", error);
             toast.error("전공 목록을 불러오는데 실패했습니다");
         }
     };
 
-    // 아이디 중복 체크
-    const checkUsernameAvailability = debounce(async (username: string) => {
-        if (username.length < 4) return;
+    // 학번 중복 확인
+    const checkStudentId = async () => {
+        const studentId = form.getValues("studentId");
 
-        setIsCheckingUsername(true);
+        if (!studentId.trim()) {
+            toast.error("학번을 입력해주세요.");
+            return;
+        }
+
         try {
-            const response = await authApi.checkId(username);
+            // API가 username 파라미터를 사용하지만 실제로는 studentId를 체크
+            const response = await authApi.checkId(studentId);
             const isAvailable = response.data;
 
-            if (!isAvailable) {
-                form.setError("username", {
-                    type: "manual",
-                    message: "이미 사용 중인 아이디입니다",
-                });
+            if (isAvailable) {
+                setIsStudentIdChecked(true);
+                toast.success("사용 가능한 학번입니다.");
             } else {
-                form.clearErrors("username");
+                toast.error("이미 존재하는 학번입니다. 다른 학번을 입력해주세요.");
+                form.setValue("studentId", "");
+                setIsStudentIdChecked(false);
             }
         } catch (error) {
-            console.error("Username check failed:", error);
-        } finally {
-            setIsCheckingUsername(false);
+            console.error("Student ID check failed:", error);
+            toast.error("중복 확인 중 오류가 발생했습니다.");
+            setIsStudentIdChecked(false);
         }
-    }, 500);
-
-    // 비밀번호 표시 토글
-    const toggleShowPassword = () => {
-        setShowPassword(!showPassword);
-    };
-
-    const toggleShowConfirmPassword = () => {
-        setShowConfirmPassword(!showConfirmPassword);
     };
 
     // 폼 제출 처리
     const onSubmit = async (values: SignupFormValues) => {
+        if (!isStudentIdChecked) {
+            toast.error("학번 중복 확인을 해주세요.");
+            return;
+        }
+
         try {
             await authApi.signup({
-                username: values.username,
-                password: values.password,
                 name: values.name,
+                studentId: values.studentId,
+                majorId: parseInt(values.majorId), // string을 number로 변환
+                tel: values.tel,
+                kakaoTel: values.kakaoTel,
                 email: values.email,
-                level: values.level,
-                majorId: values.majorId,
+                level: parseInt(values.level), // string을 number로 변환
+                motivation: values.motivation,
             });
 
             toast.success("회원가입 신청 완료", {
@@ -155,7 +144,7 @@ export function SignupForm() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 max-w-2xl mx-auto">
             <div className="space-y-2 text-center">
                 <h1 className="text-2xl font-semibold tracking-tight">회원가입</h1>
                 <p className="text-sm text-muted-foreground">
@@ -164,163 +153,58 @@ export function SignupForm() {
             </div>
 
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                        control={form.control}
-                        name="username"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>아이디</FormLabel>
-                                <FormControl>
-                                    <div className="relative">
-                                        <Input
-                                            placeholder="아이디를 입력하세요"
-                                            {...field}
-                                            onChange={(e) => {
-                                                field.onChange(e);
-                                                checkUsernameAvailability(e.target.value);
-                                            }}
-                                        />
-                                        {isCheckingUsername && (
-                                            <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
-                                        )}
-                                    </div>
-                                </FormControl>
-                                <FormDescription>
-                                    4-20자의 영문, 숫자, 하이픈(-), 언더스코어(_)만 사용 가능합니다.
-                                </FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>비밀번호</FormLabel>
-                                <FormControl>
-                                    <div className="relative">
-                                        <Input
-                                            type={showPassword ? "text" : "password"}
-                                            placeholder="비밀번호를 입력하세요"
-                                            {...field}
-                                        />
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            className="absolute right-0 top-0 h-full px-3"
-                                            onClick={toggleShowPassword}
-                                        >
-                                            {showPassword ? (
-                                                <EyeOff className="h-4 w-4" />
-                                            ) : (
-                                                <Eye className="h-4 w-4" />
-                                            )}
-                                            <span className="sr-only">
-                                                {showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
-                                            </span>
-                                        </Button>
-                                    </div>
-                                </FormControl>
-                                <FormDescription>
-                                    8자 이상, 대소문자, 숫자, 특수문자를 포함해야 합니다.
-                                </FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="confirmPassword"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>비밀번호 확인</FormLabel>
-                                <FormControl>
-                                    <div className="relative">
-                                        <Input
-                                            type={showConfirmPassword ? "text" : "password"}
-                                            placeholder="비밀번호를 다시 입력하세요"
-                                            {...field}
-                                        />
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            className="absolute right-0 top-0 h-full px-3"
-                                            onClick={toggleShowConfirmPassword}
-                                        >
-                                            {showConfirmPassword ? (
-                                                <EyeOff className="h-4 w-4" />
-                                            ) : (
-                                                <Eye className="h-4 w-4" />
-                                            )}
-                                            <span className="sr-only">
-                                                {showConfirmPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
-                                            </span>
-                                        </Button>
-                                    </div>
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <FormField
                         control={form.control}
                         name="name"
                         render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>이름</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="이름을 입력하세요" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>이메일</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="이메일을 입력하세요" type="email" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="level"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>영어 실력</FormLabel>
-                                <Select
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}
-                                >
+                            <FormItem className="flex items-center space-y-0 gap-4">
+                                <FormLabel className="w-32 text-right">이름</FormLabel>
+                                <div className="flex-1 space-y-1">
                                     <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="영어 실력을 선택하세요" />
-                                        </SelectTrigger>
+                                        <Input placeholder="이름을 입력하세요" {...field} />
                                     </FormControl>
-                                    <SelectContent>
-                                        {ENGLISH_LEVELS.map((level) => (
-                                            <SelectItem key={level.value} value={level.value}>
-                                                {level.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
+                                    <FormMessage />
+                                </div>
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="studentId"
+                        render={({ field }) => (
+                            <FormItem className="flex items-center space-y-0 gap-4">
+                                <FormLabel className="w-32 text-right">학번</FormLabel>
+                                <div className="flex-1 space-y-1">
+                                    <FormControl>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                placeholder="학번을 입력하세요 (예: 20241234)"
+                                                maxLength={8}
+                                                {...field}
+                                                disabled={isStudentIdChecked}
+                                                onChange={(e) => {
+                                                    field.onChange(e);
+                                                    setIsStudentIdChecked(false);
+                                                }}
+                                            />
+                                            <Button
+                                                type="button"
+                                                onClick={checkStudentId}
+                                                disabled={isStudentIdChecked}
+                                                variant={isStudentIdChecked ? "secondary" : "outline"}
+                                                className="shrink-0"
+                                            >
+                                                {isStudentIdChecked ? "사용가능" : "중복확인"}
+                                            </Button>
+                                        </div>
+                                    </FormControl>
+                                    <FormDescription>
+                                        8자리 숫자로 입력해주세요
+                                    </FormDescription>
+                                    <FormMessage />
+                                </div>
                             </FormItem>
                         )}
                     />
@@ -329,31 +213,145 @@ export function SignupForm() {
                         control={form.control}
                         name="majorId"
                         render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>전공</FormLabel>
-                                <Select
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}
-                                    onOpenChange={(open) => {
-                                        if (open && majors.length === 0) {
-                                            loadMajors();
-                                        }
-                                    }}
-                                >
+                            <FormItem className="flex items-center space-y-0 gap-4">
+                                <FormLabel className="w-32 text-right">전공</FormLabel>
+                                <div className="flex-1 space-y-1">
+                                    <Select
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value}
+                                        onOpenChange={(open) => {
+                                            if (open && majors.length === 0) {
+                                                loadMajors();
+                                            }
+                                        }}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="전공을 선택하세요" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {majors.map((major) => (
+                                                <SelectItem key={major.id} value={major.id}>
+                                                    {major.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </div>
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="tel"
+                        render={({ field }) => (
+                            <FormItem className="flex items-center space-y-0 gap-4">
+                                <FormLabel className="w-32 text-right">전화번호</FormLabel>
+                                <div className="flex-1 space-y-1">
                                     <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="전공을 선택하세요" />
-                                        </SelectTrigger>
+                                        <Input
+                                            placeholder="전화번호를 입력하세요 (예: 01012345678)"
+                                            maxLength={11}
+                                            {...field}
+                                        />
                                     </FormControl>
-                                    <SelectContent>
-                                        {majors.map((major) => (
-                                            <SelectItem key={major.id} value={major.id}>
-                                                {major.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
+                                    <FormDescription>
+                                        하이픈(-) 없이 숫자만 입력해주세요
+                                    </FormDescription>
+                                    <FormMessage />
+                                </div>
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="kakaoTel"
+                        render={({ field }) => (
+                            <FormItem className="flex items-center space-y-0 gap-4">
+                                <FormLabel className="w-32 text-right">카카오톡 아이디</FormLabel>
+                                <div className="flex-1 space-y-1">
+                                    <FormControl>
+                                        <Input
+                                            placeholder="카카오톡 아이디를 입력하세요"
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </div>
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                            <FormItem className="flex items-center space-y-0 gap-4">
+                                <FormLabel className="w-32 text-right">이메일</FormLabel>
+                                <div className="flex-1 space-y-1">
+                                    <FormControl>
+                                        <Input
+                                            placeholder="이메일을 입력하세요"
+                                            type="email"
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </div>
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="level"
+                        render={({ field }) => (
+                            <FormItem className="flex items-center space-y-0 gap-4">
+                                <FormLabel className="w-32 text-right">영어 실력</FormLabel>
+                                <div className="flex-1 space-y-1">
+                                    <Select
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="영어 실력을 선택하세요" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {ENGLISH_LEVELS.map((level) => (
+                                                <SelectItem key={level.value} value={level.value.toString()}>
+                                                    {level.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </div>
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="motivation"
+                        render={({ field }) => (
+                            <FormItem className="flex items-start space-y-0 gap-4">
+                                <FormLabel className="w-32 text-right mt-2">지원 동기</FormLabel>
+                                <div className="flex-1 space-y-1">
+                                    <FormControl>
+                                        <Textarea
+                                            placeholder="ECC에 지원하게 된 동기를 작성해주세요"
+                                            className="min-h-[120px]"
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </div>
                             </FormItem>
                         )}
                     />
