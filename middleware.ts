@@ -1,13 +1,28 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// 인증이 필요한 경로 패턴
+// 관리자 권한이 필요한 경로 패턴
+const ADMIN_PATHS = [
+    "/admin",
+    "/admin/dashboard",
+    "/admin/members",
+    "/admin/teams",
+    "/admin/team-matching",
+    "/admin/notices",
+    "/admin/statistics",
+    "/admin/settings",
+];
+
+// 인증이 필요한 경로 패턴 (기존 + 관리자 경로)
 const AUTH_PATHS = [
     "/home",
     "/regular",
     "/one-time",
     "/review",
     "/my",
+    "/team",
+    "/study",
+    ...ADMIN_PATHS, // 관리자 경로도 인증 필요
 ];
 
 // 로그인한 사용자가 접근하면 리다이렉트할 경로 패턴 (인증된 사용자 접근 불가)
@@ -40,18 +55,36 @@ export function middleware(request: NextRequest) {
     console.log(`[Middleware] Path: ${pathname}`);
     console.log(`[Middleware] Token: ${token ? "present" : "missing"}`);
     console.log(`[Middleware] RefreshToken: ${refreshToken ? "present" : "missing"}`);
-    console.log(`[Middleware] All cookies:`, request.cookies.getAll().map(c => `${c.name}=${c.value}`));
 
     // 인증 상태 확인 - access token 또는 refresh token 중 하나라도 있으면 인증된 것으로 간주
     const isAuthenticated = !!(token || refreshToken);
 
-    // 1. 인증된 사용자가 로그인/회원가입 페이지에 접근하면 홈으로 리다이렉트
+    // 1. 관리자 페이지 접근 체크
+    const isAdminPath = ADMIN_PATHS.some(path => pathname === path || pathname.startsWith(`${path}/`));
+
+    if (isAdminPath) {
+        console.log(`[Middleware] Admin path detected: ${pathname}`);
+
+        // 로그인하지 않은 사용자는 로그인 페이지로 리다이렉트
+        if (!isAuthenticated) {
+            console.log(`[Middleware] Unauthenticated user accessing admin path, redirecting to /login`);
+            const loginUrl = new URL("/login", request.url);
+            loginUrl.searchParams.set("callbackUrl", pathname);
+            return NextResponse.redirect(loginUrl);
+        }
+
+        // 관리자 권한은 클라이언트 사이드에서 최종 체크
+        // (JWT 토큰 디코딩이 필요하므로 AdminLayout에서 처리)
+        console.log(`[Middleware] Authenticated user accessing admin path, allowing access for client-side permission check`);
+    }
+
+    // 2. 인증된 사용자가 로그인/회원가입 페이지에 접근하면 홈으로 리다이렉트
     if (isAuthenticated && PUBLIC_ONLY_PATHS.some(path => pathname === path || pathname.startsWith(`${path}/`))) {
         console.log(`[Middleware] Authenticated user accessing public-only path, redirecting to /home`);
         return NextResponse.redirect(new URL("/home", request.url));
     }
 
-    // 2. 인증이 필요한 페이지에 접근할 때 토큰이 없으면 로그인 페이지로 리다이렉트
+    // 3. 인증이 필요한 페이지에 접근할 때 토큰이 없으면 로그인 페이지로 리다이렉트
     if (!isAuthenticated && AUTH_PATHS.some(path => pathname === path || pathname.startsWith(`${path}/`))) {
         console.log(`[Middleware] Unauthenticated user accessing protected path, redirecting to /login`);
 
@@ -62,7 +95,7 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(loginUrl);
     }
 
-    // 3. 루트 경로 처리
+    // 4. 루트 경로 처리
     if (pathname === "/") {
         if (isAuthenticated) {
             // 로그인된 사용자는 홈 대시보드로
@@ -84,6 +117,7 @@ export const config = {
         /*
          * 매치할 경로:
          * - 모든 인증이 필요한 경로
+         * - 관리자 경로 포함
          * - 로그인/회원가입 페이지  
          * - 루트 경로
          * - API 경로 제외
