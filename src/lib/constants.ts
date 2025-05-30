@@ -151,3 +151,95 @@ export const ROUTES = {
     REVIEW: "/review",
     MY: "/my",
 };
+
+// ================================
+// 관리자 페이지 관련 상수들
+// ================================
+
+// 관리자 라우트
+export const ADMIN_ROUTES = {
+    // 관리자 메인
+    DASHBOARD: "/admin",
+
+    // 회원 관리
+    MEMBERS: "/admin/members",
+    MEMBERS_PENDING: "/admin/members/pending",
+    MEMBERS_LEVEL_REQUESTS: "/admin/members/level-requests",
+
+    // 팀/스터디 관리
+    TEAMS: "/admin/teams",
+    TEAMS_REGULAR: "/admin/teams/regular",
+    TEAMS_ONE_TIME: "/admin/teams/one-time",
+    TEAMS_REPORTS: "/admin/teams/reports",
+
+    // 팀 배정
+    TEAM_MATCHING: "/admin/team-matching",
+
+    // 공지사항
+    NOTICES: "/admin/notices",
+
+    // 통계 및 랭킹
+    STATISTICS: "/admin/statistics",
+
+    // 관리자 설정
+    SETTINGS: "/admin/settings",
+} as const;
+
+// 관리자 권한이 필요한 경로들
+export const ADMIN_PROTECTED_PATHS = [
+    "/admin",
+    "/admin/members",
+    "/admin/teams",
+    "/admin/team-matching",
+    "/admin/notices",
+    "/admin/statistics",
+    "/admin/settings",
+] as const;
+
+// 관리자 페이지 제목
+export const ADMIN_PAGE_TITLES = {
+    [ADMIN_ROUTES.DASHBOARD]: "관리자 대시보드",
+    [ADMIN_ROUTES.MEMBERS]: "회원 관리",
+    [ADMIN_ROUTES.MEMBERS_PENDING]: "승인 대기 회원",
+    [ADMIN_ROUTES.MEMBERS_LEVEL_REQUESTS]: "레벨 변경 요청",
+    [ADMIN_ROUTES.TEAMS]: "스터디 관리",
+    [ADMIN_ROUTES.TEAMS_REGULAR]: "정규 스터디 관리",
+    [ADMIN_ROUTES.TEAMS_ONE_TIME]: "번개 스터디 관리",
+    [ADMIN_ROUTES.TEAMS_REPORTS]: "보고서 관리",
+    [ADMIN_ROUTES.TEAM_MATCHING]: "팀 배정",
+    [ADMIN_ROUTES.NOTICES]: "공지사항 관리",
+    [ADMIN_ROUTES.STATISTICS]: "통계 및 랭킹",
+    [ADMIN_ROUTES.SETTINGS]: "관리자 정보",
+} as const;
+
+// 관리자 대시보드 통계 카드 설정
+export const ADMIN_STAT_CARDS = {
+    TOTAL_MEMBERS: {
+        title: "전체 회원 수",
+        color: "yellow" as const,
+        icon: "Users",
+        actionText: "회원 관리",
+        actionLink: ADMIN_ROUTES.MEMBERS,
+    },
+    PENDING_MEMBERS: {
+        title: "관리 필요 인원",
+        color: "red" as const,
+        icon: "UserCheck",
+        actionText: "회원 상태 보기",
+        actionLink: ADMIN_ROUTES.MEMBERS_PENDING,
+    },
+    TOTAL_TEAMS: {
+        title: "전체 스터디 수",
+        color: "blue" as const,
+        icon: "GraduationCap",
+        actionText: "스터디 관리",
+        actionLink: ADMIN_ROUTES.TEAMS,
+    },
+    PENDING_TEAMS: {
+        title: "관리 필요 스터디",
+        color: "purple" as const,
+        icon: "Calendar",
+        actionText: "스터디 상세 보기",
+        actionLink: ADMIN_ROUTES.TEAMS,
+    },
+} as const;
