@@ -4,24 +4,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-    LayoutDashboard, Users, GraduationCap, FileText,
+    LayoutDashboard, Users, GraduationCap,
     Bell, BarChart3, Settings, Menu, X,
-    UserCheck, UserX, Calendar, BookOpen, Zap
+    Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+
+interface SubItem {
+    href: string;
+    label: string;
+    badge?: number;
+}
 
 interface NavItem {
     href: string;
     icon: React.ComponentType<{ className?: string }>;
     label: string;
     badge?: number;
-    subItems?: {
-        href: string;
-        label: string;
-        badge?: number;
-    }[];
+    subItems?: SubItem[];
 }
 
 const navigationItems: NavItem[] = [
@@ -36,7 +38,7 @@ const navigationItems: NavItem[] = [
         label: "사용자 관리",
         badge: 4, // 승인 대기 회원 수 (실제로는 API에서 가져옴)
         subItems: [
-            { href: "/admin/members", label: "전체 회원", },
+            { href: "/admin/members", label: "전체 회원" },
             { href: "/admin/members/pending", label: "승인 대기", badge: 4 },
             { href: "/admin/members/level-requests", label: "레벨 변경 요청", badge: 2 },
         ]
@@ -99,12 +101,12 @@ export function AdminSidebar() {
                          isSubItem = false,
                          onClick
                      }: {
-        item: NavItem | { href: string; label: string; badge?: number };
+        item: NavItem | SubItem;
         isSubItem?: boolean;
         onClick?: () => void;
     }) => {
         const active = isActive(item.href);
-        const hasSubItems = 'subItems' in item && item.subItems && item.subItems.length > 0;
+        const hasSubItems = 'subItems' in item && item.subItems !== undefined && item.subItems.length > 0;
         const isExpanded = expandedItems.includes(item.href);
 
         const handleClick = (e: React.MouseEvent) => {
@@ -154,7 +156,7 @@ export function AdminSidebar() {
                 </Link>
 
                 {/* 서브 메뉴 */}
-                {hasSubItems && isExpanded && 'subItems' in item && (
+                {hasSubItems && isExpanded && 'subItems' in item && item.subItems && (
                     <div className="mt-1 space-y-1">
                         {item.subItems.map((subItem) => (
                             <NavItem
