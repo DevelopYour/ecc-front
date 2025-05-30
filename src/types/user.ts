@@ -11,7 +11,7 @@ export interface User {
     email: string;
     level: string;
     role: string;
-    status: string;
+    status: MemberStatus;
     majorId?: string;
     majorName?: string;
     createdAt: string;
@@ -37,3 +37,13 @@ export interface PasswordChangeRequest {
 export interface LevelChangeRequest {
     level: string;
 }
+
+// 회원 상태 타입 (백엔드 MemberStatus enum과 매칭)
+export type MemberStatus = 
+    | 'ACTIVE'       // 정상 활동 중
+    | 'PENDING'      // 가입 승인 대기
+    | 'SUSPENDED'    // 일시 정지
+    | 'BANNED'       // 강제 탈퇴
+    | 'WITHDRAWN'    // 자발적 탈퇴
+    | 'DORMANT'      // 휴면 계정
+    | 'DORMANT_REQUESTED'; // 휴면 해제 대기중
