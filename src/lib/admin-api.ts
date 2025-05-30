@@ -1,36 +1,9 @@
 // lib/admin-api.ts
 import { api } from "./api";
-import {
-    AdminMember,
-    AdminMemberListResponse,
-    MemberSearchParams,
-    MemberStatusUpdateRequest,
-    MemberLevelUpdateRequest,
-    LevelChangeRequest,
-    LevelChangeRequestList,
-    LevelChangeRequestAction,
-    MemberStats,
-    MemberActivity,
-    AdminTeam,
-    AdminTeamListResponse,
-    TeamSearchParams,
-    TeamScoreUpdateRequest,
-    TeamMemberManageRequest,
-    TeamReport,
-    TeamReportList,
-    ReportGradeRequest,
-    TeamAttendanceStats,
-    TeamManagementStats,
-    OneTimeTeamManagement,
-    OneTimeTeamList,
-    ReportStatusSummary,
-    DashboardStats,
-    DashboardData,
-    AdminResponse,
-    AdminPaginationResponse
-} from "@/types/admin";
+import { AdminMember, LevelChangeRequest, AdminTeam } from "@/types/admin";
 import { MemberStatus } from "@/types/user";
 
+// api.ts에서 사용하는 ResponseDto 타입 (자동 언래핑됨)
 interface ResponseDto<T> {
     success: boolean;
     data?: T;
@@ -40,8 +13,24 @@ interface ResponseDto<T> {
     timestamp?: string;
 }
 
-// 관리자 전용 API 인스턴스 (기존 api 인스턴스 재사용)
-// 기존 api.ts의 인증 및 인터셉터 로직을 그대로 활용
+// 대시보드 통계 타입
+interface DashboardStats {
+    totalMembers: number;
+    pendingMembers: number;
+    totalTeams: number;
+    activeTeams: number;
+}
+
+// 팀 멤버 정보 타입
+interface TeamMemberInfo {
+    teamId: number;
+    teamName: string;
+    isRegular: boolean;
+    members: {
+        id: number;
+        name: string;
+    }[];
+}
 
 // ================================
 // 대시보드 관련 API
@@ -49,12 +38,38 @@ interface ResponseDto<T> {
 
 export const adminDashboardApi = {
     // 대시보드 통계 조회
-    getStats: (): Promise<ResponseDto<DashboardStats>> =>
-        api.get("/admin/dashboard/stats"),
+    getStats: async (): Promise<ResponseDto<DashboardStats>> => {
+        try {
+            // 현재는 각각의 API를 호출해서 통계 계산
+            // 향후 백엔드에 통합 API 추가 시 변경
+            const [membersResponse, teamsResponse] = await Promise.all([
+                adminMemberApi.getAllMembers(),
+                adminTeamApi.getAllTeams()
+            ]);
 
-    // 대시보드 전체 데이터 조회 (통계 + 최근 공지 + 할 일)
-    getDashboardData: (): Promise<ResponseDto<DashboardData>> =>
-        api.get("/admin/dashboard"),
+            const totalMembers = membersResponse.data?.length || 0;
+            const pendingMembers = membersResponse.data?.filter((member: AdminMember) => member.status === 'PENDING').length || 0;
+            const totalTeams = teamsResponse.data?.length || 0;
+            const activeTeams = teamsResponse.data?.filter((team: AdminTeam) => team.isRegular).length || 0;
+
+            return {
+                success: true,
+                message: "통계 조회 성공",
+                data: {
+                    totalMembers,
+                    pendingMembers,
+                    totalTeams,
+                    activeTeams
+                }
+            };
+        } catch (error) {
+            console.error("Dashboard stats error:", error);
+            return {
+                success: false,
+                error: "통계 조회 중 오류가 발생했습니다."
+            };
+        }
+    },
 };
 
 // ================================
@@ -125,14 +140,6 @@ export const adminMemberApi = {
     // 레벨 변경 요청 거절
     rejectLevelChangeRequest: (requestId: number): Promise<ResponseDto<void>> =>
         api.patch(`/admin/users/level/${requestId}/reject`),
-
-    // 회원 통계 조회 (커스텀 엔드포인트 - 필요시 백엔드에 추가)
-    getMemberStats: (): Promise<ResponseDto<MemberStats>> =>
-        api.get("/admin/users/stats"),
-
-    // 회원 활동 정보 조회 (커스텀 엔드포인트 - 필요시 백엔드에 추가)
-    getMemberActivity: (uuid: number): Promise<ResponseDto<MemberActivity>> =>
-        api.get(`/admin/users/${uuid}/activity`),
 };
 
 // ================================
@@ -159,28 +166,8 @@ export const adminTeamApi = {
         api.get(`/admin/teams/${teamId}`),
 
     // 팀 주차별 상세 정보 조회 (정규 스터디 전용)
-    getTeamWeekDetail: (teamId: number, week: number): Promise<ResponseDto<any>> =>
+    getTeamWeekDetail: (teamId: number, week: number): Promise<ResponseDto<Record<string, unknown>>> =>
         api.get(`/admin/teams/${teamId}/${week}`),
-
-    // 번개 스터디 보고서 조회
-    getOneTimeTeamReport: (teamId: number): Promise<ResponseDto<TeamReport>> =>
-        api.get(`/admin/teams/one-time/${teamId}/report`),
-
-    // 팀 주차별 보고서 조회 (정규 스터디 전용)
-    getTeamWeekReport: (teamId: number, week: number): Promise<ResponseDto<TeamReport>> =>
-        api.get(`/admin/teams/${teamId}/${week}/report`),
-
-    // 정규 스터디 보고서 평가 점수 수정
-    updateReportGrade: (teamId: number, week: number, grade: number): Promise<ResponseDto<TeamReport>> =>
-        api.patch(`/admin/teams/${teamId}/${week}/report/grade`, null, {
-            params: { grade }
-        }),
-
-    // 번개 스터디 보고서 평가 점수 수정
-    updateOneTimeReportGrade: (teamId: number, grade: number): Promise<ResponseDto<TeamReport>> =>
-        api.patch(`/admin/teams/one-time/${teamId}/report/grade`, null, {
-            params: { grade }
-        }),
 
     // 번개 스터디 삭제
     deleteOneTimeTeam: (teamId: number): Promise<ResponseDto<void>> =>
@@ -193,38 +180,18 @@ export const adminTeamApi = {
         }),
 
     // 팀 멤버 조회
-    getTeamMembers: (teamId: number): Promise<ResponseDto<any>> =>
+    getTeamMembers: (teamId: number): Promise<ResponseDto<TeamMemberInfo>> =>
         api.get(`/admin/teams/${teamId}/members`),
 
     // 팀 멤버 추가
-    addTeamMember: (teamId: number, memberUuid: number): Promise<ResponseDto<any>> =>
+    addTeamMember: (teamId: number, memberUuid: number): Promise<ResponseDto<TeamMemberInfo>> =>
         api.post(`/admin/teams/${teamId}/members`, null, {
             params: { memberUuid }
         }),
 
     // 팀 멤버 삭제
-    removeTeamMember: (teamId: number, memberUuid: number): Promise<ResponseDto<any>> =>
+    removeTeamMember: (teamId: number, memberUuid: number): Promise<ResponseDto<TeamMemberInfo>> =>
         api.delete(`/admin/teams/${teamId}/members/${memberUuid}`),
-
-    // 팀 출석/참여율 통계 (정규 스터디 전용)
-    getTeamAttendanceStats: (teamId: number): Promise<ResponseDto<TeamAttendanceStats>> =>
-        api.get(`/admin/teams/${teamId}/attendance`),
-
-    // 정규 스터디 보고서 제출/평가 현황 조회
-    getTeamReportsStatus: (params?: {
-        year?: number;
-        semester?: number;
-    }): Promise<ResponseDto<ReportStatusSummary>> => {
-        const searchParams = new URLSearchParams();
-        if (params?.year) searchParams.append("year", params.year.toString());
-        if (params?.semester) searchParams.append("semester", params.semester.toString());
-
-        return api.get(`/admin/teams/reports/status?${searchParams.toString()}`);
-    },
-
-    // 팀 관리 통계 (커스텀 엔드포인트 - 필요시 백엔드에 추가)
-    getTeamManagementStats: (): Promise<ResponseDto<TeamManagementStats>> =>
-        api.get("/admin/teams/stats"),
 };
 
 // ================================
