@@ -7,40 +7,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { adminApi } from "@/lib/admin-api";
+import { useToast } from "@/hooks/use-toast";
+import { ADMIN_ROUTES } from "@/lib/constants";
 
-// 일정/할 일 타입
-interface TodoItem {
+// 관리 필요 항목 타입
+interface ManagementTask {
     id: string;
     title: string;
     description: string;
     priority: "high" | "medium" | "low";
-    status: "pending" | "completed";
-    category: "member" | "team" | "system" | "notice";
-    dueDate?: string;
-    link?: string;
+    category: "member" | "team";
+    count: number;
+    link: string;
 }
-
-// 임시 데이터
-const mockTodos: TodoItem[] = [
-    {
-        id: "1",
-        title: "승인 대기 가입신청이 3건 있습니다.",
-        description: "가능한 빠른 검토해주세요.",
-        priority: "high",
-        status: "pending",
-        category: "member",
-        link: "/admin/members/pending"
-    },
-    {
-        id: "2",
-        title: "영어 레벨 변경 신청이 1건 있습니다.",
-        description: "가능한 빠른 검토해주세요.",
-        priority: "medium",
-        status: "pending",
-        category: "member",
-        link: "/admin/members/level-requests"
-    }
-];
 
 const priorityStyles = {
     high: {
@@ -62,9 +42,7 @@ const priorityStyles = {
 
 const categoryIcons = {
     member: "👥",
-    team: "📚",
-    system: "⚙️",
-    notice: "📢"
+    team: "📚"
 };
 
 const priorityLabels = {
@@ -78,22 +56,79 @@ interface TodosSectionProps {
 }
 
 export function TodosSection({ isLoading = false }: TodosSectionProps) {
-    const [todos, setTodos] = useState<TodoItem[]>([]);
+    const { toast } = useToast();
+    const [tasks, setTasks] = useState<ManagementTask[]>([]);
+    const [isTasksLoading, setIsTasksLoading] = useState(true);
 
     useEffect(() => {
-        // 실제로는 API에서 가져올 예정
-        setTodos(mockTodos);
-    }, []);
+        const loadManagementTasks = async () => {
+            try {
+                setIsTasksLoading(true);
 
-    const pendingTodos = todos.filter(todo => todo.status === "pending");
+                // 실제 데이터 가져오기
+                const [membersResponse, teamsResponse, levelRequestsResponse] = await Promise.all([
+                    adminApi.members.getMembersByStatus("PENDING"),
+                    adminApi.teams.getAllTeams(),
+                    adminApi.members.getLevelChangeRequests()
+                ]);
 
-    if (isLoading) {
+                const managementTasks: ManagementTask[] = [];
+
+                // 승인 대기 회원
+                if (membersResponse.success && membersResponse.data) {
+                    const pendingCount = membersResponse.data.length;
+                    if (pendingCount > 0) {
+                        managementTasks.push({
+                            id: "pending-members",
+                            title: `승인 대기 가입신청이 ${pendingCount}건 있습니다.`,
+                            description: "가능한 빠른 검토해주세요.",
+                            priority: "high",
+                            category: "member",
+                            count: pendingCount,
+                            link: ADMIN_ROUTES.MEMBERS_PENDING
+                        });
+                    }
+                }
+
+                // 레벨 변경 요청
+                if (levelRequestsResponse.success && levelRequestsResponse.data) {
+                    const levelRequestCount = levelRequestsResponse.data.length;
+                    if (levelRequestCount > 0) {
+                        managementTasks.push({
+                            id: "level-requests",
+                            title: `영어 레벨 변경 신청이 ${levelRequestCount}건 있습니다.`,
+                            description: "가능한 빠른 검토해주세요.",
+                            priority: "medium",
+                            category: "member",
+                            count: levelRequestCount,
+                            link: ADMIN_ROUTES.MEMBERS_LEVEL_REQUESTS
+                        });
+                    }
+                }
+
+                setTasks(managementTasks);
+            } catch (error) {
+                console.error("Failed to load management tasks:", error);
+                toast.error("관리 항목 로드 실패", {
+                    description: "관리가 필요한 항목을 불러오는 중 오류가 발생했습니다.",
+                });
+            } finally {
+                setIsTasksLoading(false);
+            }
+        };
+
+        if (!isLoading) {
+            loadManagementTasks();
+        }
+    }, [isLoading, toast]);
+
+    if (isLoading || isTasksLoading) {
         return (
             <Card className="h-full">
                 <CardHeader>
                     <div className="flex items-center space-x-2">
                         <Calendar className="h-5 w-5 text-blue-600" />
-                        <CardTitle className="text-lg">일정</CardTitle>
+                        <CardTitle className="text-lg">관리 항목</CardTitle>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -113,56 +148,56 @@ export function TodosSection({ isLoading = false }: TodosSectionProps) {
             <CardHeader>
                 <div className="flex items-center space-x-2">
                     <Calendar className="h-5 w-5 text-blue-600" />
-                    <CardTitle className="text-lg">일정</CardTitle>
+                    <CardTitle className="text-lg">관리 항목</CardTitle>
                     <span className="text-sm text-muted-foreground">
-                        시스템 일정 및 처리해야 할 작업
+                        처리가 필요한 관리 업무
                     </span>
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
-                {pendingTodos.length === 0 ? (
+                {tasks.length === 0 ? (
                     <div className="text-center py-8">
                         <div className="p-4 bg-green-50 rounded-lg border border-green-200 mb-4">
                             <CheckCircle2 className="h-12 w-12 mx-auto text-green-600 mb-2" />
-                            <p className="text-green-800 font-medium">모든 작업이 완료되었습니다!</p>
-                            <p className="text-green-600 text-sm">처리할 대기 작업이 없습니다.</p>
+                            <p className="text-green-800 font-medium">모든 관리 업무가 완료되었습니다!</p>
+                            <p className="text-green-600 text-sm">현재 처리할 대기 작업이 없습니다.</p>
                         </div>
                     </div>
                 ) : (
                     <>
                         {/* 긴급 알림 */}
-                        {pendingTodos.some(todo => todo.priority === "high") && (
-                            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200 mb-4">
+                        {tasks.filter(task => task.priority === "high").map((task) => (
+                            <div key={`alert-${task.id}`} className="p-4 bg-red-50 rounded-lg border border-red-200 mb-4">
                                 <div className="flex items-center space-x-2">
-                                    <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                                    <span className="font-medium text-red-800">
+                                        {task.title}
+                                    </span>
+                                </div>
+                                <p className="text-red-700 text-sm mt-1">{task.description}</p>
+                            </div>
+                        ))}
+
+                        {/* 중요도 보통 알림 */}
+                        {tasks.filter(task => task.priority === "medium").map((task) => (
+                            <div key={`alert-${task.id}`} className="p-4 bg-yellow-50 rounded-lg border border-yellow-200 mb-4">
+                                <div className="flex items-center space-x-2">
+                                    <Clock className="h-5 w-5 text-yellow-600" />
                                     <span className="font-medium text-yellow-800">
-                                        승인 대기 가입신청이 {pendingTodos.filter(t => t.category === "member" && t.priority === "high").length}건 있습니다.
+                                        {task.title}
                                     </span>
                                 </div>
-                                <p className="text-yellow-700 text-sm mt-1">가능한 빠른 검토해주세요.</p>
+                                <p className="text-yellow-700 text-sm mt-1">{task.description}</p>
                             </div>
-                        )}
+                        ))}
 
-                        {/* 중요도 낮은 알림 */}
-                        {pendingTodos.some(todo => todo.priority === "medium") && (
-                            <div className="p-4 bg-pink-50 rounded-lg border border-pink-200 mb-4">
-                                <div className="flex items-center space-x-2">
-                                    <Clock className="h-5 w-5 text-pink-600" />
-                                    <span className="font-medium text-pink-800">
-                                        영어 레벨 변경 신청이 {pendingTodos.filter(t => t.category === "member" && t.priority === "medium").length}건 있습니다.
-                                    </span>
-                                </div>
-                                <p className="text-pink-700 text-sm mt-1">가능한 빠른 검토해주세요.</p>
-                            </div>
-                        )}
-
-                        {/* 개별 할 일 목록 */}
+                        {/* 개별 관리 항목 목록 */}
                         <div className="space-y-3">
-                            {pendingTodos.map((todo) => {
-                                const style = priorityStyles[todo.priority];
+                            {tasks.map((task) => {
+                                const style = priorityStyles[task.priority];
                                 return (
                                     <div
-                                        key={todo.id}
+                                        key={task.id}
                                         className={cn(
                                             "p-3 rounded-lg border transition-colors hover:bg-gray-50",
                                             style.border
@@ -174,27 +209,25 @@ export function TodosSection({ isLoading = false }: TodosSectionProps) {
                                                 <div className="flex-1">
                                                     <div className="flex items-center space-x-2 mb-1">
                                                         <span className="text-sm">
-                                                            {categoryIcons[todo.category]}
+                                                            {categoryIcons[task.category]}
                                                         </span>
                                                         <span className="font-medium text-gray-900">
-                                                            {todo.title}
+                                                            {task.title}
                                                         </span>
                                                         <Badge className={cn("text-xs px-2 py-0.5", style.badge)}>
-                                                            {priorityLabels[todo.priority]}
+                                                            {priorityLabels[task.priority]}
                                                         </Badge>
                                                     </div>
                                                     <p className="text-sm text-gray-600">
-                                                        {todo.description}
+                                                        {task.description}
                                                     </p>
                                                 </div>
                                             </div>
-                                            {todo.link && (
-                                                <Link href={todo.link}>
-                                                    <Button variant="outline" size="sm" className="ml-2">
-                                                        처리하기
-                                                    </Button>
-                                                </Link>
-                                            )}
+                                            <Link href={task.link}>
+                                                <Button variant="outline" size="sm" className="ml-2">
+                                                    처리하기
+                                                </Button>
+                                            </Link>
                                         </div>
                                     </div>
                                 );

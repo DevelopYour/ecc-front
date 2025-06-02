@@ -50,9 +50,16 @@ export function useAuth() {
     return {
         ...auth,
         isAdmin: auth.user?.role === "ADMIN",
-        isActive: auth.user?.status === "active",
-        isPending: auth.user?.status === "pending",
-        isInactive: auth.user?.status === "inactive",
+        // MemberStatus enum 값으로 정확한 비교
+        isActive: auth.user?.status === "ACTIVE",
+        isPending: auth.user?.status === "PENDING",
+        isSuspended: auth.user?.status === "SUSPENDED",
+        isBanned: auth.user?.status === "BANNED",
+        isWithdrawn: auth.user?.status === "WITHDRAWN",
+        isDormant: auth.user?.status === "DORMANT",
+        isDormantRequested: auth.user?.status === "DORMANT_REQUESTED",
+        // 기존 호환성을 위한 deprecated 프로퍼티들 (필요시 사용)
+        isInactive: auth.user?.status !== "ACTIVE",
         hasChecked,
     };
 }

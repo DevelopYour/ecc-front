@@ -3,7 +3,7 @@ import { api } from "./api";
 import { AdminMember, LevelChangeRequest, AdminTeam } from "@/types/admin";
 import { MemberStatus } from "@/types/user";
 
-// api.ts에서 사용하는 ResponseDto 타입 (자동 언래핑됨)
+// api.ts의 응답 인터셉터에서 자동으로 언래핑되어 반환되는 타입
 interface ResponseDto<T> {
     success: boolean;
     data?: T;
@@ -37,20 +37,30 @@ interface TeamMemberInfo {
 // ================================
 
 export const adminDashboardApi = {
-    // 대시보드 통계 조회
+    // 대시보드 통계 조회 - 실제 백엔드 API 호출
     getStats: async (): Promise<ResponseDto<DashboardStats>> => {
         try {
-            // 현재는 각각의 API를 호출해서 통계 계산
-            // 향후 백엔드에 통합 API 추가 시 변경
+            // 실제 백엔드 통계 API가 있다면 사용, 없다면 개별 API 조합
             const [membersResponse, teamsResponse] = await Promise.all([
                 adminMemberApi.getAllMembers(),
                 adminTeamApi.getAllTeams()
             ]);
 
-            const totalMembers = membersResponse.data?.length || 0;
-            const pendingMembers = membersResponse.data?.filter((member: AdminMember) => member.status === 'PENDING').length || 0;
-            const totalTeams = teamsResponse.data?.length || 0;
-            const activeTeams = teamsResponse.data?.filter((team: AdminTeam) => team.isRegular).length || 0;
+            // api.ts에서 자동 언래핑된 ResponseDto<T> 형태 응답 처리
+            const membersData = (membersResponse as ResponseDto<AdminMember[]>);
+            const teamsData = (teamsResponse as ResponseDto<AdminTeam[]>);
+
+            if (!membersData.success || !teamsData.success) {
+                throw new Error("통계 데이터 조회에 실패했습니다.");
+            }
+
+            const members = membersData.data || [];
+            const teams = teamsData.data || [];
+
+            const totalMembers = members.length;
+            const pendingMembers = members.filter((member: AdminMember) => member.status === 'PENDING').length;
+            const totalTeams = teams.length;
+            const activeTeams = teams.filter((team: AdminTeam) => team.isRegular).length;
 
             return {
                 success: true,
@@ -66,7 +76,7 @@ export const adminDashboardApi = {
             console.error("Dashboard stats error:", error);
             return {
                 success: false,
-                error: "통계 조회 중 오류가 발생했습니다."
+                error: error instanceof Error ? error.message : "통계 조회 중 오류가 발생했습니다."
             };
         }
     },
@@ -225,9 +235,10 @@ export const handleAdminApiResponse = <T>(
 // 관리자 권한 체크 헬퍼 함수
 export const checkAdminPermission = async (): Promise<boolean> => {
     try {
-        // 사용자 정보를 가져와서 role이 ROLE_ADMIN인지 확인
-        const response = await api.get("/users/me");
-        return response.data?.role === "ROLE_ADMIN";
+        // 사용자 정보를 가져와서 role 확인
+        const userResponse = await api.get("/users/me") as ResponseDto<{ role: string }>;
+
+        return userResponse.success && userResponse.data?.role === "ROLE_ADMIN";
     } catch (error) {
         console.error("Admin permission check failed:", error);
         return false;

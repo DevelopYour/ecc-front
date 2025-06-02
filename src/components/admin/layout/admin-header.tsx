@@ -11,9 +11,9 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User as UserIcon, Home, Settings } from "lucide-react";
+import { LogOut, User as UserIcon, Home, Settings, Shield } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES, ADMIN_ROUTES } from "@/lib/constants";
 
 export function AdminHeader() {
     const { user, logout } = useAuth();
@@ -27,7 +27,7 @@ export function AdminHeader() {
             <div className="flex h-16 items-center justify-between px-4 lg:px-8">
                 {/* 로고 및 관리자 표시 */}
                 <div className="flex items-center space-x-4">
-                    <Link href="/admin" className="flex items-center space-x-2">
+                    <Link href={ADMIN_ROUTES.DASHBOARD} className="flex items-center space-x-2">
                         <img
                             src="/images/logo.png"
                             alt="ECC 스터디 로고"
@@ -38,6 +38,7 @@ export function AdminHeader() {
                         </div>
                     </Link>
                     <Badge variant="secondary" className="bg-blue-100 text-blue-800 hidden sm:inline-flex">
+                        <Shield className="mr-1 h-3 w-3" />
                         관리자
                     </Badge>
                 </div>
@@ -49,6 +50,13 @@ export function AdminHeader() {
                         <Button variant="ghost" size="sm" className="hidden sm:flex">
                             <Home className="mr-2 h-4 w-4" />
                             사용자 홈
+                        </Button>
+                    </Link>
+
+                    {/* 관리자 대시보드로 가기 버튼 (모바일용) */}
+                    <Link href={ADMIN_ROUTES.DASHBOARD} className="sm:hidden">
+                        <Button variant="ghost" size="sm">
+                            <Shield className="h-4 w-4" />
                         </Button>
                     </Link>
 
@@ -75,9 +83,22 @@ export function AdminHeader() {
                                 <div className="flex flex-col space-y-1">
                                     <p className="text-sm font-medium">{user?.name}</p>
                                     <p className="text-xs text-muted-foreground">{user?.username}</p>
+                                    <Badge variant="secondary" className="text-xs w-fit">관리자</Badge>
                                 </div>
                             </div>
                             <DropdownMenuSeparator />
+
+                            {/* 관리자 전용 메뉴 */}
+                            <DropdownMenuItem asChild>
+                                <Link href={ADMIN_ROUTES.DASHBOARD} className="w-full">
+                                    <Shield className="mr-2 h-4 w-4" />
+                                    관리자 대시보드
+                                </Link>
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator />
+
+                            {/* 일반 사용자 메뉴 */}
                             <DropdownMenuItem asChild>
                                 <Link href={ROUTES.MY} className="w-full">
                                     <UserIcon className="mr-2 h-4 w-4" />
@@ -90,6 +111,7 @@ export function AdminHeader() {
                                     사용자 홈
                                 </Link>
                             </DropdownMenuItem>
+
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                                 <LogOut className="mr-2 h-4 w-4" />
