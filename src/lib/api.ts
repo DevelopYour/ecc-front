@@ -285,8 +285,8 @@ export const studyApi = {
         api.post(`/study/${teamId}`),
 
     // 추천 주제 목록 조회
-    getTopicRecommendations: (studyId: string): Promise<ResponseDto<TopicRecommendation[]>> =>
-        api.get(`/study/${studyId}/topic`),
+    getTopicRecommendations: (teamId: string): Promise<ResponseDto<TopicRecommendation[]>> =>
+        api.get(`/study/${teamId}/topic`),
 
     // 주제 선정
     saveTopics: (studyId: string, topics: Topic[]): Promise<ResponseDto<StudyRedis>> =>

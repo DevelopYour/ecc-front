@@ -55,7 +55,7 @@ export default function StudyPage({ params }: StudyPageProps) {
                 (data) => {
                     setStudyRoom(data);
                     // 주제 추천 자동 로드
-                    loadTopicRecommendations(data.id);
+                    loadTopicRecommendations(teamId);
                     // 이미 저장된 주제가 있으면 표현 학습 탭으로 이동
                     if (data.topics && data.topics.length > 0) {
                         setActiveTab('expressions');
@@ -80,9 +80,9 @@ export default function StudyPage({ params }: StudyPageProps) {
         }
     };
 
-    const loadTopicRecommendations = async (studyId: string) => {
+    const loadTopicRecommendations = async (teamId: string) => {
         try {
-            const response = await studyApi.getTopicRecommendations(studyId);
+            const response = await studyApi.getTopicRecommendations(teamId);
 
             handleApiResponse(
                 response,
@@ -120,17 +120,32 @@ export default function StudyPage({ params }: StudyPageProps) {
             return;
         }
 
+        // 이미 저장된 주제는 제외
+        const newTopics = selectedTopics.filter(selected =>
+            !studyRoom.topics?.some(saved =>
+                saved.category === selected.category && saved.topic === selected.topic
+            )
+        );
+
+        if (newTopics.length === 0) {
+            toast.warning('알림', {
+                description: '모든 선택한 주제가 이미 저장되어 있습니다.'
+            });
+            return;
+        }
+
         setLoading(true);
         try {
-            const response = await studyApi.saveTopics(studyRoom.id, selectedTopics);
+            const response = await studyApi.saveTopics(studyRoom.id, newTopics);
 
             handleApiResponse(
                 response,
                 (data) => {
                     setStudyRoom(data);
+                    setSelectedTopics([]); // 선택 초기화
                     setActiveTab('expressions');
                     toast.success('성공', {
-                        description: '주제가 저장되었습니다.',
+                        description: `${newTopics.length}개의 새로운 주제가 저장되었습니다.`,
                     });
                 },
                 (error) => {
@@ -286,25 +301,36 @@ export default function StudyPage({ params }: StudyPageProps) {
                                         </CardHeader>
                                         <CardContent>
                                             <div className="space-y-2">
-                                                {recommendation.topic.map((topic, idx) => (
-                                                    <div key={idx} className="flex items-center space-x-2">
-                                                        <Checkbox
-                                                            id={`${recommendation.category}-${idx}`}
-                                                            checked={selectedTopics.some(
-                                                                t => t.category === recommendation.category && t.topic === topic
-                                                            )}
-                                                            onCheckedChange={(checked) =>
-                                                                handleTopicSelection(recommendation.category, topic, checked as boolean)
-                                                            }
-                                                        />
-                                                        <Label
-                                                            htmlFor={`${recommendation.category}-${idx}`}
-                                                            className="text-sm font-normal cursor-pointer flex-1"
-                                                        >
-                                                            {topic}
-                                                        </Label>
-                                                    </div>
-                                                ))}
+                                                {recommendation.topic.map((topic, idx) => {
+                                                    const isAlreadySaved = studyRoom.topics?.some(
+                                                        t => t.category === recommendation.category && t.topic === topic
+                                                    ) || false;
+
+                                                    return (
+                                                        <div key={idx} className="flex items-center space-x-2">
+                                                            <Checkbox
+                                                                id={`${recommendation.category}-${idx}`}
+                                                                checked={selectedTopics.some(
+                                                                    t => t.category === recommendation.category && t.topic === topic
+                                                                )}
+                                                                onCheckedChange={(checked) =>
+                                                                    handleTopicSelection(recommendation.category, topic, checked as boolean)
+                                                                }
+                                                                disabled={isAlreadySaved}
+                                                            />
+                                                            <Label
+                                                                htmlFor={`${recommendation.category}-${idx}`}
+                                                                className={`text-sm font-normal cursor-pointer flex-1 ${isAlreadySaved ? 'text-muted-foreground line-through' : ''
+                                                                    }`}
+                                                            >
+                                                                {topic}
+                                                                {isAlreadySaved && (
+                                                                    <span className="ml-2 text-xs text-muted-foreground">(이미 선택됨)</span>
+                                                                )}
+                                                            </Label>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
                                         </CardContent>
                                     </Card>

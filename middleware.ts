@@ -10,7 +10,7 @@ const AUTH_PATHS = [
     "/my",
 ];
 
-// 로그인한 사용자가 접근하면 리다이렉트할 경로 패턴 (인증된 사용자 접근 불가)
+// 로그인한 사용자가 접근하면 리다이렉트할 경로 패턴
 const PUBLIC_ONLY_PATHS = [
     "/login",
     "/signup",
@@ -32,18 +32,14 @@ export function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // 토큰 확인 - 여러 방법으로 시도
+    // 쿠키에서 토큰 확인
     const token = request.cookies.get("ecc-token")?.value;
     const refreshToken = request.cookies.get("ecc-refresh-token")?.value;
 
-    // 디버깅을 위한 로그
-    console.log(`[Middleware] Path: ${pathname}`);
-    console.log(`[Middleware] Token: ${token ? "present" : "missing"}`);
-    console.log(`[Middleware] RefreshToken: ${refreshToken ? "present" : "missing"}`);
-    console.log(`[Middleware] All cookies:`, request.cookies.getAll().map(c => `${c.name}=${c.value}`));
-
-    // 인증 상태 확인 - access token 또는 refresh token 중 하나라도 있으면 인증된 것으로 간주
+    // 토큰이 하나라도 있으면 인증된 상태로 간주
     const isAuthenticated = !!(token || refreshToken);
+
+    console.log(`[Middleware] ${pathname} - Authenticated: ${isAuthenticated}`);
 
     // 1. 인증된 사용자가 로그인/회원가입 페이지에 접근하면 홈으로 리다이렉트
     if (isAuthenticated && PUBLIC_ONLY_PATHS.some(path => pathname === path || pathname.startsWith(`${path}/`))) {
@@ -70,11 +66,9 @@ export function middleware(request: NextRequest) {
             return NextResponse.redirect(new URL("/home", request.url));
         }
         // 로그인되지 않은 사용자는 랜딩 페이지 표시
-        console.log(`[Middleware] Unauthenticated user at root, showing landing page`);
         return NextResponse.next();
     }
 
-    console.log(`[Middleware] Allowing request to proceed`);
     return NextResponse.next();
 }
 

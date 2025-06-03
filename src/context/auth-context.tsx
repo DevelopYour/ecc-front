@@ -3,10 +3,11 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User } from "@/types/user";
 import { authApi } from "@/lib/api";
-import { login as loginAuth, logout as logoutAuth, getUser, setToken } from "@/lib/auth";
+import { login as loginAuth, logout as logoutAuth, getUser, setToken, getToken } from "@/lib/auth";
 import { STORAGE_KEYS } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/lib/constants";
+import { setCookie, deleteCookie } from "cookies-next";
 
 interface AuthContextType {
     user: User | null;
@@ -25,14 +26,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter();
 
     useEffect(() => {
-        // 페이지 로드 시 로컬 스토리지에서 사용자 정보 가져오기
-        const savedUser = getUser();
-        setUser(savedUser);
-        setIsLoading(false);
+        // 페이지 로드 시 인증 상태 확인
+        const initializeAuth = () => {
+            const token = getToken(); // 쿠키에서 토큰 확인
+            const savedUser = getUser(); // localStorage에서 사용자 정보 확인
+
+            // 토큰과 사용자 정보가 모두 있어야 로그인 상태로 간주
+            if (token && savedUser) {
+                setUser(savedUser);
+            } else {
+                // 하나라도 없으면 로그아웃 처리
+                logoutAuth();
+                setUser(null);
+            }
+
+            setIsLoading(false);
+        };
+
+        initializeAuth();
     }, []);
 
     const login = async (username: string, password: string): Promise<void> => {
         try {
+            setIsLoading(true);
+
             // 1. API 호출로 로그인 처리
             const response = await authApi.login({ username, password });
 
@@ -42,11 +59,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             const loginData = response.data;
 
-            // 2. 토큰 저장
+            // 2. 토큰은 쿠키에 저장 (middleware에서 읽기 위해)
             setToken(loginData.accessToken);
-            localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, loginData.refreshToken);
+            setCookie(STORAGE_KEYS.REFRESH_TOKEN, loginData.refreshToken, {
+                maxAge: 60 * 60 * 24 * 30, // 30일
+                path: "/",
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax"
+            });
 
-            // 3. 사용자 정보 구성 및 저장
+            // 3. 사용자 정보는 localStorage에 저장
             const user = {
                 uuid: loginData.uuid,
                 username: loginData.studentId,
@@ -67,19 +89,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             console.error("Login failed:", error);
             throw error;
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const logout = async () => {
         try {
+            setIsLoading(true);
+
             // API 로그아웃 호출
             await authApi.logout();
         } catch (error) {
             console.error("Logout API failed:", error);
         } finally {
-            // 로컬 상태 및 스토리지 정리
+            // 로컬 상태 및 스토리지 정리 (쿠키 + localStorage)
             logoutAuth();
             setUser(null);
+            setIsLoading(false);
 
             // 홈페이지로 리다이렉트
             router.push(ROUTES.HOME);
@@ -100,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             value={{
                 user,
                 isLoading,
-                isLoggedIn: !!user,
+                isLoggedIn: !!user, // user 객체 존재 여부로 판단
                 login,
                 logout,
                 updateUser,
