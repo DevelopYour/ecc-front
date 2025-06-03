@@ -8,7 +8,7 @@ import {
     Team
 } from "@/types/team";
 import { Review, ReviewTest } from "@/types/review";
-import { User } from "@/types/user";
+import { User, MemberResponse } from "@/types/user";
 import { getToken, setToken } from "./auth";
 import { ExpressionToAsk, ReportDocument, StudyRedis, Topic, TopicRecommendation, WeeklySummary } from "@/types/study";
 import { ApplyRegularStudyListResponse, RegularStudyApplyRequest, Subject, TimeSlot } from "@/types/apply-regular";
@@ -163,8 +163,8 @@ export const authApi = {
 
 // 사용자 관련 API
 export const userApi = {
-    // 내 정보 조회
-    getMyInfo: (): Promise<ResponseDto<User>> =>
+    // 내 정보 조회 - 백엔드는 MemberResponse를 반환
+    getMyInfo: (): Promise<ResponseDto<MemberResponse>> =>
         api.get("/users/me"),
 
     // 탈퇴

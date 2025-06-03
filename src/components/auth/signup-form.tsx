@@ -30,6 +30,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { authApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { ROUTES, ENGLISH_LEVELS } from "@/lib/constants";
+import type { Major } from "@/types/auth";
 
 // 회원가입 폼 검증 스키마
 const signupSchema = z.object({
@@ -52,7 +53,7 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 export function SignupForm() {
     const router = useRouter();
     const { toast } = useToast();
-    const [majors, setMajors] = useState<{ id: string; name: string }[]>([]);
+    const [majors, setMajors] = useState<Major[]>([]);
     const [isStudentIdChecked, setIsStudentIdChecked] = useState(false);
 
     // react-hook-form 설정
@@ -232,7 +233,7 @@ export function SignupForm() {
                                         </FormControl>
                                         <SelectContent>
                                             {majors.map((major) => (
-                                                <SelectItem key={major.id} value={major.id}>
+                                                <SelectItem key={major.id} value={major.id.toString()}>
                                                     {major.name}
                                                 </SelectItem>
                                             ))}
