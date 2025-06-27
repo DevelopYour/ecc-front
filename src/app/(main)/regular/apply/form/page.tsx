@@ -176,7 +176,7 @@ export default function RegularStudyApplyFormPage() {
                         toast.success('신청 완료', {
                             description: '정규 스터디 신청이 완료되었습니다.',
                         });
-                        router.push('/regular');
+                        router.push('/regular/apply');
                     },
                     (error) => {
                         toast.error('신청 실패', {

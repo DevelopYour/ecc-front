@@ -9,10 +9,11 @@ import {
 } from "@/types/team";
 import { Review, ReviewTest } from "@/types/review";
 import { User } from "@/types/user";
-import { getToken, setToken } from "./auth";
+import { getRefreshToken, getToken, setToken } from "./auth";
 import { ExpressionToAsk, ReportDocument, StudyRedis, Topic, TopicRecommendation, WeeklySummary } from "@/types/study";
 import { ApplyRegularStudyListResponse, RegularStudyApplyRequest, Subject, TimeSlot } from "@/types/apply-regular";
 import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
+import { setCookie } from "cookies-next";
 
 interface ResponseDto<T> {
     success: boolean;
@@ -73,6 +74,18 @@ api.interceptors.request.use(
 let isRefreshing = false;
 let failedQueue: any[] = [];
 
+const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach(prom => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+
+    failedQueue = [];
+};
+
 // 응답 인터셉터 - 자동 언래핑 및 401 에러 시 토큰 갱신 시도 후 실패 시 로그아웃 처리
 api.interceptors.response.use(
     (response) => {
@@ -90,6 +103,8 @@ api.interceptors.response.use(
                 }).then((token) => {
                     originalRequest.headers.Authorization = `Bearer ${token}`;
                     return api(originalRequest);
+                }).catch(err => {
+                    return Promise.reject(err);
                 });
             }
 
@@ -97,30 +112,47 @@ api.interceptors.response.use(
             isRefreshing = true;
 
             try {
-                const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+                const refreshToken = getRefreshToken(); // 쿠키에서 리프레시 토큰 가져오기
                 if (refreshToken) {
                     // 토큰 갱신 API 호출
                     const response = await publicApi.post('/auth/refresh', {
                         refreshToken: refreshToken
-                    });
+                    }) as ResponseDto<{ accessToken: string; refreshToken?: string }>;
 
-                    const newAccessToken = response.data.data.accessToken;
+                    if (response.success && response.data) {
+                        const { accessToken, refreshToken: newRefreshToken } = response.data;
 
-                    // 새 토큰 저장
-                    setToken(newAccessToken);
+                        // 새 액세스 토큰을 쿠키에 저장
+                        setToken(accessToken);
 
-                    // 대기 중인 요청들에 새 토큰 적용
-                    failedQueue.forEach(({ resolve }) => resolve(newAccessToken));
-                    failedQueue = [];
+                        // 새 리프레시 토큰이 있으면 업데이트
+                        if (newRefreshToken) {
+                            setCookie(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken, {
+                                maxAge: 60 * 60 * 24 * 30, // 30일
+                                path: "/",
+                                secure: process.env.NODE_ENV === "production",
+                                sameSite: "lax",
+                                httpOnly: false,
+                            });
+                        }
 
-                    // 원래 요청에 새 토큰으로 재시도
-                    originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-                    return api(originalRequest);
+                        // 대기 중인 요청들에 새 토큰 적용
+                        processQueue(null, accessToken);
+
+                        // 원래 요청에 새 토큰으로 재시도
+                        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+                        return api(originalRequest);
+                    } else {
+                        throw new Error('Token refresh failed');
+                    }
                 }
             } catch (refreshError) {
                 // 토큰 갱신 실패 시 로그아웃
-                localStorage.clear();
-                window.location.href = "/login";
+                processQueue(refreshError, null);
+                if (typeof window !== "undefined") {
+                    localStorage.clear();
+                    window.location.href = "/login";
+                }
             } finally {
                 isRefreshing = false;
             }
