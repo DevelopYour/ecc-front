@@ -152,7 +152,7 @@ export function ProfileForm() {
                                             </FormControl>
                                             <SelectContent>
                                                 {ENGLISH_LEVELS.map((level) => (
-                                                    <SelectItem key={level.value} value={level.value}>
+                                                    <SelectItem key={level.value} value={level.value.toString()}>
                                                         {level.label}
                                                     </SelectItem>
                                                 ))}

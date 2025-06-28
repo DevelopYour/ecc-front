@@ -111,8 +111,7 @@ export default function ReportPage({ params }: ReportPageProps) {
                         description: '보고서가 성공적으로 제출되었습니다.',
                     });
 
-                    // 보고서 다시 로드하여 상태 업데이트
-                    loadReport();
+                    router.push(`/team/${teamId}`);
                 },
                 (error) => {
                     console.error('Error submitting report:', error);

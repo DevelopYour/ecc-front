@@ -3,11 +3,11 @@ export interface Team {
     name: string;
     subject: string;
     isRegular: boolean;
-    status: 'RECRUITING' | 'ACTIVE' | 'COMPLETED' | 'CANCELED';
-    startDate: string;
-    endDate: string;
+    status?: 'RECRUITING' | 'ACTIVE' | 'COMPLETED' | 'CANCELED';
+    startTime: number;
+    endDate?: string;
     day: string;
-    time: string;
+    date?: string; // 번개스터디
     isOnline: boolean;
     location?: string;
     description?: string;
