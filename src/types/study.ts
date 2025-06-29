@@ -24,7 +24,7 @@ export interface StudyRedis {
 
 export interface TopicRedis {
     topicId: number;
-    category: TopicCategory;
+    category: string;
     topic: string;
     expressions: ExpressionRedis[];
 }
@@ -38,12 +38,15 @@ export interface ExpressionRedis {
 }
 
 export interface TopicRecommendation {
-    category: TopicCategory;
-    topic: string[];
+    id: number;
+    category: string;
+    description: string;
+    topics: Topic[];
 }
 
 export interface Topic {
-    category: TopicCategory;
+    id: number;
+    category: string;
     topic: string;
 }
 
@@ -62,7 +65,6 @@ export interface Report {
 
 export type StudyStatus = 'WAITING' | 'IN_PROGRESS' | 'COMPLETE';
 export type ReviewStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETE';
-export type TopicCategory = 'CONVERSATION' | 'GRAMMAR' | 'VOCABULARY' | 'BUSINESS' | 'CULTURE' | 'NEWS' | 'DAILY' | 'TRAVEL' | 'TECH';
 
 export const STUDY_STATUS_LABELS: Record<StudyStatus, string> = {
     WAITING: '대기중',
@@ -74,18 +76,6 @@ export const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
     NOT_STARTED: '시작전',
     IN_PROGRESS: '진행중',
     COMPLETE: '완료',
-};
-
-export const TOPIC_CATEGORY_LABELS: Record<TopicCategory, string> = {
-    CONVERSATION: '일상대화',
-    GRAMMAR: '문법',
-    VOCABULARY: '어휘',
-    BUSINESS: '비즈니스',
-    CULTURE: '문화',
-    NEWS: '뉴스',
-    DAILY: '일상',
-    TRAVEL: '여행',
-    TECH: '기술',
 };
 
 export interface ExpressionToAsk {
@@ -117,8 +107,4 @@ export const getStatusBadgeVariant = (status: StudyStatus | ReviewStatus): 'defa
         default:
             return 'outline';
     }
-};
-
-export const getCategoryLabel = (category: TopicCategory): string => {
-    return TOPIC_CATEGORY_LABELS[category] || category;
 };

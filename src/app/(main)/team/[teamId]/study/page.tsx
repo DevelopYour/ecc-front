@@ -3,7 +3,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Sparkles, Check, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Sparkles, Check, Loader2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,9 +18,7 @@ import {
     StudyRedis,
     TopicRecommendation,
     Topic,
-    ExpressionToAsk,
-    getCategoryLabel,
-    TopicCategory
+    ExpressionToAsk
 } from '@/types/study';
 
 interface StudyPageProps {
@@ -40,6 +38,7 @@ export default function StudyPage({ params }: StudyPageProps) {
     const [loading, setLoading] = useState(false);
     const [loadingAi, setLoadingAi] = useState(false);
     const [activeTab, setActiveTab] = useState('topics');
+    const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
 
     useEffect(() => {
         enterStudyRoom();
@@ -104,9 +103,20 @@ export default function StudyPage({ params }: StudyPageProps) {
         }
     };
 
-    const handleTopicSelection = (category: TopicCategory, topic: string, checked: boolean) => {
+    const toggleCategory = (categoryId: number) => {
+        const newExpanded = new Set(expandedCategories);
+        if (newExpanded.has(categoryId)) {
+            newExpanded.delete(categoryId);
+        } else {
+            newExpanded.add(categoryId);
+        }
+        setExpandedCategories(newExpanded);
+    };
+
+    const handleTopicSelection = (category: string, topic: string, checked: boolean) => {
         if (checked) {
-            setSelectedTopics([...selectedTopics, { category, topic }]);
+            // Topic 인터페이스에 맞게 임시로 id를 0으로 설정
+            setSelectedTopics([...selectedTopics, { id: 0, category, topic }]);
         } else {
             setSelectedTopics(selectedTopics.filter(t => !(t.category === category && t.topic === topic)));
         }
@@ -294,47 +304,88 @@ export default function StudyPage({ params }: StudyPageProps) {
                             </Card>
                         ) : (
                             <>
-                                {topicRecommendations.map((recommendation) => (
-                                    <Card key={recommendation.category}>
-                                        <CardHeader>
-                                            <CardTitle>{getCategoryLabel(recommendation.category)}</CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="space-y-2">
-                                                {recommendation.topic.map((topic, idx) => {
-                                                    const isAlreadySaved = studyRoom.topics?.some(
-                                                        t => t.category === recommendation.category && t.topic === topic
-                                                    ) || false;
+                                {topicRecommendations.map((recommendation) => {
+                                    const isExpanded = expandedCategories.has(recommendation.id);
+                                    const categoryTopicCount = recommendation.topics.length;
+                                    const selectedInCategory = selectedTopics.filter(t => t.category === recommendation.category).length;
+                                    const savedInCategory = studyRoom.topics?.filter(t => t.category === recommendation.category).length || 0;
 
-                                                    return (
-                                                        <div key={idx} className="flex items-center space-x-2">
-                                                            <Checkbox
-                                                                id={`${recommendation.category}-${idx}`}
-                                                                checked={selectedTopics.some(
-                                                                    t => t.category === recommendation.category && t.topic === topic
-                                                                )}
-                                                                onCheckedChange={(checked) =>
-                                                                    handleTopicSelection(recommendation.category, topic, checked as boolean)
-                                                                }
-                                                                disabled={isAlreadySaved}
-                                                            />
-                                                            <Label
-                                                                htmlFor={`${recommendation.category}-${idx}`}
-                                                                className={`text-sm font-normal cursor-pointer flex-1 ${isAlreadySaved ? 'text-muted-foreground line-through' : ''
-                                                                    }`}
-                                                            >
-                                                                {topic}
-                                                                {isAlreadySaved && (
-                                                                    <span className="ml-2 text-xs text-muted-foreground">(이미 선택됨)</span>
-                                                                )}
-                                                            </Label>
+                                    return (
+                                        <Card key={recommendation.id}>
+                                            <CardHeader
+                                                className="cursor-pointer hover:bg-gray-50 transition-colors"
+                                                onClick={() => toggleCategory(recommendation.id)}
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <CardTitle className="text-lg">{recommendation.category}</CardTitle>
+                                                        <div className="flex gap-2">
+                                                            <Badge variant="secondary" className="text-xs">
+                                                                {recommendation.description}
+                                                            </Badge>
+                                                            <Badge variant="outline" className="text-xs">
+                                                                {categoryTopicCount}개 주제
+                                                            </Badge>
+                                                            {selectedInCategory > 0 && (
+                                                                <Badge variant="default" className="text-xs">
+                                                                    {selectedInCategory}개 선택됨
+                                                                </Badge>
+                                                            )}
+                                                            {savedInCategory > 0 && (
+                                                                <Badge variant="outline" className="text-xs">
+                                                                    {savedInCategory}개 저장됨
+                                                                </Badge>
+                                                            )}
                                                         </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        {isExpanded ? (
+                                                            <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                                                        ) : (
+                                                            <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </CardHeader>
+                                            {isExpanded && (
+                                                <CardContent>
+                                                    <div className="space-y-2">
+                                                        {recommendation.topics.map((topic, idx) => {
+                                                            const isAlreadySaved = studyRoom.topics?.some(
+                                                                t => t.category === recommendation.category && t.topic === topic.topic
+                                                            ) || false;
+
+                                                            return (
+                                                                <div key={topic.id} className="flex items-center space-x-2">
+                                                                    <Checkbox
+                                                                        id={`${recommendation.category}-${topic.id}`}
+                                                                        checked={selectedTopics.some(
+                                                                            t => t.category === recommendation.category && t.topic === topic.topic
+                                                                        )}
+                                                                        onCheckedChange={(checked) =>
+                                                                            handleTopicSelection(recommendation.category, topic.topic, checked as boolean)
+                                                                        }
+                                                                        disabled={isAlreadySaved}
+                                                                    />
+                                                                    <Label
+                                                                        htmlFor={`${recommendation.category}-${topic.id}`}
+                                                                        className={`text-sm font-normal cursor-pointer flex-1 ${isAlreadySaved ? 'text-muted-foreground line-through' : ''
+                                                                            }`}
+                                                                    >
+                                                                        {topic.topic}
+                                                                        {isAlreadySaved && (
+                                                                            <span className="ml-2 text-xs text-muted-foreground">(이미 선택됨)</span>
+                                                                        )}
+                                                                    </Label>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </CardContent>
+                                            )}
+                                        </Card>
+                                    );
+                                })}
                                 <Button
                                     onClick={handleSaveTopics}
                                     disabled={selectedTopics.length === 0 || loading}
@@ -359,7 +410,7 @@ export default function StudyPage({ params }: StudyPageProps) {
                                         <div className="flex items-center justify-between">
                                             <CardTitle>{studyRoom.topics[currentTopicIndex]?.topic}</CardTitle>
                                             <Badge>
-                                                {getCategoryLabel(studyRoom.topics[currentTopicIndex]?.category)}
+                                                {studyRoom.topics[currentTopicIndex]?.category}
                                             </Badge>
                                         </div>
                                     </CardHeader>
