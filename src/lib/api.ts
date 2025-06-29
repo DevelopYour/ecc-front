@@ -9,7 +9,7 @@ import {
 } from "@/types/team";
 import { Review, ReviewTest } from "@/types/review";
 import { User } from "@/types/user";
-import { getRefreshToken, getToken, setToken } from "./auth";
+import { getRefreshToken, getToken, logout, setToken } from "./auth";
 import { ExpressionToAsk, ReportDocument, StudyRedis, Topic, TopicRecommendation, WeeklySummary } from "@/types/study";
 import { ApplyRegularStudyListResponse, RegularStudyApplyRequest, Subject, TimeSlot } from "@/types/apply-regular";
 import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
@@ -147,12 +147,27 @@ api.interceptors.response.use(
                         throw new Error('Token refresh failed');
                     }
                 }
-            } catch (refreshError) {
+            } catch (refreshError: any) {
                 // 토큰 갱신 실패 시 로그아웃
                 processQueue(refreshError, null);
-                if (typeof window !== "undefined") {
-                    localStorage.clear();
-                    window.location.href = "/login";
+                if (refreshError.response?.status === 401) {
+                    // 401: 리프레시 토큰 만료 또는 유효하지 않음
+                    console.log('Refresh token expired or invalid');
+
+                    // 로그아웃 처리 (쿠키와 localStorage 정리)
+                    logout();
+
+                    // 로그인 페이지로 리다이렉트
+                    if (typeof window !== "undefined") {
+                        // 현재 경로를 저장하여 로그인 후 돌아올 수 있도록
+                        const currentPath = window.location.pathname;
+                        window.location.href = `/login?callbackUrl=${encodeURIComponent(currentPath)}`;
+                    }
+                } else if (refreshError.response?.status === 400) {
+                    // 400: 잘못된 요청 (리프레시 토큰 형식 오류 등)
+                    console.error('Invalid refresh token format');
+                    logout();
+                    window.location.href = '/login';
                 }
             } finally {
                 isRefreshing = false;
