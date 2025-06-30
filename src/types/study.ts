@@ -78,16 +78,30 @@ export const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
 export interface ExpressionToAsk {
     topicId: number;
     question: string;
+    translation: boolean;
+    korean: boolean;
+}
+
+export interface ReportExpression {
+    english: string;
+    korean: string;
     isTranslation: boolean;
-    isKorean: boolean;
+    example?: string;
+    feedback?: string;
+}
+
+export interface ReportTopic {
+    category: string;
+    topic: string;
+    expressions: ReportExpression[];
 }
 
 export interface ReportDocument {
     id: string;
     teamId: number;
     week: number;
-    topics: TopicRedis[];
-    finalComments?: string;
+    topics: ReportTopic[];
+    comments?: string;
     isSubmitted: boolean;
     submittedAt?: string;
     createdAt: string;

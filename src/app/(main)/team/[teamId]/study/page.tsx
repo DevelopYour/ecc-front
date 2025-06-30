@@ -193,8 +193,8 @@ export default function StudyPage({ params }: StudyPageProps) {
             const question: ExpressionToAsk = {
                 topicId: currentTopic.topicId,
                 question: translateQuestion,
-                isKorean: detectKorean(translateQuestion),
-                isTranslation: true
+                korean: detectKorean(translateQuestion),
+                translation: true
             };
 
             const response = await studyApi.getAiHelp(studyRoom.id, question);
@@ -236,8 +236,8 @@ export default function StudyPage({ params }: StudyPageProps) {
             const question: ExpressionToAsk = {
                 topicId: currentTopic.topicId,
                 question: feedbackQuestion,
-                isKorean: false, // 피드백을 원하는 문장은 영어로 고정이라고 가정
-                isTranslation: false
+                korean: false, // 피드백을 원하는 문장은 영어로 고정이라고 가정
+                translation: false
             };
 
             const response = await studyApi.getAiHelp(studyRoom.id, question);
