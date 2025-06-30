@@ -286,7 +286,7 @@ export default function HomePage() {
                                                     {`${review.week}주차 복습 자료`}
                                                 </h3>
                                                 <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-                                                    {review.contents.length > 80
+                                                    {review.contents?.length > 80
                                                         ? `${review.contents.substring(0, 80)}...`
                                                         : review.contents
                                                     }

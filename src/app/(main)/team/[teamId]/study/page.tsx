@@ -493,7 +493,7 @@ export default function StudyPage({ params }: StudyPageProps) {
                                                                     <>
                                                                         <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded">
                                                                             <p className="text-sm text-red-600">원본:</p>
-                                                                            <p className="text-sm">{expression.english}</p>
+                                                                            <p className="text-sm">{expression.original}</p>
                                                                         </div>
                                                                         <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
                                                                             <p className="text-sm text-green-600">피드백:</p>

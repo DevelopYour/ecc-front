@@ -57,7 +57,7 @@ const getCategoryStyle = (category: string) => {
 
 // Expression 카드 컴포넌트
 const ExpressionCard = ({ expression, index }: { expression: ReportExpression; index: number }) => {
-    const isTranslation = expression.isTranslation;
+    const isTranslation = expression.translation;
 
     return (
         <Card className="bg-muted/30 hover:bg-muted/50 transition-colors">
@@ -143,8 +143,8 @@ const TopicSection = ({ topic, topicIndex, isLastTopic }: {
     isLastTopic: boolean;
 }) => {
     const categoryStyle = getCategoryStyle(topic.category);
-    const translationCount = topic.expressions.filter(expr => expr.isTranslation).length;
-    const expressionCount = topic.expressions.filter(expr => !expr.isTranslation).length;
+    const translationCount = topic.expressions.filter(expr => expr.translation).length;
+    const expressionCount = topic.expressions.filter(expr => !expr.translation).length;
 
     return (
         <div className="space-y-4">
@@ -335,7 +335,7 @@ export default function ReportPage({ params }: ReportPageProps) {
 
         const totalExpressions = report.topics.reduce((acc, topic) => acc + topic.expressions.length, 0);
         const translationCount = report.topics.reduce((acc, topic) =>
-            acc + topic.expressions.filter(expr => expr.isTranslation).length, 0);
+            acc + topic.expressions.filter(expr => expr.translation).length, 0);
         const expressionCount = totalExpressions - translationCount;
 
         return { totalExpressions, translationCount, expressionCount };

@@ -31,11 +31,11 @@ export interface TopicRedis {
 
 export interface ExpressionRedis {
     expressionId: number;
-    question: string;
     english: string;
     korean: string;
     example?: string;
     feedback?: string;
+    original?: string;
 }
 
 export interface TopicRecommendation {
@@ -85,8 +85,9 @@ export interface ExpressionToAsk {
 export interface ReportExpression {
     english: string;
     korean: string;
-    isTranslation: boolean;
+    translation: boolean;
     example?: string;
+    question?: string;
     feedback?: string;
 }
 
