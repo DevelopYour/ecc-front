@@ -1,4 +1,5 @@
 import { MemberIdAndName } from "./apply-onetime";
+import { ReportTopic } from "./study";
 
 export enum ReviewStatus {
     NOT_READY = "NOT_READY",
@@ -12,7 +13,7 @@ export interface Review {
     week: number;
     member: MemberIdAndName;
     status: ReviewStatus;
-    contents: string;
+    topics: ReportTopic[];
     createdAt: string;
     updatedAt?: string;
 }

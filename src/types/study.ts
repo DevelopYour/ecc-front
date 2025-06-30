@@ -87,7 +87,7 @@ export interface ReportExpression {
     korean: string;
     translation: boolean;
     example?: string;
-    question?: string;
+    original?: string;
     feedback?: string;
 }
 
