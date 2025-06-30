@@ -3,7 +3,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Sparkles, Check, Loader2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Sparkles, Check, Loader2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Languages, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -34,9 +34,11 @@ export default function StudyPage({ params }: StudyPageProps) {
     const [topicRecommendations, setTopicRecommendations] = useState<TopicRecommendation[]>([]);
     const [selectedTopics, setSelectedTopics] = useState<Topic[]>([]);
     const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
-    const [aiQuestion, setAiQuestion] = useState('');
+    const [translateQuestion, setTranslateQuestion] = useState('');
+    const [feedbackQuestion, setFeedbackQuestion] = useState('');
     const [loading, setLoading] = useState(false);
-    const [loadingAi, setLoadingAi] = useState(false);
+    const [loadingTranslate, setLoadingTranslate] = useState(false);
+    const [loadingFeedback, setLoadingFeedback] = useState(false);
     const [activeTab, setActiveTab] = useState('topics');
     const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
 
@@ -175,17 +177,24 @@ export default function StudyPage({ params }: StudyPageProps) {
         }
     };
 
-    const handleAiHelp = async () => {
-        if (!studyRoom || !aiQuestion.trim() || studyRoom.topics.length === 0) return;
+    const detectKorean = (text: string): boolean => {
+        const koreanRegex = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/;   // 한글 유니코드 범위
+        return koreanRegex.test(text);
+    };
+
+    const handleTranslateHelp = async () => {
+        if (!studyRoom || !translateQuestion.trim() || studyRoom.topics.length === 0) return;
 
         const currentTopic = studyRoom.topics[currentTopicIndex];
         if (!currentTopic) return;
 
-        setLoadingAi(true);
+        setLoadingTranslate(true);
         try {
             const question: ExpressionToAsk = {
                 topicId: currentTopic.topicId,
-                question: aiQuestion,
+                question: translateQuestion,
+                isKorean: detectKorean(translateQuestion),
+                isTranslation: true
             };
 
             const response = await studyApi.getAiHelp(studyRoom.id, question);
@@ -194,25 +203,68 @@ export default function StudyPage({ params }: StudyPageProps) {
                 response,
                 (data) => {
                     setStudyRoom(data);
-                    setAiQuestion('');
+                    setTranslateQuestion('');
                     toast.success('성공', {
-                        description: 'AI가 표현을 추가했습니다.',
+                        description: 'AI가 번역을 추가했습니다.',
                     });
                 },
                 (error) => {
-                    console.error('Error getting AI help:', error);
+                    console.error('Error getting translate help:', error);
                     toast.error('오류', {
-                        description: 'AI 도움 요청에 실패했습니다.'
+                        description: '번역 요청에 실패했습니다.'
                     });
                 }
             );
         } catch (error) {
-            console.error('Network error getting AI help:', error);
+            console.error('Network error getting translate help:', error);
             toast.error('오류', {
-                description: 'AI 도움 요청에 실패했습니다.'
+                description: '번역 요청에 실패했습니다.'
             });
         } finally {
-            setLoadingAi(false);
+            setLoadingTranslate(false);
+        }
+    };
+
+    const handleFeedbackHelp = async () => {
+        if (!studyRoom || !feedbackQuestion.trim() || studyRoom.topics.length === 0) return;
+
+        const currentTopic = studyRoom.topics[currentTopicIndex];
+        if (!currentTopic) return;
+
+        setLoadingFeedback(true);
+        try {
+            const question: ExpressionToAsk = {
+                topicId: currentTopic.topicId,
+                question: feedbackQuestion,
+                isKorean: false, // 피드백을 원하는 문장은 영어로 고정이라고 가정
+                isTranslation: false
+            };
+
+            const response = await studyApi.getAiHelp(studyRoom.id, question);
+
+            handleApiResponse(
+                response,
+                (data) => {
+                    setStudyRoom(data);
+                    setFeedbackQuestion('');
+                    toast.success('성공', {
+                        description: 'AI가 교정을 추가했습니다.',
+                    });
+                },
+                (error) => {
+                    console.error('Error getting feedback help:', error);
+                    toast.error('오류', {
+                        description: '교정 요청에 실패했습니다.'
+                    });
+                }
+            );
+        } catch (error) {
+            console.error('Network error getting feedback help:', error);
+            toast.error('오류', {
+                description: '교정 요청에 실패했습니다.'
+            });
+        } finally {
+            setLoadingFeedback(false);
         }
     };
 
@@ -423,18 +475,31 @@ export default function StudyPage({ params }: StudyPageProps) {
                                                         아직 저장된 표현이 없습니다. AI에게 물어보세요!
                                                     </p>
                                                 ) : (
+                                                    // 표현 카드에서 조건부 렌더링
                                                     studyRoom.topics[currentTopicIndex]?.expressions.map((expression) => (
                                                         <Card key={expression.expressionId}>
                                                             <CardContent className="pt-4">
-                                                                <p className="text-sm text-muted-foreground mb-2">
-                                                                    {expression.question}
-                                                                </p>
+
                                                                 <p className="font-medium">{expression.english}</p>
-                                                                <p className="text-sm text-muted-foreground mt-1">
-                                                                    {expression.korean}
-                                                                </p>
+                                                                <p className="text-sm text-muted-foreground mt-1">{expression.korean}</p>
+
+                                                                {/* 번역 요청인 경우 예문 표시 */}
                                                                 {expression.example && (
-                                                                    <p className="text-sm mt-2 italic">{expression.example}</p>
+                                                                    <p className="text-sm mt-2 italic text-blue-600">{expression.example}</p>
+                                                                )}
+
+                                                                {/* 교정 요청인 경우 피드백 표시 */}
+                                                                {expression.feedback && (
+                                                                    <>
+                                                                        <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded">
+                                                                            <p className="text-sm text-red-600">원본:</p>
+                                                                            <p className="text-sm">{expression.english}</p>
+                                                                        </div>
+                                                                        <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
+                                                                            <p className="text-sm text-green-600">피드백:</p>
+                                                                            <p className="text-sm">{expression.feedback}</p>
+                                                                        </div>
+                                                                    </>
                                                                 )}
                                                             </CardContent>
                                                         </Card>
@@ -444,29 +509,73 @@ export default function StudyPage({ params }: StudyPageProps) {
                                         </ScrollArea>
 
                                         {/* AI 도움받기 */}
-                                        <div className="space-y-2 pt-4 border-t">
-                                            <Label htmlFor="ai-question">AI에게 물어보기</Label>
-                                            <div className="flex gap-2">
-                                                <Textarea
-                                                    id="ai-question"
-                                                    placeholder="어떤 표현이 궁금하신가요?"
-                                                    value={aiQuestion}
-                                                    onChange={(e) => setAiQuestion(e.target.value)}
-                                                    className="flex-1"
-                                                    rows={2}
-                                                />
-                                                <Button
-                                                    onClick={handleAiHelp}
-                                                    disabled={!aiQuestion.trim() || loadingAi}
-                                                    size="icon"
-                                                    className="h-auto"
-                                                >
-                                                    {loadingAi ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                    ) : (
-                                                        <Sparkles className="h-4 w-4" />
-                                                    )}
-                                                </Button>
+                                        <div className="space-y-4 pt-4 border-t">
+                                            <h4 className="text-sm font-medium text-muted-foreground">AI에게 물어보기</h4>
+
+                                            {/* 두 개의 입력 영역을 나란히 배치 */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                                                {/* 번역 요청 영역 */}
+                                                <div className="space-y-3 p-4 border border-blue-200 bg-blue-50/30 rounded-lg">
+                                                    <div className="flex items-center gap-2">
+                                                        <Languages className="h-4 w-4 text-blue-600" />
+                                                        <Label className="text-sm font-medium text-blue-900">번역 요청</Label>
+                                                    </div>
+                                                    <p className="text-xs text-blue-700">단어나 문장의 뜻을 알고 싶어요</p>
+
+                                                    <Textarea
+                                                        placeholder="예: 사과, apple, 안녕하세요, How are you?"
+                                                        value={translateQuestion}
+                                                        onChange={(e) => setTranslateQuestion(e.target.value)}
+                                                        className="min-h-[80px] resize-none border-blue-200 focus:border-blue-400"
+                                                        rows={3}
+                                                    />
+
+                                                    <Button
+                                                        onClick={handleTranslateHelp}
+                                                        disabled={!translateQuestion.trim() || loadingTranslate}
+                                                        size="sm"
+                                                        className="w-full bg-blue-600 hover:bg-blue-700"
+                                                    >
+                                                        {loadingTranslate ? (
+                                                            <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                                        ) : (
+                                                            <Languages className="mr-2 h-3 w-3" />
+                                                        )}
+                                                        번역 요청
+                                                    </Button>
+                                                </div>
+
+                                                {/* 교정 요청 영역 */}
+                                                <div className="space-y-3 p-4 border border-green-200 bg-green-50/30 rounded-lg">
+                                                    <div className="flex items-center gap-2">
+                                                        <MessageSquare className="h-4 w-4 text-green-600" />
+                                                        <Label className="text-sm font-medium text-green-900">교정 요청</Label>
+                                                    </div>
+                                                    <p className="text-xs text-green-700">내가 쓴 영어가 맞는지 확인하고 싶어요</p>
+
+                                                    <Textarea
+                                                        placeholder="예: I go to school yesterday, How do you think about this?"
+                                                        value={feedbackQuestion}
+                                                        onChange={(e) => setFeedbackQuestion(e.target.value)}
+                                                        className="min-h-[80px] resize-none border-green-200 focus:border-green-400"
+                                                        rows={3}
+                                                    />
+
+                                                    <Button
+                                                        onClick={handleFeedbackHelp}
+                                                        disabled={!feedbackQuestion.trim() || loadingFeedback}
+                                                        size="sm"
+                                                        className="w-full bg-green-600 hover:bg-green-700"
+                                                    >
+                                                        {loadingFeedback ? (
+                                                            <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                                        ) : (
+                                                            <MessageSquare className="mr-2 h-3 w-3" />
+                                                        )}
+                                                        교정 요청
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
                                     </CardContent>

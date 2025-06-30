@@ -34,7 +34,8 @@ export interface ExpressionRedis {
     question: string;
     english: string;
     korean: string;
-    example: string;
+    example?: string;
+    feedback?: string;
 }
 
 export interface TopicRecommendation {
@@ -48,10 +49,6 @@ export interface Topic {
     id: number;
     category: string;
     topic: string;
-}
-
-export interface ExpressionToAsk {
-    question: string;
 }
 
 export interface Report {
@@ -81,6 +78,8 @@ export const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
 export interface ExpressionToAsk {
     topicId: number;
     question: string;
+    isTranslation: boolean;
+    isKorean: boolean;
 }
 
 export interface ReportDocument {
