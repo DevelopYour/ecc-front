@@ -313,17 +313,8 @@ export default function HomePage() {
                             <CardContent className="flex flex-col items-center justify-center p-8">
                                 <BookText className="h-12 w-12 text-muted-foreground mb-4" />
                                 <p className="text-center text-muted-foreground mb-4">
-                                    아직 복습 자료가 없습니다.<br />
-                                    스터디에 참여하여 복습 자료를 생성하세요!
+                                    아직 복습 자료가 없습니다.
                                 </p>
-                                <div className="flex gap-2">
-                                    <Link href={ROUTES.REGULAR}>
-                                        <Button variant="outline" size="sm">정규 스터디 참여</Button>
-                                    </Link>
-                                    <Link href={ROUTES.ONE_TIME}>
-                                        <Button variant="outline" size="sm">번개 스터디 참여</Button>
-                                    </Link>
-                                </div>
                             </CardContent>
                         </Card>
                     )}

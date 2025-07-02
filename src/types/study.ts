@@ -33,7 +33,8 @@ export interface ExpressionRedis {
     expressionId: number;
     english: string;
     korean: string;
-    example?: string;
+    exampleEnglish?: string;
+    exampleKorean?: string;
     feedback?: string;
     original?: string;
 }
@@ -49,15 +50,6 @@ export interface Topic {
     id: number;
     category: string;
     topic: string;
-}
-
-export interface Report {
-    id: string;
-    teamId: number;
-    week: number;
-    content: string;
-    submittedAt?: string;
-    isSubmitted: boolean;
 }
 
 export type StudyStatus = 'WAITING' | 'IN_PROGRESS' | 'COMPLETE';
@@ -82,19 +74,27 @@ export interface ExpressionToAsk {
     korean: boolean;
 }
 
-export interface ReportExpression {
+export interface ReportTranslation {
     english: string;
     korean: string;
     translation: boolean;
-    example?: string;
-    original?: string;
-    feedback?: string;
+    exampleEnglish: string;
+    exampleKorean: string;
+}
+
+export interface ReportFeedback {
+    english: string;
+    korean: string;
+    translation: boolean;
+    original: string;
+    feedback: string;
 }
 
 export interface ReportTopic {
     category: string;
     topic: string;
-    expressions: ReportExpression[];
+    translations: ReportTranslation[];
+    feedbacks: ReportFeedback[];
 }
 
 export interface ReportDocument {

@@ -484,8 +484,8 @@ export default function StudyPage({ params }: StudyPageProps) {
                                                                 <p className="text-sm text-muted-foreground mt-1">{expression.korean}</p>
 
                                                                 {/* 번역 요청인 경우 예문 표시 */}
-                                                                {expression.example && (
-                                                                    <p className="text-sm mt-2 italic text-blue-600">{expression.example}</p>
+                                                                {expression.exampleEnglish && (
+                                                                    <p className="text-sm mt-2 italic text-blue-600">{expression.exampleEnglish}</p>
                                                                 )}
 
                                                                 {/* 교정 요청인 경우 피드백 표시 */}
