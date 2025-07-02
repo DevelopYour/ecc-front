@@ -115,23 +115,6 @@ const FeedbackCard = ({ feedback, index }: { feedback: ReportFeedback; index: nu
                         </Badge>
                     </div>
 
-                    {/* 원본 표현 */}
-                    {feedback.original && (
-                        <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-r-md p-3">
-                            <div className="flex items-start gap-2">
-                                <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                                <div>
-                                    <p className="text-xs font-medium text-yellow-800 uppercase tracking-wide">
-                                        원래 표현
-                                    </p>
-                                    <p className="text-sm text-yellow-700 mt-1">
-                                        {feedback.original}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
                     {/* 개선된 표현 */}
                     <div className="bg-white rounded-md p-3 border">
                         <p className="font-semibold text-blue-600 text-lg">
@@ -139,6 +122,9 @@ const FeedbackCard = ({ feedback, index }: { feedback: ReportFeedback; index: nu
                         </p>
                         <p className="text-gray-600 mt-1">
                             {feedback.korean}
+                        </p>
+                        <p className="text-sm text-gray-700 mt-1 line-through">
+                            {feedback.original}
                         </p>
                     </div>
 

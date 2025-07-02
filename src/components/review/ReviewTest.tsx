@@ -4,7 +4,7 @@ import { Send, AlertCircle } from "lucide-react";
 
 interface ReviewTestProps {
     test: ReviewTestType;
-    onSubmit: (answers: string[]) => void;
+    onSubmit: (responses: string[]) => void; // responses로 명칭 변경
     onCancel: () => void;
 }
 
@@ -26,23 +26,24 @@ export default function ReviewTest({ test, onSubmit, onCancel }: ReviewTestProps
         );
     }
 
-    const [answers, setAnswers] = useState<string[]>(
-        new Array(test.questions.length).fill("")
+    // response 필드가 있으면 초기값으로 사용, 없으면 빈 문자열
+    const [responses, setResponses] = useState<string[]>(
+        test.questions.map(question => question.response || "")
     );
 
-    const handleAnswerChange = (index: number, value: string) => {
-        const newAnswers = [...answers];
-        newAnswers[index] = value;
-        setAnswers(newAnswers);
+    const handleResponseChange = (index: number, value: string) => {
+        const newResponses = [...responses];
+        newResponses[index] = value;
+        setResponses(newResponses);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit(answers);
+        onSubmit(responses); // 사용자 응답을 전달
     };
 
-    const isAllAnswered = answers.every(answer => answer.trim() !== "");
-    const answeredCount = answers.filter(answer => answer.trim() !== "").length;
+    const isAllAnswered = responses.every(response => response.trim() !== "");
+    const answeredCount = responses.filter(response => response.trim() !== "").length;
 
     return (
         <div className="bg-white rounded-lg shadow-lg max-w-4xl mx-auto">
@@ -65,14 +66,14 @@ export default function ReviewTest({ test, onSubmit, onCancel }: ReviewTestProps
 
                             <div className="ml-11">
                                 <textarea
-                                    id={`answer-${index}`}
-                                    value={answers[index]}
-                                    onChange={(e) => handleAnswerChange(index, e.target.value)}
+                                    id={`response-${index}`}
+                                    value={responses[index]}
+                                    onChange={(e) => handleResponseChange(index, e.target.value)}
                                     rows={1}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
                                     placeholder="답변을 작성해주세요..."
                                 />
-                                {answers[index].trim() === "" && (
+                                {responses[index].trim() === "" && (
                                     <div className="flex items-center gap-2 text-amber-600 text-sm mt-2">
                                         <AlertCircle className="w-4 h-4" />
                                         <span>답변을 작성하지 않았습니다</span>

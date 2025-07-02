@@ -1,5 +1,5 @@
-import { ReviewTest } from "@/types/review";
-import { CheckCircle, XCircle, Trophy, RefreshCw } from "lucide-react";
+import { GradeLevel, ReviewTest } from "@/types/review";
+import { CheckCircle, XCircle, Trophy, RefreshCw, AlertCircle } from "lucide-react";
 
 interface TestResultProps {
     test: ReviewTest;
@@ -25,9 +25,15 @@ export default function TestResult({ test, onRetry, onBack }: TestResultProps) {
         );
     }
 
-    const correctCount = test.questions.filter(q => q.isCorrect).length;
+    // 3단계 채점 기준으로 점수 계산
+    const correctCount = test.questions.filter(q => q.grade === GradeLevel.CORRECT).length;
+    const partialCount = test.questions.filter(q => q.grade === GradeLevel.PARTIAL).length;
+    const incorrectCount = test.questions.filter(q => q.grade === GradeLevel.INCORRECT).length;
     const totalCount = test.questions.length;
-    const percentage = Math.round((correctCount / totalCount) * 100);
+
+    // 점수 계산 (CORRECT: 100점, PARTIAL: 70점, INCORRECT: 0점)
+    const totalScore = (correctCount * 100 + partialCount * 70) / totalCount;
+    const percentage = Math.round(totalScore);
 
     const getScoreMessage = () => {
         if (percentage === 100) return "완벽해요! 🎉";
@@ -41,6 +47,45 @@ export default function TestResult({ test, onRetry, onBack }: TestResultProps) {
         if (percentage >= 80) return "text-green-600";
         if (percentage >= 60) return "text-yellow-600";
         return "text-red-600";
+    };
+
+    const getQuestionIcon = (gradeLevel: GradeLevel | null) => {
+        switch (gradeLevel) {
+            case GradeLevel.CORRECT:
+                return <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />;
+            case GradeLevel.PARTIAL:
+                return <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />;
+            case GradeLevel.INCORRECT:
+                return <XCircle className="w-5 h-5 text-red-600 mt-0.5" />;
+            default:
+                return <XCircle className="w-5 h-5 text-gray-400 mt-0.5" />;
+        }
+    };
+
+    const getQuestionStyle = (gradeLevel: GradeLevel | null) => {
+        switch (gradeLevel) {
+            case GradeLevel.CORRECT:
+                return "bg-green-50 border-green-200";
+            case GradeLevel.PARTIAL:
+                return "bg-yellow-50 border-yellow-200";
+            case GradeLevel.INCORRECT:
+                return "bg-red-50 border-red-200";
+            default:
+                return "bg-gray-50 border-gray-200";
+        }
+    };
+
+    const getResultText = (gradeLevel: GradeLevel | null) => {
+        switch (gradeLevel) {
+            case GradeLevel.CORRECT:
+                return { text: "정답입니다", color: "text-green-600" };
+            case GradeLevel.PARTIAL:
+                return { text: "부분 정답입니다", color: "text-yellow-600" };
+            case GradeLevel.INCORRECT:
+                return { text: "오답입니다", color: "text-red-600" };
+            default:
+                return { text: "채점되지 않음", color: "text-gray-400" };
+        }
     };
 
     return (
@@ -59,7 +104,7 @@ export default function TestResult({ test, onRetry, onBack }: TestResultProps) {
                         {percentage}%
                     </div>
                     <p className="text-gray-600 mt-2">
-                        {totalCount}문제 중 {correctCount}문제 정답
+                        {totalCount}문제 중 정답 {correctCount}개, 부분정답 {partialCount}개
                     </p>
                 </div>
 
@@ -67,7 +112,7 @@ export default function TestResult({ test, onRetry, onBack }: TestResultProps) {
                 <div className="w-full bg-gray-200 rounded-full h-4 mb-8">
                     <div
                         className={`h-4 rounded-full transition-all duration-1000 ${percentage >= 80 ? "bg-green-500" :
-                                percentage >= 60 ? "bg-yellow-500" : "bg-red-500"
+                            percentage >= 60 ? "bg-yellow-500" : "bg-red-500"
                             }`}
                         style={{ width: `${percentage}%` }}
                     />
@@ -76,41 +121,42 @@ export default function TestResult({ test, onRetry, onBack }: TestResultProps) {
                 {/* Question Results */}
                 <div className="space-y-4">
                     <h3 className="font-semibold text-gray-900 mb-3">문제별 결과</h3>
-                    {test.questions.map((question, index) => (
-                        <div
-                            key={index}
-                            className={`p-4 rounded-lg border ${question.isCorrect
-                                    ? "bg-green-50 border-green-200"
-                                    : "bg-red-50 border-red-200"
-                                }`}
-                        >
-                            <div className="flex items-start gap-3">
-                                {question.isCorrect ? (
-                                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
-                                ) : (
-                                    <XCircle className="w-5 h-5 text-red-600 mt-0.5" />
-                                )}
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium text-gray-900">
-                                        문제 {index + 1}
-                                    </p>
-                                    <p className="text-sm text-gray-700 mt-1">
-                                        {question.question}
-                                    </p>
-                                    {question.answer && (
-                                        <div className="mt-2 p-2 bg-white rounded">
-                                            <p className="text-xs font-medium text-gray-600 mb-1">내 답변:</p>
-                                            <p className="text-sm text-gray-700">{question.answer}</p>
-                                        </div>
-                                    )}
-                                    <p className={`text-xs mt-2 ${question.isCorrect ? "text-green-600" : "text-red-600"
-                                        }`}>
-                                        {question.isCorrect ? "정답입니다" : "오답입니다"}
-                                    </p>
+                    {test.questions.map((question, index) => {
+                        const resultInfo = getResultText(question.grade);
+                        return (
+                            <div
+                                key={index}
+                                className={`p-4 rounded-lg border ${getQuestionStyle(question.grade)}`}
+                            >
+                                <div className="flex items-start gap-3">
+                                    {getQuestionIcon(question.grade)}
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium text-gray-900">
+                                            문제 {index + 1}
+                                        </p>
+                                        <p className="text-sm text-gray-700 mt-1">
+                                            {question.question}
+                                        </p>
+                                        {question.response && (
+                                            <div className="mt-2 p-2 bg-white rounded">
+                                                <p className="text-xs font-medium text-gray-600 mb-1">내 답변:</p>
+                                                <p className="text-sm text-gray-700">{question.response}</p>
+                                            </div>
+                                        )}
+                                        {question.answer && (
+                                            <div className="mt-2 p-2 bg-blue-50 rounded">
+                                                <p className="text-xs font-medium text-gray-600 mb-1">정답:</p>
+                                                <p className="text-sm text-gray-700">{question.answer}</p>
+                                            </div>
+                                        )}
+                                        <p className={`text-xs mt-2 ${resultInfo.color}`}>
+                                            {resultInfo.text}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
 

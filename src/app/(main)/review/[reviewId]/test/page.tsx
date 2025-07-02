@@ -34,7 +34,7 @@ export default function ReviewTestPage() {
                     response.data.questions = [];
                 }
                 setTest(response.data);
-                setShowResult(response.data.isComplete);
+                setShowResult(response.data.complete);
             }
         } catch (error) {
             console.error("Failed to fetch test:", error);
@@ -46,18 +46,18 @@ export default function ReviewTestPage() {
         }
     };
 
-    const handleSubmitTest = async (answers: string[]) => {
+    const handleSubmitTest = async (responses: string[]) => {
         if (!test) return;
 
         try {
-            // 답안을 반영한 테스트 객체 생성
+            // 사용자 응답을 반영한 테스트 객체 생성
             const updatedTest: ReviewTestType = {
                 ...test,
                 questions: test.questions.map((q, index) => ({
                     ...q,
-                    answer: answers[index]
+                    response: responses[index]
                 })),
-                isComplete: true
+                complete: true
             };
 
             const response = await reviewApi.submitReviewTest(reviewId, updatedTest);
@@ -78,7 +78,18 @@ export default function ReviewTestPage() {
 
     const handleRetry = () => {
         setShowResult(false);
-        fetchTest(); // 새로운 테스트 문제 가져오기
+        // 새로운 테스트 시도 시 기존 응답 초기화
+        if (test) {
+            const resetTest = {
+                ...test,
+                questions: test.questions.map(q => ({
+                    ...q,
+                    response: "" // 사용자 응답만 초기화, 정답(answer)은 유지
+                })),
+                isComplete: false
+            };
+            setTest(resetTest);
+        }
     };
 
     if (loading) {

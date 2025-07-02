@@ -7,6 +7,12 @@ export enum ReviewStatus {
     COMPLETED = "COMPLETED"
 }
 
+export enum GradeLevel {
+    CORRECT = "CORRECT",
+    PARTIAL = "PARTIAL", // 부분 정답
+    INCORRECT = "INCORRECT"
+}
+
 export interface Review {
     id: string;
     reportId: string;
@@ -22,15 +28,16 @@ export interface ReviewTest {
     id: string;
     userId: number;
     questions: ReviewQuestion[];
-    isComplete: boolean;
+    complete: boolean;
 }
 
 export interface ReviewQuestion {
     question: string;
-    answer?: string;
-    isCorrect: boolean;
+    answer: string;
+    response?: string;
+    personal: boolean;
+    grade: GradeLevel;
 }
-
 
 export interface ReviewSummary {
     reviewId: string;
