@@ -53,7 +53,7 @@ export interface Topic {
 }
 
 export type StudyStatus = 'WAITING' | 'IN_PROGRESS' | 'COMPLETE';
-export type ReviewStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETE';
+export type ReviewStatus = 'NOT_READY' | 'INCOMPLETE' | 'COMPLETED';
 
 export const STUDY_STATUS_LABELS: Record<StudyStatus, string> = {
     WAITING: '대기중',
@@ -62,9 +62,9 @@ export const STUDY_STATUS_LABELS: Record<StudyStatus, string> = {
 };
 
 export const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
-    NOT_STARTED: '시작전',
-    IN_PROGRESS: '진행중',
-    COMPLETE: '완료',
+    NOT_READY: '시작전',
+    INCOMPLETE: '진행중',
+    COMPLETED: '완료',
 };
 
 export interface ExpressionToAsk {
@@ -112,12 +112,12 @@ export interface ReportDocument {
 export const getStatusBadgeVariant = (status: StudyStatus | ReviewStatus): 'default' | 'secondary' | 'destructive' | 'outline' => {
     switch (status) {
         case 'WAITING':
-        case 'NOT_STARTED':
+        case 'NOT_READY':
             return 'secondary';
-        case 'IN_PROGRESS':
+        case 'INCOMPLETE':
             return 'default';
-        case 'COMPLETE':
-            return 'outline'; // success variant가 없으므로 outline 사용
+        case 'COMPLETED':
+            return 'outline';
         default:
             return 'outline';
     }
