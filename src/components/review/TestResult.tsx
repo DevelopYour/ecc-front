@@ -132,21 +132,18 @@ export default function TestResult({ test, onRetry, onBack }: TestResultProps) {
                                     {getQuestionIcon(question.grade)}
                                     <div className="flex-1">
                                         <p className="text-sm font-medium text-gray-900">
-                                            문제 {index + 1}
+                                            Q{index + 1}. {question.question}
                                         </p>
-                                        <p className="text-sm text-gray-700 mt-1">
-                                            {question.question}
-                                        </p>
-                                        {question.response && (
-                                            <div className="mt-2 p-2 bg-white rounded">
-                                                <p className="text-xs font-medium text-gray-600 mb-1">내 답변:</p>
-                                                <p className="text-sm text-gray-700">{question.response}</p>
-                                            </div>
-                                        )}
                                         {question.answer && (
                                             <div className="mt-2 p-2 bg-blue-50 rounded">
                                                 <p className="text-xs font-medium text-gray-600 mb-1">정답:</p>
                                                 <p className="text-sm text-gray-700">{question.answer}</p>
+                                            </div>
+                                        )}
+                                        {question.response && (
+                                            <div className="mt-2 p-2 bg-white rounded">
+                                                <p className="text-xs font-medium text-gray-600 mb-1">내 답변:</p>
+                                                <p className="text-sm text-gray-700">{question.response}</p>
                                             </div>
                                         )}
                                         <p className={`text-xs mt-2 ${resultInfo.color}`}>

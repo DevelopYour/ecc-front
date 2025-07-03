@@ -63,15 +63,6 @@ export default function ReviewPage() {
                         전체 ({reviews.length})
                     </button>
                     <button
-                        onClick={() => setFilterStatus(ReviewStatus.NOT_READY)}
-                        className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${filterStatus === ReviewStatus.NOT_READY
-                            ? "bg-primary text-white"
-                            : "text-gray-700 hover:bg-gray-100"
-                            }`}
-                    >
-                        준비중 ({getStatusCount(ReviewStatus.NOT_READY)})
-                    </button>
-                    <button
                         onClick={() => setFilterStatus(ReviewStatus.INCOMPLETE)}
                         className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${filterStatus === ReviewStatus.INCOMPLETE
                             ? "bg-primary text-white"

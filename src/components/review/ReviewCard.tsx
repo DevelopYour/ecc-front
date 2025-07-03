@@ -54,14 +54,13 @@ export default function ReviewCard({ review }: ReviewCardProps) {
         <div
             onClick={isClickable ? handleClick : undefined}
             className={`bg-white rounded-lg shadow-md transition-all ${isClickable
-                    ? "hover:shadow-lg cursor-pointer"
-                    : "opacity-75 cursor-not-allowed"
+                ? "hover:shadow-lg cursor-pointer"
+                : "opacity-75 cursor-not-allowed"
                 } p-6`}
         >
             <div className="flex items-start justify-between mb-4">
                 <div>
                     <h3 className="text-lg font-semibold text-gray-900">Week {review.week}</h3>
-                    <p className="text-sm text-gray-500 mt-1">보고서 ID: {review.reportId}</p>
                 </div>
                 <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(review.status)}`}>
                     {getStatusIcon(review.status)}
@@ -70,11 +69,6 @@ export default function ReviewCard({ review }: ReviewCardProps) {
             </div>
 
             <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <User className="w-4 h-4" />
-                    <span>{review.member.name}</span>
-                </div>
-
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Calendar className="w-4 h-4" />
                     <span>
