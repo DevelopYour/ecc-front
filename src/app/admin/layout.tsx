@@ -56,16 +56,24 @@ export default function AdminLayout({
     children: React.ReactNode;
 }) {
     const router = useRouter();
-    const { user, logout } = useAuth();
+    const { user, logout, isLoading } = useAuth();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
     useEffect(() => {
-        // 관리자 권한 확인
+        // 로딩 중이면 기다림
+        if (isLoading) return;
+
+        // 로딩 완료 후 권한 확인
         if (!user || user.role !== 'ROLE_ADMIN') {
             router.push('/');
         }
-    }, [user, router]);
+    }, [user, router, isLoading]);
+
+    // 로딩 중이거나 권한이 없으면 렌더링하지 않음
+    if (isLoading || !user || user.role !== 'ROLE_ADMIN') {
+        return null; // 또는 로딩 스피너
+    }
 
     const toggleExpanded = (title: string) => {
         setExpandedItems((prev) =>
