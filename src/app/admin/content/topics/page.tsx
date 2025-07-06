@@ -77,7 +77,6 @@ export default function AdminContentTopicsPage() {
     const [formData, setFormData] = useState<TopicFormData>({
         categoryId: 0,
         topic: "",
-        description: "",
     });
 
     useEffect(() => {
@@ -388,18 +387,6 @@ export default function AdminContentTopicsPage() {
                                 onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
                                 placeholder="주제 입력"
                                 className="mt-1"
-                            />
-                        </div>
-                        <div>
-                            <label className="text-sm font-medium">설명 (선택)</label>
-                            <Textarea
-                                value={formData.description}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, description: e.target.value })
-                                }
-                                placeholder="주제에 대한 설명 입력"
-                                className="mt-1"
-                                rows={3}
                             />
                         </div>
                     </div>
