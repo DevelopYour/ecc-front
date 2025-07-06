@@ -23,12 +23,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
     Search,
-    Filter,
     RefreshCw,
     ChevronRight,
     User,
     Mail,
-    Phone,
     GraduationCap
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
