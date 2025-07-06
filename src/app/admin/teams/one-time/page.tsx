@@ -223,11 +223,11 @@ export default function AdminOneTimeTeamsPage() {
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    filteredTeams.map((team) => (
+                                    filteredTeams.map((team, idx) => (
                                         <TableRow
-                                            key={team.teamId}
+                                            key={team.id ?? idx}
                                             className="cursor-pointer hover:bg-gray-50"
-                                            onClick={() => handleTeamClick(team.teamId)}
+                                            onClick={() => handleTeamClick(team.id)}
                                         >
                                             <TableCell className="font-medium">
                                                 <div className="flex items-center gap-2">

@@ -189,9 +189,9 @@ export default function AdminTeamsPage() {
                                         ) : (
                                             filteredTeams.map((team, index) => (
                                                 <TableRow
-                                                    key={`team-${team.teamId || index}`}
+                                                    key={`team-${team.id || index}`}
                                                     className="cursor-pointer hover:bg-gray-50"
-                                                    onClick={() => handleTeamClick(team.teamId)}
+                                                    onClick={() => handleTeamClick(team.id)}
                                                 >
                                                     <TableCell className="font-medium">
                                                         <div className="flex items-center gap-2">

@@ -528,12 +528,17 @@ export const adminContentApi = {
         api.get("/admin/content/topics", { params: { categoryId } }),
 
     // 주제 생성
-    createTopic: (data: { categoryId: number; topic: string; description?: string }): Promise<ResponseDto<Topic>> =>
+    createTopic: (data: { categoryId: number; topic: string; }): Promise<ResponseDto<Topic>> =>
         api.post("/admin/content/topics", data),
 
     // 주제 수정
-    updateTopic: (topicId: number, data: { topic: string; description?: string }): Promise<ResponseDto<Topic>> =>
-        api.put(`/admin/content/topics/${topicId}`, data),
+    // 주제 수정 API 타입 정의
+    updateTopic: (topicId: number, topic: string): Promise<ResponseDto<Topic>> =>
+        api.put(`/admin/content/topics/${topicId}`, topic, {
+            headers: {
+                'Content-Type': 'text/plain'
+            }
+        }),
 
     // 주제 삭제
     deleteTopic: (topicId: number): Promise<ResponseDto<void>> =>

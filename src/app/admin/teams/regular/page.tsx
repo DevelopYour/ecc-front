@@ -239,9 +239,9 @@ export default function AdminRegularTeamsPage() {
                                 ) : (
                                     filteredTeams.map((team, idx) => (
                                         <TableRow
-                                            key={team.teamId ?? idx}
+                                            key={team.id ?? idx}
                                             className="cursor-pointer hover:bg-gray-50"
-                                            onClick={() => handleTeamClick(team.teamId)}
+                                            onClick={() => handleTeamClick(team.id)}
                                         >
                                             <TableCell className="font-medium">
                                                 <div className="flex items-center gap-2">

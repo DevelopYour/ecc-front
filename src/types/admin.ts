@@ -40,7 +40,7 @@ export interface LevelChangeRequest {
 }
 
 export interface TeamA {
-    teamId: number;
+    id: number;
     name: string;
     subjectId: number;
     subjectName: string;

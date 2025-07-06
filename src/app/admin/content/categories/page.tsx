@@ -49,7 +49,7 @@ import { useRouter } from "next/navigation";
 
 interface CategoryFormData {
     name: string;
-    description?: string;
+    description: string;
 }
 
 export default function AdminContentCategoriesPage() {
@@ -111,7 +111,9 @@ export default function AdminContentCategoriesPage() {
         if (!selectedCategory || !formData.name.trim()) return;
 
         try {
+            console.log(selectedCategory.id, formData)
             const response = await adminContentApi.updateCategory(selectedCategory.id, formData);
+
             if (response.success) {
                 toast.success("카테고리가 수정되었습니다.");
                 setShowEditDialog(false);
@@ -177,7 +179,6 @@ export default function AdminContentCategoriesPage() {
                 <p className="text-gray-600 mt-2">스터디 주제 카테고리 관리</p>
             </div>
 
-            {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <Card>
                     <CardHeader className="pb-3">
@@ -219,13 +220,9 @@ export default function AdminContentCategoriesPage() {
                 </Card>
             </div>
 
-            {/* Actions */}
-            <Card className="mb-6">
+            <Card>
                 <CardContent className="pt-6">
                     <div className="flex justify-between items-center">
-                        <p className="text-sm text-gray-600">
-                            카테고리를 추가하거나 수정하여 스터디 주제를 체계적으로 관리하세요.
-                        </p>
                         <div className="flex gap-2">
                             <Button onClick={loadCategories} variant="outline">
                                 <RefreshCw className="w-4 h-4 mr-2" />
@@ -238,10 +235,6 @@ export default function AdminContentCategoriesPage() {
                         </div>
                     </div>
                 </CardContent>
-            </Card>
-
-            {/* Categories Table */}
-            <Card>
                 <CardContent className="p-0">
                     {loading ? (
                         <div className="p-6 space-y-4">
@@ -332,7 +325,7 @@ export default function AdminContentCategoriesPage() {
                             />
                         </div>
                         <div>
-                            <label className="text-sm font-medium">설명 (선택)</label>
+                            <label className="text-sm font-medium">설명</label>
                             <Textarea
                                 value={formData.description}
                                 onChange={(e) =>
@@ -399,6 +392,7 @@ export default function AdminContentCategoriesPage() {
                         <AlertDialogTitle>카테고리 삭제 확인</AlertDialogTitle>
                         <AlertDialogDescription>
                             정말로 "{selectedCategory?.name}" 카테고리를 삭제하시겠습니까?
+                            카테고리 내 주제도 함께 삭제됩니다.
                             이 작업은 되돌릴 수 없습니다.
                         </AlertDialogDescription>
                     </AlertDialogHeader>

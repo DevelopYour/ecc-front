@@ -6,7 +6,6 @@ import { TopicA, Category } from "@/types/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
     Dialog,
     DialogContent,
@@ -106,8 +105,8 @@ export default function AdminContentTopicsPage() {
     };
 
     const handleCreateTopic = async () => {
-        if (!formData.categoryId || !formData.topic.trim()) {
-            toast.error("카테고리와 주제를 입력해주세요.");
+        if (!formData.categoryId || formData.categoryId === 0 || !formData.topic.trim()) {
+            toast.error("카테고리와 주제를 모두 입력해주세요.");
             return;
         }
 
@@ -128,10 +127,8 @@ export default function AdminContentTopicsPage() {
         if (!selectedTopic || !formData.topic.trim()) return;
 
         try {
-            const response = await adminContentApi.updateTopic(selectedTopic.id, {
-                topic: formData.topic,
-                description: formData.description,
-            });
+            // 객체 대신 문자열로 직접 전송
+            const response = await adminContentApi.updateTopic(selectedTopic.id, formData.topic);
             if (response.success) {
                 toast.success("주제가 수정되었습니다.");
                 setShowEditDialog(false);
@@ -162,8 +159,7 @@ export default function AdminContentTopicsPage() {
     const resetForm = () => {
         setFormData({
             categoryId: 0,
-            topic: "",
-            description: "",
+            topic: ""
         });
         setSelectedTopic(null);
     };
@@ -196,48 +192,11 @@ export default function AdminContentTopicsPage() {
                 <p className="text-gray-600 mt-2">스터디 주제 목록 관리</p>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-gray-600">
-                            전체 주제
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-2xl font-bold">{topics.length}</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-gray-600">
-                            카테고리
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-2xl font-bold">{categories.length}</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-gray-600">
-                            평균 사용 횟수
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-2xl font-bold">
-                            {topics.length > 0
-                                ? Math.round(
-                                    topics.reduce((acc, t) => acc + (t.usageCount || 0), 0) / topics.length
-                                )
-                                : 0}
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
-
             {/* Filters and Actions */}
             <Card className="mb-6">
+                <CardContent>
+                    전체 주제 {topics.length}개, 카테고리 {categories.length}개
+                </CardContent>
                 <CardContent className="pt-6">
                     <div className="flex flex-col lg:flex-row gap-4">
                         <div className="flex-1">
@@ -363,13 +322,13 @@ export default function AdminContentTopicsPage() {
                         <div>
                             <label className="text-sm font-medium">카테고리</label>
                             <Select
-                                value={formData.categoryId.toString()}
+                                value={formData.categoryId === 0 ? "" : formData.categoryId.toString()}
                                 onValueChange={(value) =>
                                     setFormData({ ...formData, categoryId: parseInt(value) })
                                 }
                             >
                                 <SelectTrigger className="mt-1">
-                                    <SelectValue placeholder="카테고리 선택" />
+                                    <SelectValue placeholder="카테고리를 선택해주세요" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {categories.map((category) => (
@@ -432,18 +391,6 @@ export default function AdminContentTopicsPage() {
                                 onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
                                 placeholder="주제 입력"
                                 className="mt-1"
-                            />
-                        </div>
-                        <div>
-                            <label className="text-sm font-medium">설명 (선택)</label>
-                            <Textarea
-                                value={formData.description}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, description: e.target.value })
-                                }
-                                placeholder="주제에 대한 설명 입력"
-                                className="mt-1"
-                                rows={3}
                             />
                         </div>
                     </div>
