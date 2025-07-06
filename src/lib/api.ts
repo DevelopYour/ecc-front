@@ -14,6 +14,7 @@ import { ExpressionToAsk, ReportDocument, StudyRedis, Topic, TopicRecommendation
 import { ApplyRegularStudyListResponse, RegularStudyApplyRequest, Subject, TimeSlot } from "@/types/apply-regular";
 import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
 import { setCookie } from "cookies-next";
+import { MemberA, MemberStatus, LevelChangeRequest, Category, TopicA, TeamA } from "@/types/admin";
 
 interface ResponseDto<T> {
     success: boolean;
@@ -378,6 +379,165 @@ export const reviewApi = {
     // 복습 테스트 제출 - 수정됨
     submitReviewTest: (reviewId: string, test: ReviewTest): Promise<ResponseDto<ReviewTest>> =>
         api.patch(`/review/me/${reviewId}/test`, test),
+};
+
+// 관리자 회원 관리 API
+export const adminMemberApi = {
+    // 전체 회원 조회
+    getAllMembers: (): Promise<ResponseDto<MemberA[]>> =>
+        api.get("/admin/users"),
+
+    // 회원 상세 정보 조회
+    getMemberDetail: (uuid: number): Promise<ResponseDto<MemberA>> =>
+        api.get(`/admin/users/${uuid}`),
+
+    // 상태별 회원 조회
+    getMembersByStatus: (status: MemberStatus): Promise<ResponseDto<MemberA[]>> =>
+        api.get(`/admin/users/status/${status}`),
+
+    // 승인 대기 회원 조회
+    getPendingMembers: (): Promise<ResponseDto<MemberA[]>> =>
+        api.get("/admin/users/pending"),
+
+    // 레벨 변경 요청 목록 조회
+    getLevelChangeRequests: (): Promise<ResponseDto<LevelChangeRequest[]>> =>
+        api.get("/admin/users/level"),
+
+    // 레벨별 회원 조회
+    getMembersByLevel: (level: number): Promise<ResponseDto<MemberA[]>> =>
+        api.get(`/admin/users/level/${level}`),
+
+    // 회원 필터링 조회
+    getMembersByFilter: (params: {
+        status?: MemberStatus;
+        level?: number;
+    }): Promise<ResponseDto<MemberA[]>> =>
+        api.get("/admin/users/filter", { params }),
+
+    // 회원 가입 승인
+    approveApplication: (uuid: number): Promise<ResponseDto<MemberA>> =>
+        api.patch(`/admin/users/${uuid}/approve`),
+
+    // 회원 가입 거절
+    rejectApplication: (uuid: number): Promise<ResponseDto<void>> =>
+        api.delete(`/admin/users/${uuid}/reject`),
+
+    // 회원 상태 변경
+    updateMemberStatus: (uuid: number, status: MemberStatus): Promise<ResponseDto<MemberA>> =>
+        api.patch(`/admin/users/${uuid}/status`, null, { params: { status } }),
+
+    // 회원 영어 레벨 변경
+    updateMemberLevel: (uuid: number, level: number): Promise<ResponseDto<MemberA>> =>
+        api.patch(`/admin/users/${uuid}/level`, null, { params: { level } }),
+
+    // 레벨 변경 요청 승인
+    approveLevelChangeRequest: (requestId: number): Promise<ResponseDto<MemberA>> =>
+        api.patch(`/admin/users/level/${requestId}/approve`),
+
+    // 레벨 변경 요청 거절
+    rejectLevelChangeRequest: (requestId: number): Promise<ResponseDto<void>> =>
+        api.patch(`/admin/users/level/${requestId}/reject`),
+};
+
+// 관리자 팀 관리 API
+export const adminTeamApi = {
+    // 전체 팀 조회
+    getAllTeams: (params?: {
+        isRegular?: boolean;
+        year?: number;
+        semester?: number;
+    }): Promise<ResponseDto<TeamA[]>> =>
+        api.get("/admin/teams", { params }),
+
+    // 팀 상세 정보 조회
+    getTeamDetail: (teamId: number): Promise<ResponseDto<Team>> =>
+        api.get(`/admin/teams/${teamId}`),
+
+    // 팀 주차별 상세 정보 조회
+    getTeamWeekDetail: (teamId: number, week: number): Promise<ResponseDto<any>> =>
+        api.get(`/admin/teams/${teamId}/${week}`),
+
+    // 번개 스터디 보고서 조회
+    getOneTimeTeamReport: (teamId: number): Promise<ResponseDto<ReportDocument>> =>
+        api.get(`/admin/teams/one-time/${teamId}/report`),
+
+    // 팀 주차별 보고서 조회
+    getTeamWeekReport: (teamId: number, week: number): Promise<ResponseDto<ReportDocument>> =>
+        api.get(`/admin/teams/${teamId}/${week}/report`),
+
+    // 정규 스터디 보고서 평가 점수 수정
+    updateReportGrade: (teamId: number, week: number, grade: number): Promise<ResponseDto<ReportDocument>> =>
+        api.patch(`/admin/teams/${teamId}/${week}/report/grade`, null, { params: { grade } }),
+
+    // 번개 스터디 보고서 평가 점수 수정
+    updateOneTimeReportGrade: (teamId: number, grade: number): Promise<ResponseDto<ReportDocument>> =>
+        api.patch(`/admin/teams/one-time/${teamId}/report/grade`, null, { params: { grade } }),
+
+    // 번개 스터디 삭제
+    deleteOneTimeTeam: (teamId: number): Promise<ResponseDto<void>> =>
+        api.delete(`/admin/teams/one-time/${teamId}`),
+
+    // 팀 점수 수동 조정
+    updateTeamScore: (teamId: number, score: number): Promise<ResponseDto<Team>> =>
+        api.patch(`/admin/teams/${teamId}/score`, null, { params: { score } }),
+
+    // 팀 멤버 조회
+    getTeamMembers: (teamId: number): Promise<ResponseDto<any>> =>
+        api.get(`/admin/teams/${teamId}/members`),
+
+    // 팀 멤버 추가
+    addTeamMember: (teamId: number, memberUuid: number): Promise<ResponseDto<any>> =>
+        api.post(`/admin/teams/${teamId}/members`, null, { params: { memberUuid } }),
+
+    // 팀 멤버 삭제
+    removeTeamMember: (teamId: number, memberUuid: number): Promise<ResponseDto<any>> =>
+        api.delete(`/admin/teams/${teamId}/members/${memberUuid}`),
+
+    // 팀 출석/참여율 통계
+    getTeamAttendanceStats: (teamId: number): Promise<ResponseDto<Record<string, any>>> =>
+        api.get(`/admin/teams/${teamId}/attendance`),
+
+    // 정규 스터디 보고서 제출/평가 현황 조회
+    getTeamReportsStatus: (params?: {
+        year?: number;
+        semester?: number;
+    }): Promise<ResponseDto<Record<string, any>>> =>
+        api.get("/admin/teams/reports/status", { params }),
+};
+
+// 관리자 콘텐츠 관리 API
+export const adminContentApi = {
+    // 카테고리 목록 조회
+    getCategories: (): Promise<ResponseDto<Category[]>> =>
+        api.get("/admin/content/categories"),
+
+    // 카테고리 생성
+    createCategory: (data: { name: string; description?: string }): Promise<ResponseDto<Category>> =>
+        api.post("/admin/content/categories", data),
+
+    // 카테고리 수정
+    updateCategory: (categoryId: number, data: { name: string; description?: string }): Promise<ResponseDto<Category>> =>
+        api.put(`/admin/content/categories/${categoryId}`, data),
+
+    // 카테고리 삭제
+    deleteCategory: (categoryId: number): Promise<ResponseDto<void>> =>
+        api.delete(`/admin/content/categories/${categoryId}`),
+
+    // 주제 목록 조회
+    getTopics: (categoryId?: number): Promise<ResponseDto<TopicA[]>> =>
+        api.get("/admin/content/topics", { params: { categoryId } }),
+
+    // 주제 생성
+    createTopic: (data: { categoryId: number; topic: string; description?: string }): Promise<ResponseDto<Topic>> =>
+        api.post("/admin/content/topics", data),
+
+    // 주제 수정
+    updateTopic: (topicId: number, data: { topic: string; description?: string }): Promise<ResponseDto<Topic>> =>
+        api.put(`/admin/content/topics/${topicId}`, data),
+
+    // 주제 삭제
+    deleteTopic: (topicId: number): Promise<ResponseDto<void>> =>
+        api.delete(`/admin/content/topics/${topicId}`),
 };
 
 // API 응답 처리 헬퍼 함수
