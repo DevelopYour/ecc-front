@@ -6,7 +6,7 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, HelpCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +19,7 @@ import {
     FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Select,
     SelectContent,
@@ -27,9 +28,29 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { authApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { ROUTES, ENGLISH_LEVELS } from "@/lib/constants";
+import { Major } from "@/types/auth";
+
+// 대학 목록과 한국어 매핑
+const COLLEGES = {
+    ENGINEERING: "공과대학",
+    ICT: "정보통신대학",
+    ENERGY_BIO: "에너지바이오대학",
+    DESIGN: "조형대학",
+    HUMANITIES: "인문사회대학",
+    BUSINESS: "기술경영대학",
+    FUTURE_CONVERGENCE: "미래융합대학",
+    CREATIVE_CONVERGENCE: "창의융합대학",
+    ST_FREE_MAJOR: "자유전공학부"
+} as const;
 
 // 회원가입 폼 검증 스키마
 const signupSchema = z.object({
@@ -37,6 +58,7 @@ const signupSchema = z.object({
     studentId: z
         .string()
         .regex(/^\d{8}$/, "학번은 8자리 숫자여야 합니다"),
+    college: z.string().min(1, "대학은 필수 선택 항목입니다"),
     majorId: z.string().min(1, "전공은 필수 입력 항목입니다"),
     tel: z
         .string()
@@ -45,6 +67,8 @@ const signupSchema = z.object({
     email: z.string().email("올바른 이메일 형식을 입력해주세요"),
     level: z.string().min(1, "영어 실력은 필수 선택 항목입니다"),
     motivation: z.string().min(1, "지원 동기는 필수 입력 항목입니다"),
+    agreePersonalInfo: z.boolean().refine(val => val === true, "개인정보 수집에 동의해주세요"),
+    agreeActivityData: z.boolean().refine(val => val === true, "활동데이터 수집에 동의해주세요"),
 });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
@@ -52,7 +76,8 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 export function SignupForm() {
     const router = useRouter();
     const { toast } = useToast();
-    const [majors, setMajors] = useState<{ id: string; name: string }[]>([]);
+    const [majors, setMajors] = useState<Major[]>([]);
+    const [filteredMajors, setFilteredMajors] = useState<Major[]>([]);
     const [isStudentIdChecked, setIsStudentIdChecked] = useState(false);
 
     // react-hook-form 설정
@@ -75,11 +100,21 @@ export function SignupForm() {
         try {
             const response = await authApi.getMajors();
             // response.data가 undefined일 경우 빈 배열로 처리
-            setMajors(response.data || []);
+            const majorList = response.data || [];
+            setMajors(majorList);
         } catch (error) {
             console.error("Failed to load majors:", error);
             toast.error("전공 목록을 불러오는데 실패했습니다");
         }
+    };
+
+    // 대학 선택 시 전공 필터링
+    const handleCollegeChange = (college: string) => {
+        const filtered = majors.filter(major => major.college === college);
+        setFilteredMajors(filtered);
+
+        // 대학이 변경되면 기존 전공 선택 초기화
+        form.setValue("majorId", "");
     };
 
     // 학번 중복 확인
@@ -100,7 +135,7 @@ export function SignupForm() {
                 setIsStudentIdChecked(true);
                 toast.success("사용 가능한 학번입니다.");
             } else {
-                toast.error("이미 존재하는 학번입니다. 다른 학번을 입력해주세요.");
+                toast.error("이미 존재하는 학번입니다.");
                 form.setValue("studentId", "");
                 setIsStudentIdChecked(false);
             }
@@ -200,49 +235,85 @@ export function SignupForm() {
                                             </Button>
                                         </div>
                                     </FormControl>
-                                    <FormDescription>
-                                        8자리 숫자로 입력해주세요
-                                    </FormDescription>
                                     <FormMessage />
                                 </div>
                             </FormItem>
                         )}
                     />
 
-                    <FormField
-                        control={form.control}
-                        name="majorId"
-                        render={({ field }) => (
-                            <FormItem className="flex items-center space-y-0 gap-4">
-                                <FormLabel className="w-32 text-right">전공</FormLabel>
-                                <div className="flex-1 space-y-1">
-                                    <Select
-                                        onValueChange={field.onChange}
-                                        defaultValue={field.value}
-                                        onOpenChange={(open) => {
-                                            if (open && majors.length === 0) {
-                                                loadMajors();
-                                            }
-                                        }}
-                                    >
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="전공을 선택하세요" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {majors.map((major) => (
-                                                <SelectItem key={major.id} value={major.id}>
-                                                    {major.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </div>
-                            </FormItem>
-                        )}
-                    />
+                    <div className="flex items-center space-y-0 gap-4">
+                        <FormLabel className="w-32 text-right">전공</FormLabel>
+                        <div className="flex-1 flex gap-4">
+                            <FormField
+                                control={form.control}
+                                name="college"
+                                render={({ field }) => (
+                                    <FormItem className="flex-1">
+                                        <Select
+                                            onValueChange={(value) => {
+                                                field.onChange(value);
+                                                handleCollegeChange(value);
+                                            }}
+                                            defaultValue={field.value}
+                                            onOpenChange={(open) => {
+                                                if (open && majors.length === 0) {
+                                                    loadMajors();
+                                                }
+                                            }}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger className="min-w-0">
+                                                    <SelectValue placeholder="단과대를 선택하세요" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {Object.entries(COLLEGES).map(([key, label]) => (
+                                                    <SelectItem key={key} value={key}>
+                                                        {label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="majorId"
+                                render={({ field }) => (
+                                    <FormItem className="flex-1">
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            defaultValue={field.value}
+                                            disabled={!form.watch("college")}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger className="min-w-0">
+                                                    <SelectValue
+                                                        placeholder={
+                                                            form.watch("college")
+                                                                ? "전공을 선택하세요"
+                                                                : "단과대를 먼저 선택하세요"
+                                                        }
+                                                    />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {filteredMajors.map((major) => (
+                                                    <SelectItem key={major.id} value={major.id.toString()}>
+                                                        {major.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    </div>
 
                     <FormField
                         control={form.control}
@@ -312,24 +383,75 @@ export function SignupForm() {
                         render={({ field }) => (
                             <FormItem className="flex items-center space-y-0 gap-4">
                                 <FormLabel className="w-32 text-right">영어 실력</FormLabel>
-                                <div className="flex-1 space-y-1">
-                                    <Select
-                                        onValueChange={field.onChange}
-                                        defaultValue={field.value}
-                                    >
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="영어 실력을 선택하세요" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {ENGLISH_LEVELS.map((level) => (
-                                                <SelectItem key={level.value} value={level.value.toString()}>
-                                                    {level.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                <div className="flex-1 space-y-1 relative">
+                                    <div className="flex items-center gap-2">
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help absolute -left-6" />
+                                                </TooltipTrigger>
+                                                <TooltipContent className="p-0 max-w-md">
+                                                    <div className="bg-white border rounded-lg shadow-lg">
+                                                        <table className="text-xs- text-black">
+                                                            <thead>
+                                                                <tr className="bg-slate-500 text-white">
+                                                                    <th className="px-3 py-2 border-r border-slate-400">Level</th>
+                                                                    <th className="px-3 py-2 border-r border-slate-400">회화</th>
+                                                                    <th className="px-3 py-2 border-r border-slate-400">TOEIC</th>
+                                                                    <th className="px-3 py-2 border-r border-slate-400">OPIC</th>
+                                                                    <th className="px-3 py-2 border-r border-slate-400">TOEFL</th>
+                                                                    <th className="px-3 py-2">IELTS</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr className="border-b">
+                                                                    <td className="px-3 py-2 border-r font-medium">입문</td>
+                                                                    <td className="px-3 py-2 border-r text-center">기본적인 자기소개 및 간단한 문장 구사</td>
+                                                                    <td className="px-3 py-2 border-r text-center">0 ~ 550</td>
+                                                                    <td className="px-3 py-2 border-r text-center">~ NM</td>
+                                                                    <td className="px-3 py-2 border-r text-center">0 ~ 56</td>
+                                                                    <td className="px-3 py-2 text-center">0.0 ~ 4.5</td>
+                                                                </tr>
+                                                                <tr className="border-b">
+                                                                    <td className="px-3 py-2 border-r font-medium">중급</td>
+                                                                    <td className="px-3 py-2 border-r text-center">일상 대화 및 의견 표현 가능, 여행 시 의사소통 원활</td>
+                                                                    <td className="px-3 py-2 border-r text-center">550 ~ 850</td>
+                                                                    <td className="px-3 py-2 border-r text-center">IM ~ IH</td>
+                                                                    <td className="px-3 py-2 border-r text-center">57 ~ 94</td>
+                                                                    <td className="px-3 py-2 text-center">5.0 ~ 6.5</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td className="px-3 py-2 border-r font-medium">고급</td>
+                                                                    <td className="px-3 py-2 border-r text-center">비즈니스 및 학술적인 대화 가능, 유창한 의사소통</td>
+                                                                    <td className="px-3 py-2 border-r text-center">850 ~ 990</td>
+                                                                    <td className="px-3 py-2 border-r text-center">AL ~</td>
+                                                                    <td className="px-3 py-2 border-r text-center">95 ~ 120</td>
+                                                                    <td className="px-3 py-2 text-center">7.0 ~ 9.0</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            defaultValue={field.value}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="영어 실력을 선택하세요" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {ENGLISH_LEVELS.map((level) => (
+                                                    <SelectItem key={level.value} value={level.value.toString()}>
+                                                        {level.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                     <FormMessage />
                                 </div>
                             </FormItem>
@@ -345,7 +467,7 @@ export function SignupForm() {
                                 <div className="flex-1 space-y-1">
                                     <FormControl>
                                         <Textarea
-                                            placeholder="ECC에 지원하게 된 동기를 작성해주세요"
+                                            placeholder="ECC에 지원하게 된 동기를 작성해주세요!"
                                             className="min-h-[120px]"
                                             {...field}
                                         />
@@ -355,6 +477,74 @@ export function SignupForm() {
                             </FormItem>
                         )}
                     />
+
+                    <div className="border-t pt-6 space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="agreePersonalInfo"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                    <FormControl>
+                                        <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                        <div className="flex items-center gap-2">
+                                            <FormLabel>
+                                                개인정보 수집 및 이용에 동의합니다 (필수)
+                                            </FormLabel>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>운영진이 회원가입 시 입력하신 정보를 조회 가능합니다.</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </div>
+                                        <FormMessage />
+                                    </div>
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="agreeActivityData"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                    <FormControl>
+                                        <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                        <div className="flex items-center gap-2">
+                                            <FormLabel>
+                                                활동데이터 수집 및 활용에 동의합니다 (필수)
+                                            </FormLabel>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>운영진과 개발팀이 서비스 향상을 위해 활용 가능합니다.</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </div>
+                                        <FormMessage />
+                                    </div>
+                                </FormItem>
+                            )}
+                        />
+                    </div>
 
                     <Button
                         type="submit"

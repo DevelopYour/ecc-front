@@ -182,7 +182,7 @@ api.interceptors.response.use(
 export const authApi = {
     // 아이디 중복 확인
     checkId: (username: string): Promise<ResponseDto<boolean>> =>
-        publicApi.get(`/auth/signup/check-id?username=${username}`),
+        publicApi.get(`/auth/signup/check-id?studentId=${username}`),
 
     // 회원가입
     signup: (data: SignupRequest): Promise<ResponseDto<void>> =>

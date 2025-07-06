@@ -24,20 +24,13 @@ export function TopHeader() {
         if (isLoggingOut) return; // 중복 요청 방지
 
         setIsLoggingOut(true);
-
         try {
             // AuthContext의 logout 함수 호출 (이미 API 호출 + 쿠키/localStorage 정리 포함)
             await logout();
-
-            // 성공 메시지 (선택사항)
             toast?.success?.("로그아웃되었습니다.");
-
         } catch (error) {
             console.error('로그아웃 중 오류 발생:', error);
-
-            // 에러 메시지 (선택사항)
             toast?.error?.("로그아웃 처리 중 문제가 발생했습니다.");
-
         } finally {
             setIsLoggingOut(false);
         }

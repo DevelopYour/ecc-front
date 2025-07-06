@@ -285,12 +285,6 @@ export default function HomePage() {
                                                 <h3 className="font-medium text-sm mb-1">
                                                     {`${review.week}주차 복습 자료`}
                                                 </h3>
-                                                <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-                                                    {review.contents?.length > 80
-                                                        ? `${review.contents.substring(0, 80)}...`
-                                                        : review.contents
-                                                    }
-                                                </p>
                                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                                     <Calendar className="h-3 w-3" />
                                                     {formatDate(review.createdAt, "MM월 dd일")}
