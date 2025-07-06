@@ -79,8 +79,6 @@ export interface Category {
     name: string;
     description?: string;
     topicCount?: number;
-    createdAt: string;
-    updatedAt: string;
 }
 
 export interface TopicA {
@@ -88,8 +86,5 @@ export interface TopicA {
     categoryId: number;
     categoryName: string;
     topic: string;
-    description?: string;
     usageCount?: number;
-    createdAt: string;
-    updatedAt: string;
 }
