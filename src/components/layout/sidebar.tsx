@@ -6,14 +6,16 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
     Home, BookOpen, Zap, BookText, ChevronDown, ChevronRight,
-    Menu, X, Loader2
+    Menu, X, Loader2, Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTeams } from "@/context/teams-context";
+import { useAuth } from "@/context/auth-context";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export function Sidebar() {
+    const { user } = useAuth();
     const { myRegularTeams, myOneTimeTeams, isLoading: isTeamsLoading } = useTeams();
     const [isRegularExpanded, setIsRegularExpanded] = useState(true);
     const [isOneTimeExpanded, setIsOneTimeExpanded] = useState(true);
@@ -23,6 +25,9 @@ export function Sidebar() {
     const isActive = (path: string) => {
         return pathname === path || pathname.startsWith(`${path}/`);
     };
+
+    // 관리자 권한 확인
+    const isAdmin = user?.role === 'ROLE_ADMIN';
 
     const NavItem = ({
         href,
@@ -182,6 +187,17 @@ export function Sidebar() {
                 >
                     복습
                 </NavItem>
+
+                {/* 관리자 페이지 - admin 권한이 있는 경우에만 표시 */}
+                {isAdmin && (
+                    <NavItem
+                        href={ROUTES.ADMIN || '/admin'}
+                        icon={<Settings className="h-5 w-5" />}
+                        onClick={() => setIsMobileOpen(false)}
+                    >
+                        관리자 페이지
+                    </NavItem>
+                )}
             </nav>
             <p className="text-xs text-muted-foreground">
                 &copy; {new Date().getFullYear()} ECC 스터디. All rights reserved.
