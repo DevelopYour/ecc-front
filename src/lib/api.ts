@@ -450,7 +450,7 @@ export const adminTeamApi = {
         api.get("/admin/teams", { params }),
 
     // 팀 상세 정보 조회
-    getTeamDetail: (teamId: number): Promise<ResponseDto<Team>> =>
+    getTeamDetail: (teamId: number): Promise<ResponseDto<TeamA>> =>
         api.get(`/admin/teams/${teamId}`),
 
     // 팀 주차별 상세 정보 조회
