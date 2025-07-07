@@ -12,7 +12,6 @@ export default function RegularStudyApplyFormPage() {
     const [timeSlots] = useState<TimeSlot[]>(generateTimeSlots());
     const [selectedSubjects, setSelectedSubjects] = useState<number[]>([]);
     const [selectedTimes, setSelectedTimes] = useState<number[]>([]);
-    const [existingApplications, setExistingApplications] = useState<ApplyRegularStudyResponse[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
 
@@ -20,6 +19,7 @@ export default function RegularStudyApplyFormPage() {
         loadInitialData();
     }, []);
 
+    // 기존 신청 내역 처리 부분 수정
     const loadInitialData = async () => {
         try {
             setIsLoading(true);
@@ -33,15 +33,13 @@ export default function RegularStudyApplyFormPage() {
             // 기존 신청 내역 조회
             const applicationResponse = await teamApi.getRegularApplication();
             handleApiResponse(applicationResponse, (data) => {
-                if (data.applications && data.applications.length > 0) {
-                    setExistingApplications(data.applications);
+                if (data) {// 선택된 과목 ID 추출
+                    const subjectIds = data.subjects.map(s => s.subjectId);
+                    // 선택된 시간 ID 추출  
+                    const timeIds = data.times.map(t => t.timeId);
 
-                    // 기존 신청 내역을 선택 상태로 변환
-                    const subjectIds = [...new Set(data.applications.map(app => app.subjectId))];
-                    const timeIds = data.applications.map(app => app.timeId);
-
-                    setSelectedSubjects(subjectIds.map(id => Number(id)));
-                    setSelectedTimes(timeIds.map(id => Number(id)));
+                    setSelectedSubjects(subjectIds);
+                    setSelectedTimes(timeIds);
                     setIsEditing(true);
                 }
             });
@@ -102,25 +100,13 @@ export default function RegularStudyApplyFormPage() {
             }
         });
 
-        // 각 요일별로 연속성 확인
+        // 각 요일별로 최소 2시간 이상 선택했는지만 확인
         for (const [day, times] of timesByDay) {
-            times.sort((a, b) => a - b);
-
             if (times.length < 2) {
                 toast.error('선택 오류', {
                     description: `${getDayKorean(day)}요일에 최소 2시간 이상 선택해야 합니다.`,
                 });
                 return false;
-            }
-
-            // 연속성 확인
-            for (let i = 1; i < times.length; i++) {
-                if (times[i] - times[i - 1] > 1) {
-                    toast.error('선택 오류', {
-                        description: `${getDayKorean(day)}요일의 시간은 연속적으로 선택해야 합니다.`,
-                    });
-                    return false;
-                }
             }
         }
 
@@ -208,7 +194,7 @@ export default function RegularStudyApplyFormPage() {
                     toast.success('취소 완료', {
                         description: '신청이 취소되었습니다.',
                     });
-                    router.push('/regular');
+                    router.push('/regular/apply');
                 },
                 (error) => {
                     toast.error('취소 실패', {
@@ -320,14 +306,6 @@ export default function RegularStudyApplyFormPage() {
 
             {/* 버튼 */}
             <div className="flex gap-4">
-                <button
-                    onClick={handleSubmit}
-                    disabled={isLoading}
-                    className="px-6 py-2 bg-mygreen text-white rounded hover:bg-mygreen disabled:opacity-50"
-                >
-                    {isEditing ? '수정하기' : '신청하기'}
-                </button>
-
                 {isEditing && (
                     <button
                         onClick={handleCancel}
@@ -337,6 +315,14 @@ export default function RegularStudyApplyFormPage() {
                         신청 취소
                     </button>
                 )}
+
+                <button
+                    onClick={handleSubmit}
+                    disabled={isLoading}
+                    className="px-6 py-2 bg-mygreen text-white rounded hover:bg-mygreen disabled:opacity-50"
+                >
+                    {isEditing ? '수정하기' : '신청하기'}
+                </button>
 
                 <button
                     onClick={() => router.back()}

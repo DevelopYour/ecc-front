@@ -11,7 +11,7 @@ import { Review, ReviewTest } from "@/types/review";
 import { User } from "@/types/user";
 import { getRefreshToken, getToken, logout, setToken } from "./auth";
 import { ExpressionToAsk, ReportDocument, StudyRedis, Topic, TopicRecommendation, WeeklySummary } from "@/types/study";
-import { ApplyRegularStudyListResponse, RegularStudyApplyRequest, Subject, TimeSlot } from "@/types/apply-regular";
+import { ApplyRegularStudyResponse, RegularStudyApplyRequest, Subject, TimeSlot } from "@/types/apply-regular";
 import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
 import { setCookie } from "cookies-next";
 import { MemberA, MemberStatus, LevelChangeRequest, Category, TopicA, TeamA } from "@/types/admin";
@@ -247,15 +247,15 @@ export const userApi = {
 export const teamApi = {
 
     // 정규 스터디 신청
-    applyRegular: (data: RegularStudyApplyRequest): Promise<ResponseDto<ApplyRegularStudyListResponse>> =>
+    applyRegular: (data: RegularStudyApplyRequest): Promise<ResponseDto<ApplyRegularStudyResponse>> =>
         api.post("/teams/regular/apply", data),
 
     // 정규 스터디 신청 내역 조회
-    getRegularApplication: (): Promise<ResponseDto<ApplyRegularStudyListResponse>> =>
+    getRegularApplication: (): Promise<ResponseDto<ApplyRegularStudyResponse>> =>
         api.get("/teams/regular/apply"),
 
     // 정규 스터디 신청 내역 수정
-    updateRegularApplication: (data: RegularStudyApplyRequest): Promise<ResponseDto<ApplyRegularStudyListResponse>> =>
+    updateRegularApplication: (data: RegularStudyApplyRequest): Promise<ResponseDto<ApplyRegularStudyResponse>> =>
         api.put("/teams/regular/apply", data),
 
     // 정규 스터디 신청 취소
@@ -551,8 +551,8 @@ export const handleApiResponse = <T>(
     onSuccess: (data: T) => void,
     onError?: (error: string, code?: string) => void
 ) => {
-    if (response.success && response.data) {
-        onSuccess(response.data);
+    if (response.success) {
+        onSuccess(response.data as T);
     } else {
         const errorMsg = response.error || response.message || '요청 처리 중 오류가 발생했습니다';
         onError?.(errorMsg, response.code);
