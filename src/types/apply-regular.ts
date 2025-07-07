@@ -20,16 +20,25 @@ export interface UpdateRegularStudyRequest {
 }
 
 export interface ApplyRegularStudyResponse {
-    id: number;
     memberUuid: number;
     memberName: string;
+    subjects: AppliedSubject[];
+    times: AppliedTime[];
+}
+
+export interface AppliedSubject {
+    id: number;
     subjectId: number;
     subjectName: string;
+}
+
+export interface AppliedTime {
+    id: number;
     timeId: number;
     day: string;
     startTime: number;
 }
 
 export interface ApplyRegularStudyListResponse {
-    applications: ApplyRegularStudyResponse[];
+    application: ApplyRegularStudyResponse | null;
 }

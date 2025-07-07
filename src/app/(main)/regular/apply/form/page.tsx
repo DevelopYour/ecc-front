@@ -20,6 +20,7 @@ export default function RegularStudyApplyFormPage() {
         loadInitialData();
     }, []);
 
+    // 기존 신청 내역 처리 부분 수정
     const loadInitialData = async () => {
         try {
             setIsLoading(true);
@@ -33,15 +34,16 @@ export default function RegularStudyApplyFormPage() {
             // 기존 신청 내역 조회
             const applicationResponse = await teamApi.getRegularApplication();
             handleApiResponse(applicationResponse, (data) => {
-                if (data.applications && data.applications.length > 0) {
-                    setExistingApplications(data.applications);
+                if (data.application) {
+                    const app = data.application;
 
-                    // 기존 신청 내역을 선택 상태로 변환
-                    const subjectIds = [...new Set(data.applications.map(app => app.subjectId))];
-                    const timeIds = data.applications.map(app => app.timeId);
+                    // 선택된 과목 ID 추출
+                    const subjectIds = app.subjects.map(s => s.subjectId);
+                    // 선택된 시간 ID 추출  
+                    const timeIds = app.times.map(t => t.timeId);
 
-                    setSelectedSubjects(subjectIds.map(id => Number(id)));
-                    setSelectedTimes(timeIds.map(id => Number(id)));
+                    setSelectedSubjects(subjectIds);
+                    setSelectedTimes(timeIds);
                     setIsEditing(true);
                 }
             });
