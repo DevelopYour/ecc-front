@@ -39,4 +39,5 @@ export interface CheckIdRequest {
 export interface Major {
     id: string;
     name: string;
+    college: string;
 }

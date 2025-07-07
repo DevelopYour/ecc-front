@@ -150,4 +150,5 @@ export const ROUTES = {
     ONE_TIME: "/one-time",
     REVIEW: "/review",
     MY: "/my",
+    ADMIN: "/admin"
 };
