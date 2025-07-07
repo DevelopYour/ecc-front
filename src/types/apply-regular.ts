@@ -38,7 +38,3 @@ export interface AppliedTime {
     day: string;
     startTime: number;
 }
-
-export interface ApplyRegularStudyListResponse {
-    application: ApplyRegularStudyResponse | null;
-}
