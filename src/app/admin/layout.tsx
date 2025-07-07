@@ -9,7 +9,6 @@ import {
     BookOpen,
     Menu,
     X,
-    ChevronRight,
     Settings,
     LogOut
 } from "lucide-react";
@@ -58,7 +57,6 @@ export default function AdminLayout({
     const router = useRouter();
     const { user, logout, isLoading } = useAuth();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
     useEffect(() => {
         // 로딩 중이면 기다림
@@ -74,14 +72,6 @@ export default function AdminLayout({
     if (isLoading || !user || user.role !== 'ROLE_ADMIN') {
         return null; // 또는 로딩 스피너
     }
-
-    const toggleExpanded = (title: string) => {
-        setExpandedItems((prev) =>
-            prev.includes(title)
-                ? prev.filter((item) => item !== title)
-                : [...prev, title]
-        );
-    };
 
     const handleLogout = async () => {
         await logout();
@@ -122,38 +112,25 @@ export default function AdminLayout({
                     <nav className="flex-1 p-4 overflow-y-auto">
                         {adminNavItems.map((item) => (
                             <div key={item.title} className="mb-2">
-                                <button
-                                    onClick={() => toggleExpanded(item.title)}
-                                    className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 transition-colors"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <item.icon className="w-5 h-5 text-gray-600" />
-                                        <span className="font-medium text-gray-700">
-                                            {item.title}
-                                        </span>
-                                    </div>
-                                    <ChevronRight
-                                        className={cn(
-                                            "w-4 h-4 text-gray-400 transition-transform",
-                                            expandedItems.includes(item.title) && "rotate-90"
-                                        )}
-                                    />
-                                </button>
+                                <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
+                                    <item.icon className="w-5 h-5 text-gray-600" />
+                                    <span className="font-medium text-gray-700">
+                                        {item.title}
+                                    </span>
+                                </div>
 
-                                {expandedItems.includes(item.title) && (
-                                    <div className="ml-4 mt-1">
-                                        {item.subItems.map((subItem) => (
-                                            <Link
-                                                key={subItem.href}
-                                                href={subItem.href}
-                                                className="block p-2 pl-8 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
-                                                onClick={() => setIsSidebarOpen(false)}
-                                            >
-                                                {subItem.title}
-                                            </Link>
-                                        ))}
-                                    </div>
-                                )}
+                                <div className="ml-4 mt-1">
+                                    {item.subItems.map((subItem) => (
+                                        <Link
+                                            key={subItem.href}
+                                            href={subItem.href}
+                                            className="block p-2 pl-8 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+                                            onClick={() => setIsSidebarOpen(false)}
+                                        >
+                                            {subItem.title}
+                                        </Link>
+                                    ))}
+                                </div>
                             </div>
                         ))}
                     </nav>

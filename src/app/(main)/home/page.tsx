@@ -42,7 +42,6 @@ export default function HomePage() {
 
     // 팀 데이터를 기반으로 예정된 일정 생성
     const generateUpcomingEvents = (regularTeams: Team[], oneTimeTeams: Team[]): CalendarEvent[] => {
-        console.log(regularTeams.length > 0 ? regularTeams[0].startTime : "hi");
         const events: CalendarEvent[] = [];
         const now = new Date();
 
