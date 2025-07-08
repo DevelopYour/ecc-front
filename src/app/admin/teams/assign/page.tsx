@@ -3,18 +3,24 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { handleApiResponse, adminTeamMatchApi } from '@/lib/api';
-import { TeamAssignmentResult, UserAppliedStudy } from '@/types/apply-regular';
+import { TeamAssignmentResult, RegularStudyApplicant, AppliedTime } from '@/types/apply-regular';
 
 export default function AdminTeamAssignPage() {
-    const [users, setUsers] = useState<UserAppliedStudy[]>([]);
+    const [users, setUsers] = useState<RegularStudyApplicant[]>([]);
+    const [filteredUsers, setFilteredUsers] = useState<RegularStudyApplicant[]>([]);
     const [assignmentResults, setAssignmentResults] = useState<TeamAssignmentResult[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isAssigning, setIsAssigning] = useState(false);
     const [showResults, setShowResults] = useState(false);
+    const [selectedSubject, setSelectedSubject] = useState<string>('all');
 
     useEffect(() => {
         loadInitialData();
     }, []);
+
+    useEffect(() => {
+        filterUsersBySubject();
+    }, [users, selectedSubject]);
 
     const loadInitialData = async () => {
         try {
@@ -23,7 +29,7 @@ export default function AdminTeamAssignPage() {
             // 신청자 목록 조회
             const usersResponse = await adminTeamMatchApi.getRegularApplications();
             handleApiResponse(usersResponse, (data) => {
-                setUsers(data.users || []);
+                setUsers(data);
             });
 
         } catch (error) {
@@ -34,6 +40,27 @@ export default function AdminTeamAssignPage() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const filterUsersBySubject = () => {
+        if (selectedSubject === 'all') {
+            setFilteredUsers(users);
+        } else {
+            const filtered = users.filter(user =>
+                user.subjects.some(subject => subject.subjectName === selectedSubject)
+            );
+            setFilteredUsers(filtered);
+        }
+    };
+
+    const getAllSubjects = () => {
+        const subjectsSet = new Set<string>();
+        users.forEach(user => {
+            user.subjects.forEach(subject => {
+                subjectsSet.add(subject.subjectName);
+            });
+        });
+        return Array.from(subjectsSet).sort();
     };
 
     const getDayKorean = (day: string): string => {
@@ -51,6 +78,25 @@ export default function AdminTeamAssignPage() {
 
     const formatTimeRange = (startTime: number): string => {
         return `${startTime}:00-${startTime + 1}:00`;
+    };
+
+    // 시간을 요일별로 그룹화하는 함수
+    const groupTimesByDay = (times: AppliedTime[]) => {
+        const grouped = times.reduce((acc, time) => {
+            const day = time.day;
+            if (!acc[day]) {
+                acc[day] = [];
+            }
+            acc[day].push(time);
+            return acc;
+        }, {} as { [key: string]: AppliedTime[] });
+
+        // 각 요일의 시간들을 시작 시간 순으로 정렬
+        Object.keys(grouped).forEach(day => {
+            grouped[day].sort((a, b) => a.startTime - b.startTime);
+        });
+
+        return grouped;
     };
 
     const executeTeamAssignment = async () => {
@@ -138,7 +184,9 @@ export default function AdminTeamAssignPage() {
 
         return stats;
     };
+
     const assignmentStats = getAssignmentStats();
+    const allSubjects = getAllSubjects();
 
     if (isLoading) {
         return <div className="flex justify-center items-center h-64">로딩 중...</div>;
@@ -238,7 +286,37 @@ export default function AdminTeamAssignPage() {
 
             {/* 신청자 목록 */}
             <div className="bg-white border rounded-lg p-6">
-                <h2 className="text-xl font-semibold mb-4">신청자 목록</h2>
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-semibold">신청자 목록</h2>
+
+                    {/* 과목 필터 */}
+                    <div className="flex items-center gap-2">
+                        <label htmlFor="subject-filter" className="text-sm font-medium text-gray-700">
+                            과목 필터:
+                        </label>
+                        <select
+                            id="subject-filter"
+                            value={selectedSubject}
+                            onChange={(e) => setSelectedSubject(e.target.value)}
+                            className="border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="all">전체 과목</option>
+                            {allSubjects.map((subject) => (
+                                <option key={subject} value={subject}>
+                                    {subject}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
+                {/* 필터 정보 */}
+                <div className="mb-4 text-sm text-gray-600">
+                    {selectedSubject === 'all'
+                        ? `전체 신청자 ${users.length}명`
+                        : `${selectedSubject} 신청자 ${filteredUsers.length}명`
+                    }
+                </div>
 
                 <div className="overflow-x-auto">
                     <table className="min-w-full table-auto">
@@ -250,36 +328,50 @@ export default function AdminTeamAssignPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {users.map((user) => (
-                                <tr key={user.memberUuid} className="border-t">
-                                    <td className="px-4 py-2 font-medium">{user.memberName}</td>
-                                    <td className="px-4 py-2">
-                                        <div className="space-y-1">
-                                            {user.subjects.map((subject) => (
-                                                <span key={subject.id} className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-1">
-                                                    {subject.subjectName}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-2">
-                                        <div className="space-y-1">
-                                            {user.times.map((time) => (
-                                                <span key={time.id} className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded mr-1">
-                                                    {getDayKorean(time.day)} {formatTimeRange(time.startTime)}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                            {filteredUsers.map((user) => {
+                                const groupedTimes = groupTimesByDay(user.times);
+
+                                return (
+                                    <tr key={user.memberUuid} className="border-t">
+                                        <td className="px-4 py-2 font-medium">{user.memberName}</td>
+                                        <td className="px-4 py-2">
+                                            <div className="flex flex-wrap gap-1">
+                                                {user.subjects.map((subject) => (
+                                                    <span key={subject.id} className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                                        {subject.subjectName}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-2">
+                                            <div className="space-y-1">
+                                                {Object.entries(groupedTimes).map(([day, times]) => (
+                                                    <div key={day} className="flex items-center gap-1">
+                                                        <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-medium">
+                                                            {getDayKorean(day)}
+                                                        </span>
+                                                        {times.map((time, index) => (
+                                                            <span key={time.id} className="inline-block bg-green-50 text-green-700 text-xs px-2 py-1 rounded">
+                                                                {formatTimeRange(time.startTime)}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
 
-                {users.length === 0 && (
+                {filteredUsers.length === 0 && (
                     <div className="text-center py-8 text-gray-500">
-                        신청자가 없습니다.
+                        {selectedSubject === 'all'
+                            ? '신청자가 없습니다.'
+                            : `${selectedSubject} 신청자가 없습니다.`
+                        }
                     </div>
                 )}
             </div>

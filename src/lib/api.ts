@@ -12,7 +12,7 @@ import { Review, ReviewTest } from "@/types/review";
 import { User } from "@/types/user";
 import { getRefreshToken, getToken, logout, setToken } from "./auth";
 import { ExpressionToAsk, ReportDocument, StudyRedis, Topic, TopicRecommendation, WeeklySummary } from "@/types/study";
-import { ApplyRegularStudyResponse, RegularStudyApplyRequest, TeamAssignmentResult, TimeSlot, UserAppliedStudy } from "@/types/apply-regular";
+import { RegularStudyApplicant, RegularStudyApplyRequest, TeamAssignmentResult, TimeSlot } from "@/types/apply-regular";
 import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
 import { setCookie } from "cookies-next";
 import { MemberA, MemberStatus, LevelChangeRequest, Category, TopicA, TeamA } from "@/types/admin";
@@ -248,15 +248,15 @@ export const userApi = {
 export const teamApi = {
 
     // 정규 스터디 신청
-    applyRegular: (data: RegularStudyApplyRequest): Promise<ResponseDto<ApplyRegularStudyResponse>> =>
+    applyRegular: (data: RegularStudyApplyRequest): Promise<ResponseDto<RegularStudyApplicant>> =>
         api.post("/teams/regular/apply", data),
 
     // 정규 스터디 신청 내역 조회
-    getRegularApplication: (): Promise<ResponseDto<ApplyRegularStudyResponse>> =>
+    getRegularApplication: (): Promise<ResponseDto<RegularStudyApplicant>> =>
         api.get("/teams/regular/apply"),
 
     // 정규 스터디 신청 내역 수정
-    updateRegularApplication: (data: RegularStudyApplyRequest): Promise<ResponseDto<ApplyRegularStudyResponse>> =>
+    updateRegularApplication: (data: RegularStudyApplyRequest): Promise<ResponseDto<RegularStudyApplicant>> =>
         api.put("/teams/regular/apply", data),
 
     // 정규 스터디 신청 취소
@@ -546,45 +546,10 @@ export const adminContentApi = {
         api.delete(`/admin/content/topics/${topicId}`),
 };
 
-// API 응답 처리 헬퍼 함수
-export const handleApiResponse = <T>(
-    response: ResponseDto<T>,
-    onSuccess: (data: T) => void,
-    onError?: (error: string, code?: string) => void
-) => {
-    if (response.success) {
-        onSuccess(response.data as T);
-    } else {
-        const errorMsg = response.error || response.message || '요청 처리 중 오류가 발생했습니다';
-        onError?.(errorMsg, response.code);
-        console.error('API Error:', errorMsg, response.code);
-    }
-};
-
-// 시간 목록 생성 헬퍼 함수
-export const generateTimeSlots = (): TimeSlot[] => {
-    const days: TimeSlot['day'][] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-    const timeSlots: TimeSlot[] = [];
-    let timeId = 1;
-
-    days.forEach(day => {
-        for (let startTime = 6; startTime <= 22; startTime++) {
-            timeSlots.push({
-                timeId,
-                day,
-                startTime,
-            });
-            timeId++;
-        }
-    });
-
-    return timeSlots;
-};
-
 // 관리자 팀 매칭 API
 export const adminTeamMatchApi = {
     // 모든 정규 스터디 신청자 목록 조회
-    getRegularApplications: (): Promise<ResponseDto<{ users: UserAppliedStudy[] }>> =>
+    getRegularApplications: (): Promise<ResponseDto<RegularStudyApplicant[]>> =>
         api.get("/admin/team-match/applications"),
 
     // 팀 매칭 실행 (OR-Tools 최적화 알고리즘 실행)
@@ -656,5 +621,39 @@ export const adminTeamMatchApi = {
     //     api.patch(`/admin/teams/regular/matching/team/${teamId}`, data),
 };
 
+// API 응답 처리 헬퍼 함수
+export const handleApiResponse = <T>(
+    response: ResponseDto<T>,
+    onSuccess: (data: T) => void,
+    onError?: (error: string, code?: string) => void
+) => {
+    if (response.success) {
+        onSuccess(response.data as T);
+    } else {
+        const errorMsg = response.error || response.message || '요청 처리 중 오류가 발생했습니다';
+        onError?.(errorMsg, response.code);
+        console.error('API Error:', errorMsg, response.code);
+    }
+};
+
+// 시간 목록 생성 헬퍼 함수
+export const generateTimeSlots = (): TimeSlot[] => {
+    const days: TimeSlot['day'][] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    const timeSlots: TimeSlot[] = [];
+    let timeId = 1;
+
+    days.forEach(day => {
+        for (let startTime = 6; startTime <= 22; startTime++) {
+            timeSlots.push({
+                timeId,
+                day,
+                startTime,
+            });
+            timeId++;
+        }
+    });
+
+    return timeSlots;
+};
 
 export default api;

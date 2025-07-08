@@ -14,7 +14,7 @@ export interface UpdateRegularStudyRequest {
     timeIds: number[];
 }
 
-export interface ApplyRegularStudyResponse {
+export interface RegularStudyApplicant {
     memberUuid: number;
     memberName: string;
     subjects: AppliedSubject[];
@@ -32,14 +32,6 @@ export interface AppliedTime {
     timeId: number;
     day: string;
     startTime: number;
-}
-
-// 팀 배정
-export interface UserAppliedStudy {
-    memberUuid: string;
-    memberName: string;
-    subjects: AppliedSubject[];
-    times: AppliedTime[];
 }
 
 export interface TeamAssignmentResult {
