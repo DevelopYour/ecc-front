@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
+import { hr } from "date-fns/locale";
 
 const adminNavItems = [
     {
@@ -36,6 +37,7 @@ const adminNavItems = [
             { title: "정규 스터디", href: "/admin/teams/regular" },
             { title: "번개 스터디", href: "/admin/teams/one-time" },
             { title: "보고서 현황", href: "/admin/teams/reports" },
+            { title: "팀 배정", href: "/admin/teams/assign" },
         ],
     },
     {

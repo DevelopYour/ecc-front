@@ -4,11 +4,6 @@ export interface TimeSlot {
     startTime: number;
 }
 
-export interface Subject {
-    subjectId: number;
-    name: string;
-}
-
 export interface RegularStudyApplyRequest {
     subjectIds: number[];
     timeIds: number[];
@@ -37,4 +32,31 @@ export interface AppliedTime {
     timeId: number;
     day: string;
     startTime: number;
+}
+
+// 팀 배정
+export interface UserAppliedStudy {
+    memberUuid: string;
+    memberName: string;
+    subjects: AppliedSubject[];
+    times: AppliedTime[];
+}
+
+export interface TeamAssignmentResult {
+    subjectId: number;
+    subjectName: string;
+    timeId: number;
+    day: string;
+    startTime: number;
+    teams: AssignedTeam[];
+}
+
+export interface AssignedTeam {
+    teamId: string;
+    members: AssignedTeamMember[];
+}
+
+export interface AssignedTeamMember {
+    memberUuid: string;
+    memberName: string;
 }

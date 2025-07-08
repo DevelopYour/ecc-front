@@ -1,8 +1,3 @@
-export interface Subject {
-    subjectId: number;
-    name: string;
-}
-
 export type OneTimeTeamStatus =
     | 'RECRUITING'
     | 'UPCOMING'

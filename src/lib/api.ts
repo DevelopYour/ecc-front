@@ -5,13 +5,14 @@ import {
     LoginRequest, LoginResponse, SignupRequest, Major
 } from "@/types/auth";
 import {
+    Subject,
     Team
 } from "@/types/team";
 import { Review, ReviewTest } from "@/types/review";
 import { User } from "@/types/user";
 import { getRefreshToken, getToken, logout, setToken } from "./auth";
 import { ExpressionToAsk, ReportDocument, StudyRedis, Topic, TopicRecommendation, WeeklySummary } from "@/types/study";
-import { ApplyRegularStudyResponse, RegularStudyApplyRequest, Subject, TimeSlot } from "@/types/apply-regular";
+import { ApplyRegularStudyResponse, RegularStudyApplyRequest, TeamAssignmentResult, TimeSlot, UserAppliedStudy } from "@/types/apply-regular";
 import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
 import { setCookie } from "cookies-next";
 import { MemberA, MemberStatus, LevelChangeRequest, Category, TopicA, TeamA } from "@/types/admin";
@@ -578,6 +579,81 @@ export const generateTimeSlots = (): TimeSlot[] => {
     });
 
     return timeSlots;
+};
+
+// 관리자 팀 매칭 API
+export const adminTeamMatchApi = {
+    // 모든 정규 스터디 신청자 목록 조회
+    getRegularApplications: (): Promise<ResponseDto<{ users: UserAppliedStudy[] }>> =>
+        api.get("/admin/team-match/applications"),
+
+    // 팀 매칭 실행 (OR-Tools 최적화 알고리즘 실행)
+    executeTeamAssignment: (): Promise<ResponseDto<{
+        results: TeamAssignmentResult[];
+        executionTime: number;
+    }>> =>
+        api.get("/admin/team-match"),
+
+    // 팀 배정 결과 저장
+    saveTeamAssignment: (results: TeamAssignmentResult[]): Promise<ResponseDto<{ savedTeams: number }>> =>
+        api.post("/admin/team-match", { results }),
+
+    // // 수동으로 특정 사용자를 팀에 배정
+    // manualAssignUser: (data: {
+    //     memberUuid: string;
+    //     subjectId: number;
+    //     timeId: number;
+    //     teamId?: string;
+    // }): Promise<ResponseDto<TeamAssignmentResult>> =>
+    //     api.post("/admin/teams/regular/matching/manual-assign", data),
+
+    // // 과목별 신청자 분포 조회
+    // getSubjectDistribution: (): Promise<ResponseDto<{
+    //     subjectId: number;
+    //     subjectName: string;
+    //     applicantCount: number;
+    //     timeDistribution: {
+    //         timeId: number;
+    //         day: string;
+    //         startTime: number;
+    //         count: number;
+    //     }[];
+    // }[]>> =>
+    //     api.get("/admin/team-match/subject-distribution"),
+
+    // // 시간대별 신청자 분포 조회
+    // getTimeDistribution: (): Promise<ResponseDto<{
+    //     timeId: number;
+    //     day: string;
+    //     startTime: number;
+    //     applicantCount: number;
+    //     subjectDistribution: {
+    //         subjectId: number;
+    //         subjectName: string;
+    //         count: number;
+    //     }[];
+    // }[]>> =>
+    //     api.get("/admin/team-match/time-distribution"),
+
+    // // 미배정 사용자 목록 조회
+    // getUnassignedUsers: (): Promise<ResponseDto<{
+    //     users: ApplyRegularStudyUser[];
+    //     reasons: {
+    //         memberUuid: string;
+    //         reason: 'NO_MATCHING_TIME' | 'INSUFFICIENT_CANDIDATES' | 'CONSTRAINT_CONFLICT';
+    //         details: string;
+    //     }[];
+    // }>> =>
+    //     api.get("/admin/team-match/unassigned"),
+
+
+    // // 팀 정보 수정 (멤버 추가/제거, 시간 변경 등)
+    // updateTeam: (teamId: string, data: {
+    //     addMembers?: string[];
+    //     removeMembers?: string[];
+    //     newTimeId?: number;
+    // }): Promise<ResponseDto<TeamAssignmentResult>> =>
+    //     api.patch(`/admin/teams/regular/matching/team/${teamId}`, data),
 };
 
 

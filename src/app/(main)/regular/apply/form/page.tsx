@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { teamApi, generateTimeSlots, handleApiResponse } from '@/lib/api';
-import { Subject, TimeSlot, ApplyRegularStudyResponse } from '@/types/apply-regular';
+import { TimeSlot } from '@/types/apply-regular';
+import { Subject } from '@/types/team';
 
 export default function RegularStudyApplyFormPage() {
     const router = useRouter();

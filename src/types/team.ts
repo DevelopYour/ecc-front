@@ -31,3 +31,8 @@ export interface TeamMember {
     };
     joinedAt: string;
 }
+
+export interface Subject {
+    subjectId: number;
+    name: string;
+}
