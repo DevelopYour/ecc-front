@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { teamApi } from '@/lib/api';
-import { Subject } from '@/types/apply-regular';
+import { Subject } from '@/types/team';
 
 interface CreateOneTimeRequest {
     name: string;

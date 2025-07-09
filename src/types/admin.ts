@@ -44,7 +44,7 @@ export interface TeamA {
     name: string;
     subjectId: number;
     subjectName: string;
-    isRegular: boolean;
+    regular: boolean;
     year?: number;
     semester?: number;
     timeId?: number;
@@ -70,7 +70,7 @@ export interface TeamMemberA {
     name: string;
     studentId: string;
     level: number;
-    isLeader: boolean;
+    leader: boolean;
     joinedAt: string;
 }
 

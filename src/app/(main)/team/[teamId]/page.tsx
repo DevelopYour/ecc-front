@@ -30,7 +30,7 @@ export default function TeamPage({ params }: TeamPageProps) {
 
     const teamId = resolvedParams.teamId;
     const team = getTeamById(teamId);
-    const isRegular = team?.isRegular ?? true; // 기본값을 정규로 설정
+    const isRegular = team?.regular ?? true; // 기본값을 정규로 설정
 
     useEffect(() => {
         loadTeamProgress();

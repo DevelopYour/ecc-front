@@ -314,7 +314,7 @@ export default function ReportPage({ params }: ReportPageProps) {
 
     // 코멘트 자동 저장 (debounced)
     useEffect(() => {
-        if (!report || report.isSubmitted || finalComments === report.comments) return;
+        if (!report || report.submitted || finalComments === report.comments) return;
 
         const timeoutId = setTimeout(async () => {
             if (finalComments.trim() !== (report.comments || '').trim()) {
@@ -326,7 +326,7 @@ export default function ReportPage({ params }: ReportPageProps) {
     }, [finalComments, report]);
 
     const saveComments = async () => {
-        if (!report || report.isSubmitted) return;
+        if (!report || report.submitted) return;
 
         setCommentsSaving(true);
         try {
@@ -441,7 +441,7 @@ export default function ReportPage({ params }: ReportPageProps) {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {report.isSubmitted ? (
+                        {report.submitted ? (
                             <Badge variant="default" className="gap-1">
                                 <CheckCircle2 className="h-3 w-3" />
                                 제출 완료
@@ -539,7 +539,7 @@ export default function ReportPage({ params }: ReportPageProps) {
                                 value={finalComments}
                                 onChange={(e) => setFinalComments(e.target.value)}
                                 className="mt-2 min-h-[60px]"
-                                disabled={report.isSubmitted}
+                                disabled={report.submitted}
                             />
                             {finalComments.length > 0 && (
                                 <p className="text-xs text-muted-foreground mt-1">
@@ -568,7 +568,7 @@ export default function ReportPage({ params }: ReportPageProps) {
                 </Card>
 
                 {/* 제출 버튼 */}
-                {!report.isSubmitted && (
+                {!report.submitted && (
                     <Card className="border-orange-200 bg-orange-50">
                         <CardContent className="pt-6">
                             <div className="flex items-start gap-3">
@@ -600,7 +600,7 @@ export default function ReportPage({ params }: ReportPageProps) {
                 )}
 
                 {/* 제출 완료 안내 */}
-                {report.isSubmitted && (
+                {report.submitted && (
                     <Card className="border-green-200 bg-green-50">
                         <CardContent className="pt-6">
                             <div className="flex items-start gap-3">

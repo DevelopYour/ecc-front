@@ -6,9 +6,9 @@ import { toast } from 'sonner';
 import { teamApi } from '@/lib/api';
 import { Clock, Users, MapPin, Calendar, Plus } from 'lucide-react';
 import { OneTimeTeam } from '@/types/apply-onetime';
-import { Subject } from '@/types/apply-regular';
 import { ONE_TIME_STATUS_STYLE } from '@/lib/constants';
 import { useTeams } from '@/context/teams-context';
+import { Subject } from '@/types/team';
 
 export default function OneTimeApplyPage() {
     const router = useRouter();

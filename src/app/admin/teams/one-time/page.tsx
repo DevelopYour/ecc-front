@@ -53,7 +53,7 @@ export default function AdminOneTimeTeamsPage() {
             setLoading(true);
             const response = await adminTeamApi.getAllTeams({ isRegular: false });
             if (response.success && response.data) {
-                setTeams(response.data.filter(team => !team.isRegular));
+                setTeams(response.data.filter(team => !team.regular));
             }
         } catch (error) {
             console.error("Failed to load one-time teams:", error);

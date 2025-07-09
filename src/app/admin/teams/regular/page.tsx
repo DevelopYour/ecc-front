@@ -58,7 +58,7 @@ export default function AdminRegularTeamsPage() {
 
             const response = await adminTeamApi.getAllTeams(params);
             if (response.success && response.data) {
-                setTeams(response.data.filter(team => team.isRegular));
+                setTeams(response.data.filter(team => team.regular));
             }
         } catch (error) {
             console.error("Failed to load regular teams:", error);

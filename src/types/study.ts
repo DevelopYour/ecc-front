@@ -103,7 +103,7 @@ export interface ReportDocument {
     week: number;
     topics: ReportTopic[];
     comments?: string;
-    isSubmitted: boolean;
+    submitted: boolean;
     submittedAt?: string;
     createdAt: string;
     updatedAt: string;

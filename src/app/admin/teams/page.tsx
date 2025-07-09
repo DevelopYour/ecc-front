@@ -54,9 +54,9 @@ export default function AdminTeamsPage() {
     const getFilteredTeams = () => {
         switch (activeTab) {
             case "regular":
-                return teams.filter((team) => team.isRegular);
+                return teams.filter((team) => team.regular);
             case "onetime":
-                return teams.filter((team) => !team.isRegular);
+                return teams.filter((team) => !team.regular);
             default:
                 return teams;
         }
@@ -109,7 +109,7 @@ export default function AdminTeamsPage() {
                     </CardHeader>
                     <CardContent>
                         <p className="text-2xl font-bold">
-                            {teams.filter((t) => t.isRegular).length}
+                            {teams.filter((t) => t.regular).length}
                         </p>
                     </CardContent>
                 </Card>
@@ -121,7 +121,7 @@ export default function AdminTeamsPage() {
                     </CardHeader>
                     <CardContent>
                         <p className="text-2xl font-bold">
-                            {teams.filter((t) => !t.isRegular).length}
+                            {teams.filter((t) => !t.regular).length}
                         </p>
                     </CardContent>
                 </Card>
@@ -207,7 +207,7 @@ export default function AdminTeamsPage() {
                                                     </TableCell>
                                                     <TableCell>
                                                         <Badge variant="outline">
-                                                            {team.isRegular ? "정규" : "번개"}
+                                                            {team.regular ? "정규" : "번개"}
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell>{getStatusBadge(team.status)}</TableCell>
@@ -220,7 +220,7 @@ export default function AdminTeamsPage() {
                                                     <TableCell>
                                                         <div className="flex items-center gap-2">
                                                             <Clock className="w-4 h-4 text-gray-400" />
-                                                            {team.isRegular
+                                                            {team.regular
                                                                 ? `${team.day} ${team.startTime}:00`
                                                                 : new Date(team.startDateTime!).toLocaleString("ko-KR", {
                                                                     month: "numeric",
@@ -231,7 +231,7 @@ export default function AdminTeamsPage() {
                                                         </div>
                                                     </TableCell>
                                                     <TableCell>
-                                                        {team.isRegular && (
+                                                        {team.regular && (
                                                             <div className="flex items-center gap-2">
                                                                 <Target className="w-4 h-4 text-gray-400" />
                                                                 {team.score || 0}점

@@ -194,7 +194,7 @@ export default function OneTimeStudyDetailPage() {
                         <p className="text-lg text-mygreen font-medium">{team.subjectName}</p>
                     </div>
 
-                    {team.isCreator && (
+                    {team.creator && (
                         <div className="flex gap-2">
                             <button
                                 onClick={handleEdit}
@@ -286,7 +286,7 @@ export default function OneTimeStudyDetailPage() {
 
                 {/* 액션 버튼 */}
                 <div className="flex gap-4 pt-6 border-t">
-                    {!team.isCreator && team.status === 'RECRUITING' && (
+                    {!team.creator && team.status === 'RECRUITING' && (
                         <>
                             {!isUserJoined() ? (
                                 <button

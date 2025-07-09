@@ -2,7 +2,7 @@ export interface Team {
     id: string;
     name: string;
     subject: string;
-    isRegular: boolean;
+    regular: boolean;
     status?: 'RECRUITING' | 'ACTIVE' | 'COMPLETED' | 'CANCELED';
     startTime: number;
     endDate?: string;

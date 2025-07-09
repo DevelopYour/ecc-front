@@ -50,7 +50,7 @@ export interface OneTimeStudyDetail {
     members: MemberIdAndName[];
     canJoin: boolean;
     canCancel: boolean;
-    isCreator: boolean;
+    creator: boolean;
 }
 
 export interface CreateOneTimeRequest {

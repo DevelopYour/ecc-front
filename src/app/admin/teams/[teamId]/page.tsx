@@ -77,7 +77,7 @@ export default function AdminTeamDetailPage() {
     };
 
     const handleDeleteTeam = async () => {
-        if (!team || team.isRegular) return;
+        if (!team || team.regular) return;
 
         try {
             const response = await adminTeamApi.deleteOneTimeTeam(teamId);
@@ -92,7 +92,7 @@ export default function AdminTeamDetailPage() {
     };
 
     const handleScoreUpdate = async () => {
-        if (!team || !team.isRegular) return;
+        if (!team || !team.regular) return;
 
         try {
             const response = await adminTeamApi.updateTeamScore(teamId, newScore);
@@ -178,7 +178,7 @@ export default function AdminTeamDetailPage() {
                                 <label className="text-sm font-medium text-gray-500">유형</label>
                                 <div className="mt-1">
                                     <Badge variant="outline">
-                                        {team.isRegular ? "정규 스터디" : "번개 스터디"}
+                                        {team.regular ? "정규 스터디" : "번개 스터디"}
                                     </Badge>
                                 </div>
                             </div>
@@ -196,13 +196,13 @@ export default function AdminTeamDetailPage() {
                                 <div className="flex items-center gap-2 mt-1">
                                     <Clock className="w-4 h-4 text-gray-400" />
                                     <p className="font-medium">
-                                        {team.isRegular
+                                        {team.regular
                                             ? `${team.day} ${team.startTime}:00`
                                             : new Date(team.startDateTime!).toLocaleString("ko-KR")}
                                     </p>
                                 </div>
                             </div>
-                            {team.isRegular && (
+                            {team.regular && (
                                 <>
                                     <div>
                                         <label className="text-sm font-medium text-gray-500">학기</label>
@@ -242,7 +242,7 @@ export default function AdminTeamDetailPage() {
                             <CardTitle>관리 작업</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            {team.isRegular && (
+                            {team.regular && (
                                 <Button
                                     variant="outline"
                                     className="w-full"
@@ -260,7 +260,7 @@ export default function AdminTeamDetailPage() {
                                 <Users className="w-4 h-4 mr-2" />
                                 멤버 관리
                             </Button>
-                            {team.isRegular && (
+                            {team.regular && (
                                 <Button
                                     variant="outline"
                                     className="w-full"
@@ -270,7 +270,7 @@ export default function AdminTeamDetailPage() {
                                     보고서 관리
                                 </Button>
                             )}
-                            {!team.isRegular && (
+                            {!team.regular && (
                                 <Button
                                     variant="destructive"
                                     className="w-full"
@@ -322,7 +322,7 @@ export default function AdminTeamDetailPage() {
                                         <Badge variant="outline">Level {member.level}</Badge>
                                     </TableCell>
                                     <TableCell>
-                                        {member.isLeader && (
+                                        {member.leader && (
                                             <Badge variant="default">
                                                 <Star className="w-3 h-3 mr-1" />
                                                 팀장
