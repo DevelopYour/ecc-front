@@ -44,6 +44,7 @@ export interface AssignedTeam {
 }
 
 export interface AssignedTeamMember {
-    id: string;
+    id: number;
+    studentId: string
     name: string;
 }

@@ -150,6 +150,7 @@ export default function AdminTeamAssignPage() {
                     toast.success('저장 완료', {
                         description: '팀 배정 결과가 저장되었습니다.',
                     });
+                    setShowResults(false);
                 },
                 (error) => {
                     toast.error('저장 실패', {
@@ -248,7 +249,7 @@ export default function AdminTeamAssignPage() {
                                 <div key={result.timeId} className="bg-gray-50 p-4 rounded">
                                     <span className="space-x-3">
                                         {result.members.map((member) => (
-                                            <span key={member.id} className="text-sm font-semibold">{member.name} ({member.id})</span>
+                                            <span key={member.id} className="text-sm font-semibold">{member.name} ({member.studentId})</span>
                                         ))}
                                     </span>
                                 </div>

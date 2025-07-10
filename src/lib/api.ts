@@ -557,8 +557,8 @@ export const adminTeamMatchApi = {
         api.get("/admin/team-match"),
 
     // 팀 배정 결과 저장
-    saveTeamAssignment: (results: AssignedTeam[]): Promise<ResponseDto<{ savedTeams: number }>> =>
-        api.post("/admin/team-match", { results }),
+    saveTeamAssignment: (results: AssignedTeam[]): Promise<ResponseDto<number>> =>
+        api.post("/admin/team-match", results),
 
     // // 수동으로 특정 사용자를 팀에 배정
     // manualAssignUser: (data: {
