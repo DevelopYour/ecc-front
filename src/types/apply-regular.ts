@@ -34,21 +34,17 @@ export interface AppliedTime {
     startTime: number;
 }
 
-export interface TeamAssignmentResult {
+export interface AssignedTeam {
+    day: string;
+    timeId: number;
+    startTime: number;
     subjectId: number;
     subjectName: string;
-    timeId: number;
-    day: string;
-    startTime: number;
-    teams: AssignedTeam[];
-}
-
-export interface AssignedTeam {
-    teamId: string;
     members: AssignedTeamMember[];
 }
 
 export interface AssignedTeamMember {
-    memberUuid: string;
-    memberName: string;
+    id: number;
+    studentId: string
+    name: string;
 }

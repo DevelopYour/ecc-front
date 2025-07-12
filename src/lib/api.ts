@@ -12,7 +12,7 @@ import { Review, ReviewTest } from "@/types/review";
 import { User } from "@/types/user";
 import { getRefreshToken, getToken, logout, setToken } from "./auth";
 import { ExpressionToAsk, ReportDocument, StudyRedis, Topic, TopicRecommendation, WeeklySummary } from "@/types/study";
-import { RegularStudyApplicant, RegularStudyApplyRequest, TeamAssignmentResult, TimeSlot } from "@/types/apply-regular";
+import { AssignedTeam, RegularStudyApplicant, RegularStudyApplyRequest, TimeSlot } from "@/types/apply-regular";
 import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
 import { setCookie } from "cookies-next";
 import { MemberA, MemberStatus, LevelChangeRequest, Category, TopicA, TeamA } from "@/types/admin";
@@ -553,15 +553,12 @@ export const adminTeamMatchApi = {
         api.get("/admin/team-match/applications"),
 
     // 팀 매칭 실행 (OR-Tools 최적화 알고리즘 실행)
-    executeTeamAssignment: (): Promise<ResponseDto<{
-        results: TeamAssignmentResult[];
-        executionTime: number;
-    }>> =>
+    executeTeamAssignment: (): Promise<ResponseDto<AssignedTeam[]>> =>
         api.get("/admin/team-match"),
 
     // 팀 배정 결과 저장
-    saveTeamAssignment: (results: TeamAssignmentResult[]): Promise<ResponseDto<{ savedTeams: number }>> =>
-        api.post("/admin/team-match", { results }),
+    saveTeamAssignment: (results: AssignedTeam[]): Promise<ResponseDto<number>> =>
+        api.post("/admin/team-match", results),
 
     // // 수동으로 특정 사용자를 팀에 배정
     // manualAssignUser: (data: {

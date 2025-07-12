@@ -3,12 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { handleApiResponse, adminTeamMatchApi } from '@/lib/api';
-import { TeamAssignmentResult, RegularStudyApplicant, AppliedTime } from '@/types/apply-regular';
+import { RegularStudyApplicant, AppliedTime, AssignedTeam } from '@/types/apply-regular';
 
 export default function AdminTeamAssignPage() {
     const [users, setUsers] = useState<RegularStudyApplicant[]>([]);
     const [filteredUsers, setFilteredUsers] = useState<RegularStudyApplicant[]>([]);
-    const [assignmentResults, setAssignmentResults] = useState<TeamAssignmentResult[]>([]);
+    const [assignmentResults, setAssignmentResults] = useState<AssignedTeam[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isAssigning, setIsAssigning] = useState(false);
     const [showResults, setShowResults] = useState(false);
@@ -113,7 +113,8 @@ export default function AdminTeamAssignPage() {
             const response = await adminTeamMatchApi.executeTeamAssignment();
             handleApiResponse(response,
                 (data) => {
-                    setAssignmentResults(data.results || []);
+                    console.log('팀 배정 결과:', data);
+                    setAssignmentResults(data || []);
                     setShowResults(true);
                     toast.success('팀 배정 완료', {
                         description: '팀 배정이 성공적으로 완료되었습니다.',
@@ -149,6 +150,7 @@ export default function AdminTeamAssignPage() {
                     toast.success('저장 완료', {
                         description: '팀 배정 결과가 저장되었습니다.',
                     });
+                    setShowResults(false);
                 },
                 (error) => {
                     toast.error('저장 실패', {
@@ -166,26 +168,6 @@ export default function AdminTeamAssignPage() {
         }
     };
 
-    const getAssignmentStats = () => {
-        if (!assignmentResults.length) return null;
-
-        const stats = {
-            totalTeams: assignmentResults.reduce((sum, result) => sum + result.teams.length, 0),
-            totalAssigned: assignmentResults.reduce((sum, result) =>
-                sum + result.teams.reduce((teamSum, team) => teamSum + team.members.length, 0), 0
-            ),
-            unassigned: users.length - assignmentResults.reduce((sum, result) =>
-                sum + result.teams.reduce((teamSum, team) => teamSum + team.members.length, 0), 0
-            ),
-            assignmentRate: 0,
-        };
-
-        stats.assignmentRate = users.length > 0 ? (stats.totalAssigned / users.length) * 100 : 0;
-
-        return stats;
-    };
-
-    const assignmentStats = getAssignmentStats();
     const allSubjects = getAllSubjects();
 
     if (isLoading) {
@@ -235,7 +217,7 @@ export default function AdminTeamAssignPage() {
                     </div>
 
                     {/* 배정 통계 */}
-                    {assignmentStats && (
+                    {/* {assignmentStats && (
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                             <div className="bg-gray-50 p-4 rounded">
                                 <p className="text-sm text-gray-600">총 팀 수</p>
@@ -254,29 +236,22 @@ export default function AdminTeamAssignPage() {
                                 <p className="text-2xl font-bold">{assignmentStats.assignmentRate.toFixed(1)}%</p>
                             </div>
                         </div>
-                    )}
+                    )} */}
 
                     {/* 팀 목록 */}
                     <div className="space-y-6">
                         {assignmentResults.map((result, index) => (
-                            <div key={index} className="border border-gray-200 rounded-lg p-4">
+                            <div key={`${result.subjectId}-${result.day}-${result.startTime}`} className="border border-gray-200 rounded-lg p-4">
                                 <h3 className="font-semibold text-lg mb-2">
-                                    {result.subjectName} - {getDayKorean(result.day)} {formatTimeRange(result.startTime)}
+                                    {result.subjectName} - {getDayKorean(result.day)} {formatTimeRange(result.startTime)} ({result.members.length}명)
                                 </h3>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {result.teams.map((team, teamIndex) => (
-                                        <div key={team.teamId} className="bg-gray-50 p-4 rounded">
-                                            <h4 className="font-medium mb-2">팀 {teamIndex + 1} ({team.members.length}명)</h4>
-                                            <ul className="space-y-1">
-                                                {team.members.map((member) => (
-                                                    <li key={member.memberUuid} className="text-sm">
-                                                        {member.memberName}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    ))}
+                                <div key={result.timeId} className="bg-gray-50 p-4 rounded">
+                                    <span className="space-x-3">
+                                        {result.members.map((member) => (
+                                            <span key={member.id} className="text-sm font-semibold">{member.name} ({member.studentId})</span>
+                                        ))}
+                                    </span>
                                 </div>
                             </div>
                         ))}

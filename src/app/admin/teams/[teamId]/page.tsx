@@ -312,8 +312,8 @@ export default function AdminTeamDetailPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {team.members.map((member) => (
-                                <TableRow key={member.uuid}>
+                            {team.members.map((member, idx) => (
+                                <TableRow key={member.uuid || member.studentId || idx}>
                                     <TableCell className="font-medium">
                                         {member.name}
                                     </TableCell>
