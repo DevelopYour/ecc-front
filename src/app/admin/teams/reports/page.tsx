@@ -33,6 +33,46 @@ import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 
+// 백엔드 DTO와 일치하는 타입 정의
+interface MemberReviewStatus {
+    memberId: number;
+    memberName: string;
+    reviewStatus: 'NOT_READY' | 'READY' | 'COMPLETED' | 'PENDING';
+}
+
+interface WeeklyStatus {
+    week: number;
+    submitted: boolean;
+    grade: number;
+    memberReviews: MemberReviewStatus[];
+}
+
+interface TeamReportStatus {
+    teamId: number;
+    teamName: string;
+    weeklyStatus: WeeklyStatus[];
+    totalWeeks: number;
+    submittedReports: number;
+    submissionRate: number;
+    averageGrade: number;
+}
+
+interface ReportSummary {
+    totalTeams: number;
+    totalSubmittedReports: number;
+    totalExpectedReports: number;
+    overallSubmissionRate: number;
+    overallAverageGrade: number;
+}
+
+export interface TeamReportsStatusResponse {
+    year: number;
+    semester: number;
+    teamReportStatus: TeamReportStatus[];
+    summary: ReportSummary;
+}
+
+// 기존 인터페이스 (호환성을 위해 유지)
 interface ReportStatus {
     teamId: number;
     teamName: string;
@@ -54,6 +94,8 @@ interface WeekReport {
 export default function AdminTeamReportsPage() {
     const router = useRouter();
     const [reportStatus, setReportStatus] = useState<ReportStatus[]>([]);
+    const [originalTeamData, setOriginalTeamData] = useState<TeamReportStatus[]>([]);
+    const [summary, setSummary] = useState<ReportSummary | null>(null);
     const [loading, setLoading] = useState(true);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
     const [selectedSemester, setSelectedSemester] = useState("all");
@@ -62,6 +104,24 @@ export default function AdminTeamReportsPage() {
     useEffect(() => {
         loadReportStatus();
     }, [selectedYear, selectedSemester]);
+
+    // 백엔드 응답을 기존 인터페이스 형태로 변환하는 함수
+    const transformResponseToReportStatus = (response: TeamReportsStatusResponse): ReportStatus[] => {
+        return response.teamReportStatus.map((team: TeamReportStatus) => ({
+            teamId: team.teamId,
+            teamName: team.teamName,
+            subjectName: "정규 스터디", // 기본값, 필요시 백엔드에서 추가
+            weeklyReports: team.weeklyStatus.map((week: WeeklyStatus) => ({
+                week: week.week,
+                isSubmitted: week.submitted,
+                isEvaluated: week.grade > 0, // 점수가 있으면 평가 완료로 간주
+                grade: week.grade,
+            })),
+            totalWeeks: team.totalWeeks,
+            submittedCount: team.submittedReports,
+            evaluatedCount: team.weeklyStatus.filter(w => w.grade > 0).length,
+        }));
+    };
 
     const loadReportStatus = async () => {
         try {
@@ -72,9 +132,10 @@ export default function AdminTeamReportsPage() {
 
             const response = await adminTeamApi.getTeamReportsStatus(params);
             if (response.success && response.data) {
-                // Transform the response data into ReportStatus format
-                const teams = response.data.teams || [];
-                setReportStatus(teams);
+                const transformedData = transformResponseToReportStatus(response.data);
+                setReportStatus(transformedData);
+                setOriginalTeamData(response.data.teamReportStatus);
+                setSummary(response.data.summary);
             }
         } catch (error) {
             console.error("Failed to load report status:", error);
@@ -114,10 +175,10 @@ export default function AdminTeamReportsPage() {
     const currentYear = new Date().getFullYear();
     const yearOptions = Array.from({ length: 3 }, (_, i) => currentYear - i);
 
-    // Calculate overall statistics
-    const totalTeams = reportStatus.length;
-    const totalReports = reportStatus.reduce((acc, r) => acc + r.totalWeeks, 0);
-    const totalSubmitted = reportStatus.reduce((acc, r) => acc + r.submittedCount, 0);
+    // 요약 통계 (백엔드에서 제공하는 데이터 사용)
+    const totalTeams = summary?.totalTeams || 0;
+    const totalReports = summary?.totalExpectedReports || 0;
+    const totalSubmitted = summary?.totalSubmittedReports || 0;
     const totalEvaluated = reportStatus.reduce((acc, r) => acc + r.evaluatedCount, 0);
     const pendingEvaluation = totalSubmitted - totalEvaluated;
 
@@ -137,8 +198,18 @@ export default function AdminTeamReportsPage() {
                 <p className="text-gray-600 mt-2">정규 스터디 보고서 제출 및 평가 현황</p>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            {/* Stats - 백엔드 summary 데이터 사용 */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                <Card>
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-medium text-gray-600">
+                            전체 팀
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-2xl font-bold">{totalTeams}</p>
+                    </CardContent>
+                </Card>
                 <Card>
                     <CardHeader className="pb-3">
                         <CardTitle className="text-sm font-medium text-gray-600">
@@ -158,7 +229,7 @@ export default function AdminTeamReportsPage() {
                     <CardContent>
                         <p className="text-2xl font-bold text-green-600">{totalSubmitted}</p>
                         <p className="text-xs text-gray-500 mt-1">
-                            {totalReports > 0 ? `${getSubmissionRate(totalSubmitted, totalReports)}%` : "0%"}
+                            {summary?.overallSubmissionRate.toFixed(1)}%
                         </p>
                     </CardContent>
                 </Card>
@@ -246,9 +317,9 @@ export default function AdminTeamReportsPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>팀명</TableHead>
-                                    <TableHead>과목</TableHead>
                                     <TableHead>제출 현황</TableHead>
                                     <TableHead>평가 현황</TableHead>
+                                    <TableHead>평균 점수</TableHead>
                                     <TableHead>진행률</TableHead>
                                     <TableHead></TableHead>
                                 </TableRow>
@@ -265,6 +336,10 @@ export default function AdminTeamReportsPage() {
                                         const submissionRate = getSubmissionRate(report.submittedCount, report.totalWeeks);
                                         const evaluationRate = getEvaluationRate(report.evaluatedCount, report.submittedCount);
 
+                                        // 원본 백엔드 데이터에서 평균 점수 가져오기
+                                        const teamData = originalTeamData.find(t => t.teamId === report.teamId);
+                                        const averageGrade = teamData?.averageGrade || 0;
+
                                         return (
                                             <TableRow
                                                 key={report.teamId}
@@ -277,7 +352,6 @@ export default function AdminTeamReportsPage() {
                                                         {report.teamName}
                                                     </div>
                                                 </TableCell>
-                                                <TableCell>{report.subjectName}</TableCell>
                                                 <TableCell>
                                                     <div className="space-y-1">
                                                         <div className="flex items-center gap-2">
@@ -298,7 +372,7 @@ export default function AdminTeamReportsPage() {
                                                         <div className="flex items-center gap-2">
                                                             {report.evaluatedCount === report.submittedCount ? (
                                                                 <CheckCircle className="w-4 h-4 text-blue-600" />
-                                                            ) : pendingEvaluation > 0 ? (
+                                                            ) : report.submittedCount > report.evaluatedCount ? (
                                                                 <Clock className="w-4 h-4 text-yellow-600" />
                                                             ) : (
                                                                 <XCircle className="w-4 h-4 text-gray-400" />
@@ -308,6 +382,11 @@ export default function AdminTeamReportsPage() {
                                                             </span>
                                                         </div>
                                                         <Progress value={evaluationRate} className="h-2" />
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="text-sm font-medium">
+                                                        {averageGrade > 0 ? `${averageGrade.toFixed(1)}점` : '-'}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
@@ -329,7 +408,7 @@ export default function AdminTeamReportsPage() {
 
                                                             if (week.isEvaluated) {
                                                                 bgColor = "bg-blue-600";
-                                                                title = `Week ${week.week}: 평가 완료`;
+                                                                title = `Week ${week.week}: 평가 완료 (${week.grade}점)`;
                                                             } else if (week.isSubmitted) {
                                                                 bgColor = "bg-yellow-600";
                                                                 title = `Week ${week.week}: 평가 대기`;
@@ -357,6 +436,26 @@ export default function AdminTeamReportsPage() {
                     )}
                 </CardContent>
             </Card>
+
+            {/* Summary Statistics */}
+            {summary && (
+                <Card className="mt-4">
+                    <CardContent className="pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span className="font-medium">전체 제출률:</span>
+                                <span className="ml-2">{summary.overallSubmissionRate.toFixed(1)}%</span>
+                            </div>
+                            <div>
+                                <span className="font-medium">전체 평균 점수:</span>
+                                <span className="ml-2">
+                                    {summary.overallAverageGrade > 0 ? `${summary.overallAverageGrade.toFixed(1)}점` : '-'}
+                                </span>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Legend */}
             <Card className="mt-4">
