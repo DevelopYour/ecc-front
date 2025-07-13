@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { userApi } from "@/lib/api";
-import router from "next/router";
+import { useRouter } from "next/navigation";
 
 // 비밀번호 변경 폼 검증 스키마
 const passwordSchema = z
@@ -46,6 +46,7 @@ export function PasswordForm() {
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const router = useRouter();
 
     const form = useForm<PasswordFormValues>({
         resolver: zodResolver(passwordSchema),

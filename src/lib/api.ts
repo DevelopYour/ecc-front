@@ -27,7 +27,7 @@ interface ResponseDto<T> {
 }
 
 // API 기본 URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+const API_BASE_URL = process.env.API_BASE_URL + "/api";
 
 // 공개 API 인스턴스 (토큰 불필요)
 export const publicApi = axios.create({
@@ -498,12 +498,12 @@ export const adminTeamApi = {
     getTeamAttendanceStats: (teamId: number): Promise<ResponseDto<Record<string, any>>> =>
         api.get(`/admin/teams/${teamId}/attendance`),
 
-    // 정규 스터디 보고서 제출/평가 현황 조회
-    getTeamReportsStatus: (params?: {
-        year?: number;
-        semester?: number;
-    }): Promise<ResponseDto<Record<string, any>>> =>
-        api.get("/admin/teams/reports/status", { params }),
+    // // 정규 스터디 보고서 제출/평가 현황 조회
+    // getTeamReportsStatus: (params?: {
+    //     year?: number;
+    //     semester?: number;
+    // }): Promise<ResponseDto<TeamReportsStatusResponse>> =>
+    //     api.get("/admin/teams/reports/status", { params }),
 };
 
 // 관리자 콘텐츠 관리 API
