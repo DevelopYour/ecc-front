@@ -7,12 +7,12 @@ const nextConfig = {
     API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:8080'
   },
 
-  // ESLint 에러를 임시로 무시 (빌드 성공 우선)
+  // ESLint 에러 임시 무시 TODO
   eslint: {
     ignoreDuringBuilds: true, // 빌드 시 ESLint 건너뛰기
   },
 
-  // TypeScript 에러를 임시로 무시 (빌드 성공 우선)
+  // TypeScript 에러 임시 무시 TODO
   typescript: {
     ignoreBuildErrors: true,
   }
