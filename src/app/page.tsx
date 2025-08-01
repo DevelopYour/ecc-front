@@ -49,7 +49,7 @@ export default function HomePage() {
             {/* 메인 콘텐츠 */}
             <main className="flex-1">
                 {/* 중앙 로고 섹션 */}
-                <div className="w-full flex justify-center items-center py-16">
+                <div className="w-full flex justify-center items-center py-10 px-10 sm:px-6 lg:px-8">
                     <img
                         src="/images/full-logo.png"
                         alt="ECC 스터디 로고"
@@ -58,16 +58,16 @@ export default function HomePage() {
                 </div>
 
                 <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto">
                         {/* 특징 1 */}
-                        <div className="bg-card rounded-lg p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-gray-100">
+                        <div className="bg-card rounded-lg p-5 shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-gray-100">
                             <h3 className="text-xl font-semibold mb-4">정규 & 번개 스터디</h3>
                             <p className="text-muted-foreground leading-relaxed">
                                 한 학기 동안 체계적으로 진행되는 정규 스터디와 원하는 시간에 자유롭게 참여할 수 있는 번개 스터디를 통해 효과적으로 영어 실력을 향상시켜보세요.
                             </p>
                         </div>
                         {/* 특징 2 */}
-                        <div className="bg-card rounded-lg p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-gray-100">
+                        <div className="bg-card rounded-lg p-5 shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-gray-100">
                             <h3 className="text-xl font-semibold mb-4">AI 학습 보조 및 복습 시스템</h3>
                             <p className="text-muted-foreground leading-relaxed">
                                 AI 기반 학습 도구와 체계적인 복습 시스템으로 스터디 내용을 완벽하게 정리하고, 개인별 맞춤 테스트를 통해 학습 성과를 확인할 수 있어요.

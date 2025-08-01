@@ -4,7 +4,7 @@ const nextConfig = {
   // output: 'export',
 
   env: {
-    API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:8080'
+    API_BASE_URL: process.env.API_BASE_URL
   },
 
   // ESLint 에러 임시 무시 TODO

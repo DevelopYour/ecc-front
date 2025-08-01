@@ -69,6 +69,7 @@ const signupSchema = z.object({
     motivation: z.string().min(1, "지원 동기는 필수 입력 항목입니다"),
     agreePersonalInfo: z.boolean().refine(val => val === true, "개인정보 수집에 동의해주세요"),
     agreeActivityData: z.boolean().refine(val => val === true, "활동데이터 수집에 동의해주세요"),
+    paidMembership: z.boolean().refine(val => val === true, "회비 입금을 확인해주세요"),
 });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
@@ -243,7 +244,7 @@ export function SignupForm() {
 
                     <div className="flex items-center space-y-0 gap-4">
                         <FormLabel className="w-32 text-right">전공</FormLabel>
-                        <div className="flex-1 flex gap-4">
+                        <div className="flex-1 flex flex-col sm:flex-row gap-4">
                             <FormField
                                 control={form.control}
                                 name="college"
@@ -479,6 +480,36 @@ export function SignupForm() {
                     />
 
                     <div className="border-t pt-6 space-y-4">
+
+                        <FormField
+                            control={form.control}
+                            name="paidMembership"
+                            render={({ field }) => (
+                                <FormItem className="flex items-start space-y-0 gap-4">
+                                    <div className="flex-1 space-y-1">
+                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                            <FormControl>
+                                                <Checkbox
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel>
+                                                    회비를 입금했습니다.
+                                                </FormLabel>
+                                                <FormDescription className="text-xs text-muted-foreground">
+                                                    *신규 회원 20,000원, 기존 회원 15,000원<br />
+                                                    토스뱅크 1002-1019-0485 김창환(모임통장)
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </div>
+                                        </FormItem>
+                                    </div>
+                                </FormItem>
+                            )}
+                        />
+
                         <FormField
                             control={form.control}
                             name="agreePersonalInfo"
@@ -493,7 +524,7 @@ export function SignupForm() {
                                     <div className="space-y-1 leading-none">
                                         <div className="flex items-center gap-2">
                                             <FormLabel>
-                                                개인정보 수집 및 이용에 동의합니다 (필수)
+                                                개인정보 수집 및 이용에 동의합니다. (필수)
                                             </FormLabel>
                                             <TooltipProvider>
                                                 <Tooltip>
@@ -526,7 +557,7 @@ export function SignupForm() {
                                     <div className="space-y-1 leading-none">
                                         <div className="flex items-center gap-2">
                                             <FormLabel>
-                                                활동데이터 수집 및 활용에 동의합니다 (필수)
+                                                활동데이터 수집 및 활용에 동의합니다. (필수)
                                             </FormLabel>
                                             <TooltipProvider>
                                                 <Tooltip>
