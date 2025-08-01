@@ -184,7 +184,7 @@ export function SignupForm() {
             <div className="space-y-2 text-center">
                 <h1 className="text-2xl font-semibold tracking-tight">회원가입</h1>
                 <p className="text-sm text-muted-foreground">
-                    ECC 스터디 회원가입을 위해 정보를 입력해주세요
+                    ECC 동아리 가입을 위한 정보를 입력해주세요
                 </p>
             </div>
 

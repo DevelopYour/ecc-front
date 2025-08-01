@@ -8,8 +8,8 @@ import { Toaster } from "sonner"; // sonner에서 Toaster 임포트
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "ECC 스터디",
-  description: "영어 스터디 관리 플랫폼",
+  title: "서울과학기술대학교 ECC",
+  description: "English Conversation Club",
 };
 
 export default function RootLayout({
