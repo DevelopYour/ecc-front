@@ -251,14 +251,14 @@ export default function AdminMembersPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>학번</TableHead>
                                     <TableHead>이름</TableHead>
-                                    <TableHead>이메일</TableHead>
+                                    <TableHead>학번</TableHead>
+                                    <TableHead>전화번호</TableHead>
+                                    <TableHead>카톡아이디</TableHead>
                                     <TableHead>전공</TableHead>
                                     <TableHead>레벨</TableHead>
                                     <TableHead>상태</TableHead>
                                     <TableHead>가입일</TableHead>
-                                    <TableHead></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -275,19 +275,25 @@ export default function AdminMembersPage() {
                                             className="cursor-pointer hover:bg-gray-50"
                                             onClick={() => handleMemberClick(member.uuid)}
                                         >
-                                            <TableCell className="font-medium">
-                                                {member.studentId}
-                                            </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <User className="w-4 h-4 text-gray-400" />
                                                     {member.name}
                                                 </div>
                                             </TableCell>
+                                            <TableCell className="font-medium">
+                                                {member.studentId}
+                                            </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Mail className="w-4 h-4 text-gray-400" />
-                                                    {member.email}
+                                                    {member.tel}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <Mail className="w-4 h-4 text-gray-400" />
+                                                    {member.kakaoTel}
                                                 </div>
                                             </TableCell>
                                             <TableCell>
