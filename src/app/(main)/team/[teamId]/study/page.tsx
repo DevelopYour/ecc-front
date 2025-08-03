@@ -1,25 +1,25 @@
 // app/(main)/team/[teamId]/study/page.tsx
 'use client';
 
-import { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, Sparkles, Check, Loader2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Languages, MessageSquare } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { toast } from 'sonner';
-import { studyApi, handleApiResponse } from '@/lib/api';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { handleApiResponse, studyApi } from '@/lib/api';
 import {
+    ExpressionToAsk,
     StudyRedis,
-    TopicRecommendation,
     Topic,
-    ExpressionToAsk
+    TopicRecommendation
 } from '@/types/study';
+import { ArrowLeft, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Languages, Loader2, MessageSquare } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { use, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface StudyPageProps {
     params: Promise<{ teamId: string }>;
@@ -402,7 +402,7 @@ export default function StudyPage({ params }: StudyPageProps) {
                                             {isExpanded && (
                                                 <CardContent>
                                                     <div className="space-y-2">
-                                                        {recommendation.topics.map((topic, idx) => {
+                                                        {recommendation.topics.map((topic) => {
                                                             const isAlreadySaved = studyRoom.topics?.some(
                                                                 t => t.category === recommendation.category && t.topic === topic.topic
                                                             ) || false;

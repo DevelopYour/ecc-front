@@ -1,19 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { adminTeamApi } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -24,23 +10,37 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { adminTeamApi } from "@/lib/api";
+import { TeamA } from "@/types/admin";
+import {
+    AlertCircle,
     ArrowLeft,
-    Calendar,
-    Users,
-    Clock,
     BookOpen,
-    Target,
+    Calendar,
+    Clock,
+    FileText,
     Star,
+    Target,
     Trash2,
     UserPlus,
-    FileText,
-    AlertCircle,
+    Users,
 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
-import { TeamA } from "@/types/admin";
 
 export default function AdminTeamDetailPage() {
     const params = useParams();

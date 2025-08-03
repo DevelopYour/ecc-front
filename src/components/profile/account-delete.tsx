@@ -1,9 +1,9 @@
 // components/profile/account-delete.tsx
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,8 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { ROUTES } from "@/lib/constants";
 import { userApi } from "@/lib/api";
+import { ROUTES } from "@/lib/constants";
 
 export function AccountDelete() {
     const { logout } = useAuth();

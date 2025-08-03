@@ -6,8 +6,7 @@ export const metadata: Metadata = {
 };
 
 export default function TeamLayout({
-    children,
-    params,
+    children
 }: {
     children: React.ReactNode;
     params: { teamId: string };

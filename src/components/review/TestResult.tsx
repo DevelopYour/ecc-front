@@ -1,5 +1,5 @@
 import { GradeLevel, ReviewTest } from "@/types/review";
-import { CheckCircle, XCircle, Trophy, RefreshCw, AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle, RefreshCw, Trophy, XCircle } from "lucide-react";
 
 interface TestResultProps {
     test: ReviewTest;
@@ -28,7 +28,6 @@ export default function TestResult({ test, onRetry, onBack }: TestResultProps) {
     // 3단계 채점 기준으로 점수 계산
     const correctCount = test.questions.filter(q => q.grade === GradeLevel.CORRECT).length;
     const partialCount = test.questions.filter(q => q.grade === GradeLevel.PARTIAL).length;
-    const incorrectCount = test.questions.filter(q => q.grade === GradeLevel.INCORRECT).length;
     const totalCount = test.questions.length;
 
     // 점수 계산 (CORRECT: 100점, PARTIAL: 70점, INCORRECT: 0점)

@@ -1,21 +1,21 @@
 // app/(main)/team/[teamId]/page.tsx
 'use client';
 
-import { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
-import { Calendar, Users, BookOpen, Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
-import { studyApi, handleApiResponse } from '@/lib/api';
+import { useTeams } from '@/context/teams-context';
+import { handleApiResponse, studyApi } from '@/lib/api';
 import {
-    WeeklySummary,
-    STUDY_STATUS_LABELS,
     REVIEW_STATUS_LABELS,
+    STUDY_STATUS_LABELS,
+    WeeklySummary,
     getStatusBadgeVariant
 } from '@/types/study';
-import { useTeams } from '@/context/teams-context';
+import { BookOpen, Calendar, Loader2, Users } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { use, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface TeamPageProps {
     params: Promise<{ teamId: string }>;
@@ -69,8 +69,7 @@ export default function TeamPage({ params }: TeamPageProps) {
 
             handleApiResponse(
                 response,
-                (data) => {
-                    const studyId = data.id;
+                () => {
                     router.push(`/team/${teamId}/study`);
                 },
                 (error) => {

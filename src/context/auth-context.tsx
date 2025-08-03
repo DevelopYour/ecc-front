@@ -1,13 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User } from "@/types/user";
 import { authApi } from "@/lib/api";
-import { login as loginAuth, logout as logoutAuth, getUser, setToken, getToken } from "@/lib/auth";
-import { STORAGE_KEYS } from "@/lib/constants";
+import { getToken, getUser, logout as logoutAuth, setToken } from "@/lib/auth";
+import { ROUTES, STORAGE_KEYS } from "@/lib/constants";
+import { User } from "@/types/user";
+import { setCookie } from "cookies-next";
 import { useRouter } from "next/navigation";
-import { ROUTES } from "@/lib/constants";
-import { setCookie, deleteCookie } from "cookies-next";
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
 interface AuthContextType {
     user: User | null;

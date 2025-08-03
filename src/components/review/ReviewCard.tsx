@@ -1,8 +1,8 @@
-import { useRouter } from "next/navigation";
 import { Review, ReviewStatus } from "@/types/review";
-import { Calendar, User, BookOpen, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { AlertCircle, BookOpen, Calendar, CheckCircle, Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface ReviewCardProps {
     review: Review;

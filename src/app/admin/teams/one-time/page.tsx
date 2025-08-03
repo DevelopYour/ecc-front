@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { adminTeamApi } from "@/lib/api";
-import { TeamA } from "@/types/admin";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     Table,
     TableBody,
@@ -14,28 +20,21 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { adminTeamApi } from "@/lib/api";
+import { TeamA } from "@/types/admin";
 import {
     ArrowLeft,
-    Calendar,
-    Users,
-    Clock,
     BookOpen,
-    MapPin,
     ChevronRight,
+    Clock,
+    MapPin,
     RefreshCw,
     Search,
-    Zap,
+    Users,
+    Zap
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useState } from "react";
 
 export default function AdminOneTimeTeamsPage() {
     const router = useRouter();

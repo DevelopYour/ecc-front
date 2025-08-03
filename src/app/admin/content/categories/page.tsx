@@ -1,28 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { adminContentApi } from "@/lib/api";
-import { Category } from "@/types/admin";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -33,19 +10,41 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    Plus,
-    Edit2,
-    Trash2,
-    Tag,
-    BookOpen,
-    RefreshCw,
-    ArrowLeft,
-    Folder,
-} from "lucide-react";
-import { toast } from "sonner";
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { adminContentApi } from "@/lib/api";
+import { Category } from "@/types/admin";
+import {
+    ArrowLeft,
+    BookOpen,
+    Edit2,
+    Folder,
+    Plus,
+    RefreshCw,
+    Trash2
+} from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface CategoryFormData {
     name: string;

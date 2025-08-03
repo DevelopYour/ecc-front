@@ -1,20 +1,23 @@
 // app/(main)/home/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
 import {
-    Calendar, BookText, ArrowRight, Clock, CheckCircle2
+    ArrowRight,
+    BookText,
+    Calendar,
+    Clock
 } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/page-header";
+import { Card, CardContent } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
+import { PageHeader } from "@/components/ui/page-header";
 import { useAuth } from "@/context/auth-context";
 import { useTeams } from "@/context/teams-context";
-import { ROUTES } from "@/lib/constants";
 import { reviewApi } from "@/lib/api";
+import { ROUTES } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
 import { Review } from "@/types/review";
 import { Team } from "@/types/team";
@@ -43,7 +46,6 @@ export default function HomePage() {
     // 팀 데이터를 기반으로 예정된 일정 생성
     const generateUpcomingEvents = (regularTeams: Team[], oneTimeTeams: Team[]): CalendarEvent[] => {
         const events: CalendarEvent[] = [];
-        const now = new Date();
 
         // 정규 스터디 일정 생성 (ACTIVE 상태인 팀만)
         regularTeams

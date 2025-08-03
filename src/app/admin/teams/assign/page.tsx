@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { adminTeamMatchApi, handleApiResponse } from '@/lib/api';
+import { AppliedTime, AssignedTeam, RegularStudyApplicant } from '@/types/apply-regular';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { handleApiResponse, adminTeamMatchApi } from '@/lib/api';
-import { RegularStudyApplicant, AppliedTime, AssignedTeam } from '@/types/apply-regular';
 
 export default function AdminTeamAssignPage() {
     const [users, setUsers] = useState<RegularStudyApplicant[]>([]);
@@ -240,7 +240,7 @@ export default function AdminTeamAssignPage() {
 
                     {/* 팀 목록 */}
                     <div className="space-y-6">
-                        {assignmentResults.map((result, index) => (
+                        {assignmentResults.map((result) => (
                             <div key={`${result.subjectId}-${result.day}-${result.startTime}`} className="border border-gray-200 rounded-lg p-4">
                                 <h3 className="font-semibold text-lg mb-2">
                                     {result.subjectName} - {getDayKorean(result.day)} {formatTimeRange(result.startTime)} ({result.members.length}명)
@@ -325,7 +325,7 @@ export default function AdminTeamAssignPage() {
                                                         <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-medium">
                                                             {getDayKorean(day)}
                                                         </span>
-                                                        {times.map((time, index) => (
+                                                        {times.map((time) => (
                                                             <span key={time.id} className="inline-block bg-green-50 text-green-700 text-xs px-2 py-1 rounded">
                                                                 {formatTimeRange(time.startTime)}
                                                             </span>

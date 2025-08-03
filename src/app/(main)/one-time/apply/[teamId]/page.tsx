@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { teamApi } from '@/lib/api';
-import { Clock, Users, MapPin, Calendar, Edit, Trash2, UserMinus, UserPlus } from 'lucide-react';
+import { Users, MapPin, Calendar, Edit, Trash2, UserMinus, UserPlus } from 'lucide-react';
 import { OneTimeStudyDetail } from '@/types/apply-onetime';
 import { ONE_TIME_STATUS_STYLE } from '@/lib/constants';
 import { useTeams } from '@/context/teams-context';

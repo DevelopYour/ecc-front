@@ -1,15 +1,25 @@
-import { useState } from "react";
 import { ReviewTest as ReviewTestType } from "@/types/review";
-import { Send, AlertCircle } from "lucide-react";
+import { AlertCircle, Send } from "lucide-react";
+import { useState } from "react";
 
 interface ReviewTestProps {
     test: ReviewTestType;
-    onSubmit: (responses: string[]) => void; // responses로 명칭 변경
+    onSubmit: (responses: string[]) => void;
     onCancel: () => void;
 }
 
 export default function ReviewTest({ test, onSubmit, onCancel }: ReviewTestProps) {
-    // 안전성 체크
+
+    // response 필드가 있으면 초기값으로 사용, 없으면 빈 문자열
+    const [responses, setResponses] = useState<string[]>(() => {
+        // 안전성 체크를 초기값 계산에서 처리
+        if (!test || !test.questions || test.questions.length === 0) {
+            return [];
+        }
+        return test.questions.map(question => question.response || "");
+    });
+
+    // 안전성 체크 (Hook 호출 이후에 처리)
     if (!test || !test.questions || test.questions.length === 0) {
         return (
             <div className="bg-white rounded-lg shadow-lg max-w-4xl mx-auto p-8">
@@ -25,11 +35,6 @@ export default function ReviewTest({ test, onSubmit, onCancel }: ReviewTestProps
             </div>
         );
     }
-
-    // response 필드가 있으면 초기값으로 사용, 없으면 빈 문자열
-    const [responses, setResponses] = useState<string[]>(
-        test.questions.map(question => question.response || "")
-    );
 
     const handleResponseChange = (index: number, value: string) => {
         const newResponses = [...responses];

@@ -54,15 +54,8 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function RegularApplyPage() {
-    const router = useRouter();
-
-    const handleApplyClick = () => {
-        router.push('/regular/apply/form');
-    };
-
     return (
         <div className="container mx-auto p-6 max-w-4xl">
             <div className="text-center">

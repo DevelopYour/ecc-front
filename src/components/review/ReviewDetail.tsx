@@ -1,11 +1,9 @@
-import { Review, ReviewStatus } from "@/types/review";
-import { Calendar, User, BookOpen, CheckCircle, Clock, FileText, MessageSquare, Globe, Lightbulb, Users, Star, AlertCircle } from "lucide-react";
-import { format } from "date-fns";
-import { ko } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ReportTopic, ReportTranslation, ReportFeedback } from "@/types/study";
+import { Review, ReviewStatus } from "@/types/review";
+import { ReportFeedback, ReportTopic, ReportTranslation } from "@/types/study";
+import { BookOpen, CheckCircle, Globe, Lightbulb, MessageSquare, Star, Users } from "lucide-react";
 
 interface ReviewDetailProps {
     review: Review;
@@ -151,7 +149,7 @@ const FeedbackCard = ({ feedback, index }: { feedback: ReportFeedback; index: nu
 };
 
 // Topic 섹션 컴포넌트
-const TopicSection = ({ topic, topicIndex, isLastTopic }: {
+const TopicSection = ({ topic, isLastTopic }: {
     topic: ReportTopic;
     topicIndex: number;
     isLastTopic: boolean;

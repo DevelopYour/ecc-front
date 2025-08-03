@@ -1,10 +1,10 @@
 // context/teams-context.tsx
 "use client";
 
-import React, { createContext, useContext, ReactNode, useState, useEffect } from "react";
-import { Team } from "@/types/team";
-import { OneTimeTeam } from "@/types/apply-onetime";
 import { teamApi, userApi } from "@/lib/api";
+import { OneTimeTeam } from "@/types/apply-onetime";
+import { Team } from "@/types/team";
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import { useAuth } from "./auth-context";
 
 interface TeamsContextType {
@@ -25,7 +25,7 @@ interface TeamsContextType {
 const TeamsContext = createContext<TeamsContextType | undefined>(undefined);
 
 export function TeamsProvider({ children }: { children: ReactNode }) {
-    const { isLoggedIn, user } = useAuth();
+    const { isLoggedIn } = useAuth();
     const [myRegularTeams, setMyRegularTeams] = useState<Team[]>([]);
     const [myOneTimeTeams, setMyOneTimeTeams] = useState<Team[]>([]);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { ROUTES } from "@/lib/constants";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function HomePage() {
     const { isLoggedIn, isLoading } = useAuth();
