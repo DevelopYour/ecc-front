@@ -6,7 +6,7 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Loader2, HelpCircle } from "lucide-react";
+import { Loader2, HelpCircle, Phone } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -594,12 +594,17 @@ export function SignupForm() {
                 </form>
             </Form>
 
-            <div className="text-center text-sm">
+            <div className="text-center text-sm space-y-2">
                 <p className="text-muted-foreground">
                     이미 계정이 있으신가요?{" "}
                     <Link href={ROUTES.LOGIN} className="underline underline-offset-4 hover:text-primary">
                         로그인
                     </Link>
+                </p>
+
+                <p className="flex items-center justify-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    <span>문의사항: 회장 조유진 010-8856-5243</span>
                 </p>
             </div>
         </div>

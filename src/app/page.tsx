@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { ROUTES } from "@/lib/constants";
+import { Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -79,10 +80,12 @@ export default function HomePage() {
 
             {/* 푸터 */}
             <footer className="py-8 border-t bg-mybeige">
-                <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-muted-foreground">
-                    <p>&copy; {new Date().getFullYear()} ECC 스터디. All rights reserved.</p>
+                <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+                    <span>&copy; 2025 ECC 스터디</span>|
+                    <Mail className="h-4 w-4" />
+                    <span>ecc.seoultech@gmail.com</span>
                 </div>
             </footer>
-        </div>
+        </div >
     );
 }

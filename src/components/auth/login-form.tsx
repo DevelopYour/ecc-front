@@ -78,7 +78,7 @@ export function LoginForm() {
             <div className="space-y-2 text-center">
                 <h1 className="text-2xl font-semibold tracking-tight">로그인</h1>
                 <p className="text-sm text-muted-foreground">
-                    아이디와 비밀번호를 입력하여 로그인하세요
+                    초기 비밀번호는 전화번호입니다.
                 </p>
             </div>
 
@@ -89,9 +89,9 @@ export function LoginForm() {
                         name="username"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>아이디</FormLabel>
+                                <FormLabel>학번</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="아이디를 입력하세요" {...field} />
+                                    <Input placeholder="학번을 입력하세요" {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -159,6 +159,6 @@ export function LoginForm() {
                     </Link>
                 </p>
             </div>
-        </div>
+        </div >
     );
 }
