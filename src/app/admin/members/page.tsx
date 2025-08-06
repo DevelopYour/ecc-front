@@ -167,7 +167,7 @@ export default function AdminMembersPage() {
         // 파일명 생성 (현재 날짜 포함)
         const today = new Date();
         const dateString = today.toISOString().split('T')[0]; // YYYY-MM-DD 형식
-        const fileName = `ECC_${dateString}.xlsx`;
+        const fileName = `회원명단_${dateString}.xlsx`;
 
         // 파일 다운로드
         XLSX.writeFile(workbook, fileName);
@@ -201,47 +201,31 @@ export default function AdminMembersPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-gray-600">
-                            전체 회원
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
+                <Card className="p-4">
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-gray-600">전체 회원</p>
                         <p className="text-2xl font-bold">{members.length}</p>
-                    </CardContent>
+                    </div>
                 </Card>
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-gray-600">
-                            활동 회원
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
+                <Card className="p-4">
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-gray-600">활동 회원</p>
                         <p className="text-2xl font-bold">
                             {members.filter((m) => m.status === MemberStatus.ACTIVE).length}
                         </p>
-                    </CardContent>
+                    </div>
                 </Card>
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-gray-600">
-                            승인 대기
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
+                <Card className="p-4">
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-gray-600">승인 대기</p>
                         <p className="text-2xl font-bold text-yellow-600">
                             {members.filter((m) => m.status === MemberStatus.PENDING).length}
                         </p>
-                    </CardContent>
+                    </div>
                 </Card>
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-gray-600">
-                            탈퇴/정지
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
+                <Card className="p-4">
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-gray-600">탈퇴/정지</p>
                         <p className="text-2xl font-bold text-red-600">
                             {members.filter(
                                 (m) =>
@@ -249,7 +233,7 @@ export default function AdminMembersPage() {
                                     m.status === MemberStatus.SUSPENDED
                             ).length}
                         </p>
-                    </CardContent>
+                    </div>
                 </Card>
             </div>
 
@@ -294,7 +278,7 @@ export default function AdminMembersPage() {
                         </Select>
                         <Button
                             onClick={exportToExcel}
-                            className="bg-green-700 hover:bg-green-800 text-white"
+                            className="bg-green-600 hover:bg-green-700 text-white"
                         >
                             <Download className="w-4 h-4 mr-2" />
                             엑셀 다운로드

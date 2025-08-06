@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import {
     BookOpen,
     Calendar,
+    Home,
     LogOut,
     Menu,
     Settings,
@@ -79,6 +80,10 @@ export default function AdminLayout({
         router.push('/login');
     };
 
+    const goToMain = () => {
+        router.push('/');
+    }
+
     if (!user || user.role !== 'ROLE_ADMIN') {
         return null;
     }
@@ -151,6 +156,14 @@ export default function AdminLayout({
                                 </Button>
                             </Link>
                         </div>
+                        <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={goToMain}
+                        >
+                            <Home className="w-4 h-4 mr-2" />
+                            홈으로
+                        </Button>
                         <Button
                             variant="outline"
                             className="w-full"

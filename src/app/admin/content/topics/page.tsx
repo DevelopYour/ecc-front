@@ -42,6 +42,8 @@ import { adminContentApi } from "@/lib/api";
 import { Category, TopicA } from "@/types/admin";
 import {
     BookOpen,
+    ChevronLeft,
+    ChevronRight,
     Edit2,
     Plus,
     RefreshCw,
@@ -59,12 +61,17 @@ interface TopicFormData {
     description?: string;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function AdminContentTopicsPage() {
     const [topics, setTopics] = useState<TopicA[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
+
+    // Pagination states
+    const [currentPage, setCurrentPage] = useState(1);
 
     // Dialog states
     const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -81,6 +88,11 @@ export default function AdminContentTopicsPage() {
     useEffect(() => {
         loadData();
     }, []);
+
+    // Reset to first page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, selectedCategory]);
 
     const loadData = async () => {
         try {
@@ -178,12 +190,45 @@ export default function AdminContentTopicsPage() {
         setShowDeleteDialog(true);
     };
 
+    // Filter topics
     const filteredTopics = topics.filter((topic) => {
         const matchesSearch = topic.topic.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCategory = selectedCategory === "all" ||
             topic.categoryId.toString() === selectedCategory;
         return matchesSearch && matchesCategory;
     });
+
+    // Pagination logic
+    const totalPages = Math.ceil(filteredTopics.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const currentTopics = filteredTopics.slice(startIndex, endIndex);
+
+    const goToPage = (page: number) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
+
+    const getPageNumbers = () => {
+        const pages = [];
+        const maxVisiblePages = 5;
+
+        if (totalPages <= maxVisiblePages) {
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            const startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+            for (let i = startPage; i <= endPage; i++) {
+                pages.push(i);
+            }
+        }
+
+        return pages;
+    };
 
     return (
         <div>
@@ -194,10 +239,15 @@ export default function AdminContentTopicsPage() {
 
             {/* Filters and Actions */}
             <Card className="mb-6">
-                <CardContent>
-                    전체 주제 {topics.length}개, 카테고리 {categories.length}개
-                </CardContent>
-                <CardContent className="pt-6">
+                <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-4">
+                        <span className="text-sm text-gray-600">
+                            전체 주제 {filteredTopics.length}개 (총 {topics.length}개), 카테고리 {categories.length}개
+                        </span>
+                        <span className="text-sm text-gray-500">
+                            {startIndex + 1}-{Math.min(endIndex, filteredTopics.length)} / {filteredTopics.length}
+                        </span>
+                    </div>
                     <div className="flex flex-col lg:flex-row gap-4">
                         <div className="flex-1">
                             <div className="relative">
@@ -236,7 +286,7 @@ export default function AdminContentTopicsPage() {
             </Card>
 
             {/* Topics Table */}
-            <Card>
+            <Card className="mb-6">
                 <CardContent className="p-0">
                     {loading ? (
                         <div className="p-6 space-y-4">
@@ -255,14 +305,14 @@ export default function AdminContentTopicsPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredTopics.length === 0 ? (
+                                {currentTopics.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="text-center py-8">
+                                        <TableCell colSpan={4} className="text-center py-8">
                                             <p className="text-gray-500">검색 결과가 없습니다.</p>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    filteredTopics.map((topic) => (
+                                    currentTopics.map((topic) => (
                                         <TableRow key={topic.id}>
                                             <TableCell>
                                                 <Badge variant="outline">
@@ -308,6 +358,52 @@ export default function AdminContentTopicsPage() {
                     )}
                 </CardContent>
             </Card>
+
+            {/* Pagination */}
+            {filteredTopics.length > 0 && (
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div className="text-sm text-gray-600">
+                                총 {filteredTopics.length}개 중 {startIndex + 1}-{Math.min(endIndex, filteredTopics.length)}개 표시
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => goToPage(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                    이전
+                                </Button>
+
+                                {getPageNumbers().map((page) => (
+                                    <Button
+                                        key={page}
+                                        variant={currentPage === page ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => goToPage(page)}
+                                        className="min-w-[40px]"
+                                    >
+                                        {page}
+                                    </Button>
+                                ))}
+
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => goToPage(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    다음
+                                    <ChevronRight className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Create Dialog */}
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>

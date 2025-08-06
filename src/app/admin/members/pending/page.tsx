@@ -140,8 +140,7 @@ export default function AdminPendingMembersPage() {
             </Button>
 
             <div className="mb-6">
-                <h1 className="text-3xl font-bold text-gray-900">승인 대기 회원</h1>
-                <p className="text-gray-600 mt-2">가입 승인을 대기중인 회원 목록</p>
+                <h1 className="text-3xl font-bold text-gray-900">가입 승인 대기 회원</h1>
             </div>
 
             {/* Stats Card */}
@@ -183,7 +182,8 @@ export default function AdminPendingMembersPage() {
                                 <TableRow>
                                     <TableHead>학번</TableHead>
                                     <TableHead>이름</TableHead>
-                                    <TableHead>이메일</TableHead>
+                                    <TableHead>전화번호</TableHead>
+                                    <TableHead>카톡아이디</TableHead>
                                     <TableHead>전공</TableHead>
                                     <TableHead>레벨</TableHead>
                                     <TableHead>신청일</TableHead>
@@ -205,7 +205,13 @@ export default function AdminPendingMembersPage() {
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 <Mail className="w-4 h-4 text-gray-400" />
-                                                {member.email}
+                                                {member.tel}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <Mail className="w-4 h-4 text-gray-400" />
+                                                {member.kakaoTel}
                                             </div>
                                         </TableCell>
                                         <TableCell>
