@@ -27,11 +27,13 @@ import {
     ChevronRight,
     User,
     Mail,
-    GraduationCap
+    GraduationCap,
+    Download
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import * as XLSX from 'xlsx';
 
 const statusOptions = [
     { value: "all", label: "전체 상태" },
@@ -50,6 +52,20 @@ const levelOptions = [
     { value: "1", label: "중급" },
     { value: "2", label: "고급" }
 ];
+
+// 상태를 한국어로 변환하는 함수
+const getStatusLabel = (status: MemberStatus): string => {
+    const statusMap: Record<MemberStatus, string> = {
+        [MemberStatus.PENDING]: "승인 대기",
+        [MemberStatus.ACTIVE]: "활동중",
+        [MemberStatus.SUSPENDED]: "정지",
+        [MemberStatus.WITHDRAWN]: "탈퇴",
+        [MemberStatus.BANNED]: "강제 탈퇴",
+        [MemberStatus.DORMANT]: "휴면 계정",
+        [MemberStatus.DORMANT_REQUESTED]: "휴면 해제 대기중",
+    };
+    return statusMap[status] || status;
+};
 
 export default function AdminMembersPage() {
     const router = useRouter();
@@ -110,6 +126,53 @@ export default function AdminMembersPage() {
         setFilteredMembers(filtered);
     };
 
+    // 엑셀 파일로 내보내기 함수
+    const exportToExcel = () => {
+        // 엑셀에 포함될 데이터 준비
+        const excelData = filteredMembers.map((member, index) => ({
+            '순번': index + 1,
+            '이름': member.name,
+            '학번': member.studentId,
+            '이메일': member.email,
+            '전화번호': member.tel,
+            '카카오톡 아이디': member.kakaoTel,
+            '전공': member.majorName,
+            '레벨': `Level ${member.level}`,
+            '상태': getStatusLabel(member.status),
+            '가입일': new Date(member.createdAt).toLocaleDateString('ko-KR'),
+        }));
+
+        // 워크시트 생성
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+        // 컬럼 너비 설정
+        const columnWidths = [
+            { wch: 8 },   // 순번
+            { wch: 15 },  // 이름
+            { wch: 15 },  // 학번
+            { wch: 25 },  // 이메일
+            { wch: 18 },  // 전화번호
+            { wch: 20 },  // 카카오톡 아이디
+            { wch: 20 },  // 전공
+            { wch: 12 },  // 레벨
+            { wch: 15 },  // 상태
+            { wch: 15 },  // 가입일
+        ];
+        worksheet['!cols'] = columnWidths;
+
+        // 워크북 생성
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "회원 명단");
+
+        // 파일명 생성 (현재 날짜 포함)
+        const today = new Date();
+        const dateString = today.toISOString().split('T')[0]; // YYYY-MM-DD 형식
+        const fileName = `ECC_${dateString}.xlsx`;
+
+        // 파일 다운로드
+        XLSX.writeFile(workbook, fileName);
+    };
+
     const getStatusBadge = (status: MemberStatus) => {
         const variants: Record<MemberStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
             [MemberStatus.PENDING]: { label: "승인 대기", variant: "secondary" },
@@ -120,7 +183,6 @@ export default function AdminMembersPage() {
             [MemberStatus.DORMANT]: { label: "휴면 계정", variant: "outline" },
             [MemberStatus.DORMANT_REQUESTED]: { label: "휴면 해제 대기중", variant: "outline" },
         };
-
 
         const config = variants[status];
         return <Badge variant={config.variant}>{config.label}</Badge>;
@@ -230,6 +292,13 @@ export default function AdminMembersPage() {
                                 ))}
                             </SelectContent>
                         </Select>
+                        <Button
+                            onClick={exportToExcel}
+                            className="bg-green-700 hover:bg-green-800 text-white"
+                        >
+                            <Download className="w-4 h-4 mr-2" />
+                            엑셀 다운로드
+                        </Button>
                         <Button onClick={loadMembers} variant="outline">
                             <RefreshCw className="w-4 h-4 mr-2" />
                             새로고침
