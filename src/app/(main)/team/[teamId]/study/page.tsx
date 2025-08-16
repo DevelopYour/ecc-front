@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { handleApiResponse, studyApi } from '@/lib/api';
 import {
     ExpressionToAsk,
@@ -16,7 +17,7 @@ import {
     Topic,
     TopicRecommendation
 } from '@/types/study';
-import { ArrowLeft, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Languages, Loader2, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, ChevronRight, Languages, Loader2, MessageSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -33,14 +34,15 @@ export default function StudyPage({ params }: StudyPageProps) {
     const [studyRoom, setStudyRoom] = useState<StudyRedis | null>(null);
     const [topicRecommendations, setTopicRecommendations] = useState<TopicRecommendation[]>([]);
     const [selectedTopics, setSelectedTopics] = useState<Topic[]>([]);
-    const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
+    const [openTopicIndex, setOpenTopicIndex] = useState<number | null>(0); // 첫 번째 주제만 기본 열림
     const [translateQuestion, setTranslateQuestion] = useState('');
     const [feedbackQuestion, setFeedbackQuestion] = useState('');
     const [loading, setLoading] = useState(false);
     const [loadingTranslate, setLoadingTranslate] = useState(false);
     const [loadingFeedback, setLoadingFeedback] = useState(false);
     const [activeTab, setActiveTab] = useState('topics');
-    const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
+    const [selectedCategoryForModal, setSelectedCategoryForModal] = useState<TopicRecommendation | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         enterStudyRoom();
@@ -60,6 +62,8 @@ export default function StudyPage({ params }: StudyPageProps) {
                     // 이미 저장된 주제가 있으면 표현 학습 탭으로 이동
                     if (data.topics && data.topics.length > 0) {
                         setActiveTab('expressions');
+                        // 첫 번째 주제만 기본 열림
+                        setOpenTopicIndex(0);
                     }
                 },
                 (error) => {
@@ -105,14 +109,14 @@ export default function StudyPage({ params }: StudyPageProps) {
         }
     };
 
-    const toggleCategory = (categoryId: number) => {
-        const newExpanded = new Set(expandedCategories);
-        if (newExpanded.has(categoryId)) {
-            newExpanded.delete(categoryId);
-        } else {
-            newExpanded.add(categoryId);
-        }
-        setExpandedCategories(newExpanded);
+    const toggleTopic = (index: number) => {
+        // 현재 열린 주제를 클릭하면 닫고, 다른 주제를 클릭하면 그 주제만 열기
+        setOpenTopicIndex(openTopicIndex === index ? null : index);
+    };
+
+    const openTopicModal = (recommendation: TopicRecommendation) => {
+        setSelectedCategoryForModal(recommendation);
+        setIsModalOpen(true);
     };
 
     const handleTopicSelection = (category: string, topic: string, checked: boolean) => {
@@ -156,6 +160,9 @@ export default function StudyPage({ params }: StudyPageProps) {
                     setStudyRoom(data);
                     setSelectedTopics([]); // 선택 초기화
                     setActiveTab('expressions');
+                    // 새로 추가된 주제 중 첫 번째를 열린 상태로 설정
+                    const startIndex = (data.topics?.length || 0) - newTopics.length;
+                    setOpenTopicIndex(startIndex);
                     toast.success('성공', {
                         description: `${newTopics.length}개의 새로운 주제가 저장되었습니다.`,
                     });
@@ -182,10 +189,10 @@ export default function StudyPage({ params }: StudyPageProps) {
         return koreanRegex.test(text);
     };
 
-    const handleTranslateHelp = async () => {
+    const handleTranslateHelp = async (topicIndex: number) => {
         if (!studyRoom || !translateQuestion.trim() || studyRoom.topics.length === 0) return;
 
-        const currentTopic = studyRoom.topics[currentTopicIndex];
+        const currentTopic = studyRoom.topics[topicIndex];
         if (!currentTopic) return;
 
         setLoadingTranslate(true);
@@ -225,10 +232,10 @@ export default function StudyPage({ params }: StudyPageProps) {
         }
     };
 
-    const handleFeedbackHelp = async () => {
+    const handleFeedbackHelp = async (topicIndex: number) => {
         if (!studyRoom || !feedbackQuestion.trim() || studyRoom.topics.length === 0) return;
 
-        const currentTopic = studyRoom.topics[currentTopicIndex];
+        const currentTopic = studyRoom.topics[topicIndex];
         if (!currentTopic) return;
 
         setLoadingFeedback(true);
@@ -343,7 +350,7 @@ export default function StudyPage({ params }: StudyPageProps) {
                             value="expressions"
                             disabled={!studyRoom.topics || studyRoom.topics.length === 0}
                         >
-                            표현 학습
+                            표현 학습 ({studyRoom.topics?.length || 0})
                         </TabsTrigger>
                     </TabsList>
 
@@ -356,88 +363,109 @@ export default function StudyPage({ params }: StudyPageProps) {
                             </Card>
                         ) : (
                             <>
-                                {topicRecommendations.map((recommendation) => {
-                                    const isExpanded = expandedCategories.has(recommendation.id);
-                                    const categoryTopicCount = recommendation.topics.length;
-                                    const selectedInCategory = selectedTopics.filter(t => t.category === recommendation.category).length;
-                                    const savedInCategory = studyRoom.topics?.filter(t => t.category === recommendation.category).length || 0;
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {topicRecommendations.map((recommendation) => {
+                                        const selectedInCategory = selectedTopics.filter(t => t.category === recommendation.category).length;
+                                        const savedInCategory = studyRoom.topics?.filter(t => t.category === recommendation.category).length || 0;
 
-                                    return (
-                                        <Card key={recommendation.id}>
-                                            <CardHeader
-                                                className="cursor-pointer hover:bg-gray-50 transition-colors"
-                                                onClick={() => toggleCategory(recommendation.id)}
-                                            >
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <CardTitle className="text-lg">{recommendation.category}</CardTitle>
-                                                        <div className="flex gap-2">
-                                                            <Badge variant="secondary" className="text-xs">
-                                                                {recommendation.description}
-                                                            </Badge>
-                                                            <Badge variant="outline" className="text-xs">
-                                                                {categoryTopicCount}개 주제
-                                                            </Badge>
+                                        return (
+                                            <Card key={recommendation.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                                                <CardHeader className="pb-3">
+                                                    <CardTitle className="text-base mb-2">{recommendation.category}</CardTitle>
+                                                    <div className="space-y-2">
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {recommendation.description}
+                                                        </p>
+                                                        <div className="flex flex-wrap gap-1">
                                                             {selectedInCategory > 0 && (
                                                                 <Badge variant="default" className="text-xs">
                                                                     {selectedInCategory}개 선택됨
                                                                 </Badge>
                                                             )}
                                                             {savedInCategory > 0 && (
-                                                                <Badge variant="outline" className="text-xs">
+                                                                <Badge variant="secondary" className="text-xs">
                                                                     {savedInCategory}개 저장됨
                                                                 </Badge>
                                                             )}
                                                         </div>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="w-full mt-3"
+                                                            onClick={() => openTopicModal(recommendation)}
+                                                        >
+                                                            주제 선택
+                                                        </Button>
                                                     </div>
-                                                    <div className="flex items-center gap-2">
-                                                        {isExpanded ? (
-                                                            <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                                                        ) : (
-                                                            <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </CardHeader>
-                                            {isExpanded && (
-                                                <CardContent>
-                                                    <div className="space-y-2">
-                                                        {recommendation.topics.map((topic) => {
-                                                            const isAlreadySaved = studyRoom.topics?.some(
-                                                                t => t.category === recommendation.category && t.topic === topic.topic
-                                                            ) || false;
+                                                </CardHeader>
+                                            </Card>
+                                        );
+                                    })}
+                                </div>
 
-                                                            return (
-                                                                <div key={topic.id} className="flex items-center space-x-2">
-                                                                    <Checkbox
-                                                                        id={`${recommendation.category}-${topic.id}`}
-                                                                        checked={selectedTopics.some(
-                                                                            t => t.category === recommendation.category && t.topic === topic.topic
-                                                                        )}
-                                                                        onCheckedChange={(checked) =>
-                                                                            handleTopicSelection(recommendation.category, topic.topic, checked as boolean)
-                                                                        }
-                                                                        disabled={isAlreadySaved}
-                                                                    />
-                                                                    <Label
-                                                                        htmlFor={`${recommendation.category}-${topic.id}`}
-                                                                        className={`text-sm font-normal cursor-pointer flex-1 ${isAlreadySaved ? 'text-muted-foreground line-through' : ''
-                                                                            }`}
-                                                                    >
-                                                                        {topic.topic}
-                                                                        {isAlreadySaved && (
-                                                                            <span className="ml-2 text-xs text-muted-foreground">(이미 선택됨)</span>
-                                                                        )}
-                                                                    </Label>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </CardContent>
-                                            )}
-                                        </Card>
-                                    );
-                                })}
+                                {/* 주제 선택 모달 */}
+                                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                                    <DialogContent className="max-w-2xl max-h-[80vh]">
+                                        <DialogHeader>
+                                            <DialogTitle>
+                                                {selectedCategoryForModal?.category} - 주제 선택
+                                            </DialogTitle>
+                                        </DialogHeader>
+                                        <div className="space-y-4">
+                                            <div className="flex gap-2">
+                                                <Badge variant="secondary">
+                                                    {selectedCategoryForModal?.description}
+                                                </Badge>
+                                                <Badge variant="outline">
+                                                    {selectedCategoryForModal?.topics.length}개 주제
+                                                </Badge>
+                                            </div>
+                                            <ScrollArea className="h-[400px] pr-4">
+                                                <div className="space-y-3">
+                                                    {selectedCategoryForModal?.topics.map((topic) => {
+                                                        const isAlreadySaved = studyRoom.topics?.some(
+                                                            t => t.category === selectedCategoryForModal.category && t.topic === topic.topic
+                                                        ) || false;
+
+                                                        return (
+                                                            <div key={topic.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+                                                                <Checkbox
+                                                                    id={`modal-${selectedCategoryForModal.category}-${topic.id}`}
+                                                                    checked={selectedTopics.some(
+                                                                        t => t.category === selectedCategoryForModal.category && t.topic === topic.topic
+                                                                    )}
+                                                                    onCheckedChange={(checked) =>
+                                                                        handleTopicSelection(selectedCategoryForModal.category, topic.topic, checked as boolean)
+                                                                    }
+                                                                    disabled={isAlreadySaved}
+                                                                />
+                                                                <Label
+                                                                    htmlFor={`modal-${selectedCategoryForModal.category}-${topic.id}`}
+                                                                    className={`text-sm font-normal cursor-pointer flex-1 ${isAlreadySaved ? 'text-muted-foreground line-through' : ''
+                                                                        }`}
+                                                                >
+                                                                    {topic.topic}
+                                                                    {isAlreadySaved && (
+                                                                        <span className="ml-2 text-xs text-muted-foreground">(이미 선택됨)</span>
+                                                                    )}
+                                                                </Label>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </ScrollArea>
+                                            <div className="flex justify-end gap-2 pt-4 border-t">
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => setIsModalOpen(false)}
+                                                >
+                                                    닫기
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+
                                 <Button
                                     onClick={handleSaveTopics}
                                     disabled={selectedTopics.length === 0 || loading}
@@ -448,7 +476,7 @@ export default function StudyPage({ params }: StudyPageProps) {
                                     ) : (
                                         <Check className="mr-2 h-4 w-4" />
                                     )}
-                                    주제 저장
+                                    주제 저장 ({selectedTopics.length}개)
                                 </Button>
                             </>
                         )}
@@ -457,160 +485,135 @@ export default function StudyPage({ params }: StudyPageProps) {
                     <TabsContent value="expressions" className="space-y-4">
                         {studyRoom.topics && studyRoom.topics.length > 0 && (
                             <>
-                                <Card>
-                                    <CardHeader>
-                                        <div className="flex items-center justify-between">
-                                            <CardTitle>{studyRoom.topics[currentTopicIndex]?.topic}</CardTitle>
-                                            <Badge>
-                                                {studyRoom.topics[currentTopicIndex]?.category}
-                                            </Badge>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        {/* 저장된 표현들 */}
-                                        <ScrollArea className="h-[300px] pr-4">
-                                            <div className="space-y-4">
-                                                {studyRoom.topics[currentTopicIndex]?.expressions.length === 0 ? (
-                                                    <p className="text-center text-muted-foreground py-8">
-                                                        아직 저장된 표현이 없습니다. AI에게 물어보세요!
-                                                    </p>
-                                                ) : (
-                                                    // 표현 카드에서 조건부 렌더링
-                                                    studyRoom.topics[currentTopicIndex]?.expressions.map((expression) => (
-                                                        <Card key={expression.expressionId}>
-                                                            <CardContent className="pt-4">
+                                {/* 토글 방식 주제 리스트 */}
+                                {studyRoom.topics.map((topic, index) => (
+                                    <Card key={topic.topicId}>
+                                        <CardHeader
+                                            className="hover:bg-gray-50 transition-colors cursor-pointer"
+                                            onClick={() => toggleTopic(index)}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <ChevronRight className={`h-4 w-4 transition-transform ${openTopicIndex === index ? 'rotate-90' : ''}`} />
+                                                    <CardTitle>{topic.topic}</CardTitle>
+                                                    <Badge variant="outline">{topic.category}</Badge>
+                                                </div>
+                                                <Badge variant="secondary">
+                                                    {topic.expressions.length}개 표현
+                                                </Badge>
+                                            </div>
+                                        </CardHeader>
 
-                                                                <p className="font-medium">{expression.english}</p>
-                                                                <p className="text-sm text-muted-foreground mt-1">{expression.korean}</p>
+                                        {openTopicIndex === index && (
+                                            <CardContent className="space-y-4">
+                                                {/* 저장된 표현들 */}
+                                                <div className="space-y-4">
+                                                    {topic.expressions.length === 0 ? (
+                                                        <p className="text-center text-muted-foreground py-8">
+                                                            아직 저장된 표현이 없습니다. AI에게 물어보세요!
+                                                        </p>
+                                                    ) : (
+                                                        topic.expressions.map((expression) => (
+                                                            <div key={expression.expressionId} className="p-3 bg-gray-50 rounded-lg">
+                                                                <p className="font-medium text-sm">{expression.english}</p>
+                                                                <p className="text-xs text-muted-foreground mt-1">{expression.korean}</p>
 
                                                                 {/* 번역 요청인 경우 예문 표시 */}
                                                                 {expression.exampleEnglish && (
-                                                                    <p className="text-sm mt-2 italic text-blue-600">{expression.exampleEnglish}</p>
+                                                                    <p className="text-xs mt-2 italic text-blue-600">{expression.exampleEnglish}</p>
                                                                 )}
 
                                                                 {/* 교정 요청인 경우 피드백 표시 */}
                                                                 {expression.feedback && (
-                                                                    <>
-                                                                        <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded">
-                                                                            <p className="text-sm text-red-600">원본:</p>
-                                                                            <p className="text-sm">{expression.original}</p>
+                                                                    <div className="mt-2 space-y-1">
+                                                                        <div>
+                                                                            <span className="text-xs text-muted-foreground">원본: </span>
+                                                                            <span className="text-xs text-muted-foreground line-through">{expression.original}</span>
                                                                         </div>
-                                                                        <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
-                                                                            <p className="text-sm text-green-600">피드백:</p>
-                                                                            <p className="text-sm">{expression.feedback}</p>
+                                                                        <div className="p-2 bg-green-50 border border-green-200 rounded">
+                                                                            <span className="text-xs text-green-600">피드백: </span>
+                                                                            <span className="text-xs">{expression.feedback}</span>
                                                                         </div>
-                                                                    </>
+                                                                    </div>
                                                                 )}
-                                                            </CardContent>
-                                                        </Card>
-                                                    ))
-                                                )}
-                                            </div>
-                                        </ScrollArea>
-
-                                        {/* AI 도움받기 */}
-                                        <div className="space-y-4 pt-4 border-t">
-                                            <h4 className="text-sm font-medium text-muted-foreground">AI에게 물어보기</h4>
-
-                                            {/* 두 개의 입력 영역을 나란히 배치 */}
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                                                {/* 번역 요청 영역 */}
-                                                <div className="space-y-3 p-4 border border-blue-200 bg-blue-50/30 rounded-lg">
-                                                    <div className="flex items-center gap-2">
-                                                        <Languages className="h-4 w-4 text-blue-600" />
-                                                        <Label className="text-sm font-medium text-blue-900">번역 요청</Label>
-                                                    </div>
-                                                    <p className="text-xs text-blue-700">단어나 문장의 뜻을 알고 싶어요</p>
-
-                                                    <Textarea
-                                                        placeholder="예: 사과, apple, 안녕하세요, How are you?"
-                                                        value={translateQuestion}
-                                                        onChange={(e) => setTranslateQuestion(e.target.value)}
-                                                        className="min-h-[80px] resize-none border-blue-200 focus:border-blue-400"
-                                                        rows={3}
-                                                    />
-
-                                                    <Button
-                                                        onClick={handleTranslateHelp}
-                                                        disabled={!translateQuestion.trim() || loadingTranslate}
-                                                        size="sm"
-                                                        className="w-full bg-blue-600 hover:bg-blue-700"
-                                                    >
-                                                        {loadingTranslate ? (
-                                                            <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                                                        ) : (
-                                                            <Languages className="mr-2 h-3 w-3" />
-                                                        )}
-                                                        번역 요청
-                                                    </Button>
+                                                            </div>
+                                                        ))
+                                                    )}
                                                 </div>
 
-                                                {/* 교정 요청 영역 */}
-                                                <div className="space-y-3 p-4 border border-green-200 bg-green-50/30 rounded-lg">
-                                                    <div className="flex items-center gap-2">
-                                                        <MessageSquare className="h-4 w-4 text-green-600" />
-                                                        <Label className="text-sm font-medium text-green-900">교정 요청</Label>
+                                                {/* AI 도움받기 */}
+                                                <div className="space-y-4 pt-4 border-t">
+                                                    <h4 className="text-sm font-medium text-muted-foreground">AI에게 물어보기</h4>
+
+                                                    {/* 두 개의 입력 영역을 나란히 배치 */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        {/* 번역 요청 영역 */}
+                                                        <div className="space-y-3 p-4 border border-blue-200 bg-blue-50/30 rounded-lg">
+                                                            <div className="flex items-center gap-2">
+                                                                <Languages className="h-4 w-4 text-blue-600" />
+                                                                <Label className="text-sm font-medium text-blue-900">번역 요청</Label>
+                                                                <span className="text-xs text-blue-700">- 단어나 문장의 뜻을 알고 싶어요</span>
+                                                            </div>
+
+                                                            <Textarea
+                                                                placeholder="예: 사과, apple, 안녕하세요, How are you?"
+                                                                value={translateQuestion}
+                                                                onChange={(e) => setTranslateQuestion(e.target.value)}
+                                                                className="min-h-[40px] resize-none border-blue-200 focus:border-blue-400"
+                                                                rows={1}
+                                                            />
+
+                                                            <Button
+                                                                onClick={() => handleTranslateHelp(index)}
+                                                                disabled={!translateQuestion.trim() || loadingTranslate}
+                                                                size="sm"
+                                                                className="w-full bg-blue-600 hover:bg-blue-700"
+                                                            >
+                                                                {loadingTranslate ? (
+                                                                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                                                ) : (
+                                                                    <Languages className="mr-2 h-3 w-3" />
+                                                                )}
+                                                                번역 요청
+                                                            </Button>
+                                                        </div>
+
+                                                        {/* 교정 요청 영역 */}
+                                                        <div className="space-y-3 p-4 border border-green-200 bg-green-50/30 rounded-lg">
+                                                            <div className="flex items-center gap-2">
+                                                                <MessageSquare className="h-4 w-4 text-green-600" />
+                                                                <Label className="text-sm font-medium text-green-900">교정 요청</Label>
+                                                                <span className="text-xs text-green-700">- 내가 쓴 영어가 맞는지 확인하고 싶어요</span>
+                                                            </div>
+
+                                                            <Textarea
+                                                                placeholder="예: I go to school yesterday, How do you think about this?"
+                                                                value={feedbackQuestion}
+                                                                onChange={(e) => setFeedbackQuestion(e.target.value)}
+                                                                className="min-h-[40px] resize-none border-green-200 focus:border-green-400"
+                                                                rows={1}
+                                                            />
+
+                                                            <Button
+                                                                onClick={() => handleFeedbackHelp(index)}
+                                                                disabled={!feedbackQuestion.trim() || loadingFeedback}
+                                                                size="sm"
+                                                                className="w-full bg-green-600 hover:bg-green-700"
+                                                            >
+                                                                {loadingFeedback ? (
+                                                                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                                                ) : (
+                                                                    <MessageSquare className="mr-2 h-3 w-3" />
+                                                                )}
+                                                                교정 요청
+                                                            </Button>
+                                                        </div>
                                                     </div>
-                                                    <p className="text-xs text-green-700">내가 쓴 영어가 맞는지 확인하고 싶어요</p>
-
-                                                    <Textarea
-                                                        placeholder="예: I go to school yesterday, How do you think about this?"
-                                                        value={feedbackQuestion}
-                                                        onChange={(e) => setFeedbackQuestion(e.target.value)}
-                                                        className="min-h-[80px] resize-none border-green-200 focus:border-green-400"
-                                                        rows={3}
-                                                    />
-
-                                                    <Button
-                                                        onClick={handleFeedbackHelp}
-                                                        disabled={!feedbackQuestion.trim() || loadingFeedback}
-                                                        size="sm"
-                                                        className="w-full bg-green-600 hover:bg-green-700"
-                                                    >
-                                                        {loadingFeedback ? (
-                                                            <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                                                        ) : (
-                                                            <MessageSquare className="mr-2 h-3 w-3" />
-                                                        )}
-                                                        교정 요청
-                                                    </Button>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                {/* 주제 네비게이션 */}
-                                {studyRoom.topics.length > 1 && (
-                                    <div className="flex items-center justify-center gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setCurrentTopicIndex(Math.max(0, currentTopicIndex - 1))}
-                                            disabled={currentTopicIndex === 0}
-                                        >
-                                            <ChevronLeft className="h-4 w-4" />
-                                            이전
-                                        </Button>
-                                        <span className="text-sm text-muted-foreground px-2">
-                                            {currentTopicIndex + 1} / {studyRoom.topics.length}
-                                        </span>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() =>
-                                                setCurrentTopicIndex(
-                                                    Math.min(studyRoom.topics.length - 1, currentTopicIndex + 1)
-                                                )
-                                            }
-                                            disabled={currentTopicIndex === studyRoom.topics.length - 1}
-                                        >
-                                            다음
-                                            <ChevronRight className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                )}
+                                            </CardContent>
+                                        )}
+                                    </Card>
+                                ))}
                             </>
                         )}
                     </TabsContent>
