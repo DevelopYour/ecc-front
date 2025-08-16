@@ -9,25 +9,21 @@ import {
     AlertCircle,
     TrendingUp,
     Clock,
-    CheckCircle,
+    UserCheck,
+    FileText,
+    Settings,
 } from "lucide-react";
-import { adminMemberApi, adminTeamApi } from "@/lib/api";
+import { adminApi } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-
-interface DashboardStats {
-    totalMembers: number;
-    pendingMembers: number;
-    activeTeams: number;
-    pendingReports: number;
-}
+import { AdminSummary } from "@/types/admin";
 
 export default function AdminDashboard() {
-    const [stats, setStats] = useState<DashboardStats>({
+    const [stats, setStats] = useState<AdminSummary>({
         totalMembers: 0,
         pendingMembers: 0,
-        activeTeams: 0,
+        regularTeams: 0,
+        oneTimeTeams: 0,
         pendingReports: 0,
     });
     const [loading, setLoading] = useState(true);
@@ -38,21 +34,10 @@ export default function AdminDashboard() {
 
     const loadDashboardData = async () => {
         try {
-            const [membersRes, pendingRes, teamsRes, reportsRes] = await Promise.all([
-                adminMemberApi.getAllMembers(),
-                adminMemberApi.getPendingMembers(),
-                adminTeamApi.getAllTeams(),
-                adminTeamApi.getTeamReportsStatus(),
-            ]);
-
-            setStats({
-                totalMembers: membersRes.data?.length || 0,
-                pendingMembers: pendingRes.data?.length || 0,
-                activeTeams: teamsRes.data?.filter(team =>
-                    team.status === 'ACTIVE' || team.status === 'RECRUITING'
-                ).length || 0,
-                pendingReports: reportsRes.data?.pendingCount || 0,
-            });
+            const response = await adminApi.getSummary();
+            if (response.data) {
+                setStats(response.data);
+            }
         } catch (error) {
             console.error("Failed to load dashboard data:", error);
         } finally {
@@ -67,143 +52,174 @@ export default function AdminDashboard() {
             icon: Users,
             color: "text-blue-600",
             bgColor: "bg-blue-50",
+            borderColor: "border-blue-200",
             href: "/admin/members",
         },
         {
             title: "승인 대기",
             value: stats.pendingMembers,
             icon: Clock,
-            color: "text-yellow-600",
-            bgColor: "bg-yellow-50",
+            color: "text-amber-600",
+            bgColor: "bg-amber-50",
+            borderColor: "border-amber-200",
             href: "/admin/members/pending",
         },
         {
-            title: "진행중인 팀",
-            value: stats.activeTeams,
+            title: "정규 스터디",
+            value: stats.regularTeams,
             icon: Calendar,
-            color: "text-green-600",
-            bgColor: "bg-green-50",
-            href: "/admin/teams",
+            color: "text-emerald-600",
+            bgColor: "bg-emerald-50",
+            borderColor: "border-emerald-200",
+            href: "/admin/teams/regular",
+        },
+        {
+            title: "번개 스터디",
+            value: stats.oneTimeTeams,
+            icon: Calendar,
+            color: "text-violet-600",
+            bgColor: "bg-violet-50",
+            borderColor: "border-violet-200",
+            href: "/admin/teams/one-time",
         },
         {
             title: "미평가 보고서",
             value: stats.pendingReports,
             icon: AlertCircle,
-            color: "text-red-600",
-            bgColor: "bg-red-50",
+            color: "text-rose-600",
+            bgColor: "bg-rose-50",
+            borderColor: "border-rose-200",
             href: "/admin/teams/reports",
         },
     ];
 
+    const quickActions = [
+        {
+            title: "승인 대기 회원 처리",
+            description: "새로운 가입 신청을 검토하고 승인하세요",
+            icon: UserCheck,
+            href: "/admin/members/pending",
+            color: "text-amber-600",
+            bgColor: "bg-amber-50",
+        },
+        {
+            title: "보고서 평가하기",
+            description: "제출된 스터디 보고서를 평가하세요",
+            icon: FileText,
+            href: "/admin/teams/reports",
+            color: "text-blue-600",
+            bgColor: "bg-blue-50",
+        },
+        {
+            title: "레벨 변경 요청 검토",
+            description: "회원의 레벨 변경 요청을 처리하세요",
+            icon: TrendingUp,
+            href: "/admin/members/level-requests",
+            color: "text-purple-600",
+            bgColor: "bg-purple-50",
+        },
+        {
+            title: "스터디 주제 관리",
+            description: "새로운 스터디 주제를 추가하고 관리하세요",
+            icon: BookOpen,
+            href: "/admin/content/topics",
+            color: "text-green-600",
+            bgColor: "bg-green-50",
+        },
+    ];
+
     return (
-        <div>
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">관리자 대시보드</h1>
-                <p className="text-gray-600 mt-2">ECC 스터디 관리 시스템</p>
+        <div className="space-y-8">
+            {/* Header */}
+            <div>
+                <h1 className="text-4xl font-bold mb-2">관리자 대시보드</h1>
+                <p className="text-mygreen text-lg">ECC 스터디 관리 시스템에 오신 것을 환영합니다!</p>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
                 {statCards.map((stat) => (
                     <Link key={stat.title} href={stat.href}>
-                        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardTitle className="text-sm font-medium text-gray-600">
-                                    {stat.title}
-                                </CardTitle>
-                                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                                    <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                        <Card className={`hover:shadow-xl transition-all duration-300 cursor-pointer border-l-4 ${stat.borderColor} hover:scale-105`}>
+                            <CardHeader className="flex flex-row items-center justify-between pb-3">
+                                <div>
+                                    <CardTitle className="text-sm font-medium text-gray-600 mb-1">
+                                        {stat.title}
+                                    </CardTitle>
+                                    {loading ? (
+                                        <Skeleton className="h-8 w-16" />
+                                    ) : (
+                                        <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                                    )}
+                                </div>
+                                <div className={`p-3 rounded-xl ${stat.bgColor}`}>
+                                    <stat.icon className={`w-6 h-6 ${stat.color}`} />
                                 </div>
                             </CardHeader>
-                            <CardContent>
-                                {loading ? (
-                                    <Skeleton className="h-8 w-20" />
-                                ) : (
-                                    <p className="text-2xl font-bold">{stat.value}</p>
-                                )}
-                            </CardContent>
                         </Card>
                     </Link>
                 ))}
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Recent Activities */}
-                <Card>
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                {/* Quick Actions Card */}
+                <Card className="shadow-lg">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <TrendingUp className="w-5 h-5" />
+                        <CardTitle className="flex items-center gap-3 text-xl">
+                            <div className="p-2 bg-blue-100 rounded-lg">
+                                <TrendingUp className="w-6 h-6 text-blue-600" />
+                            </div>
                             빠른 작업
                         </CardTitle>
+                        <p className="text-gray-600">자주 사용하는 관리 기능들을 빠르게 접근하세요</p>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                        <Link href="/admin/members/pending">
-                            <Button variant="outline" className="w-full justify-start">
-                                <Clock className="w-4 h-4 mr-2" />
-                                승인 대기 회원 처리
-                            </Button>
-                        </Link>
-                        <Link href="/admin/teams/reports">
-                            <Button variant="outline" className="w-full justify-start">
-                                <BookOpen className="w-4 h-4 mr-2" />
-                                보고서 평가하기
-                            </Button>
-                        </Link>
-                        <Link href="/admin/members/level-requests">
-                            <Button variant="outline" className="w-full justify-start">
-                                <Users className="w-4 h-4 mr-2" />
-                                레벨 변경 요청 검토
-                            </Button>
-                        </Link>
-                        <Link href="/admin/content/topics">
-                            <Button variant="outline" className="w-full justify-start">
-                                <BookOpen className="w-4 h-4 mr-2" />
-                                스터디 주제 관리
-                            </Button>
-                        </Link>
+                    <CardContent className="space-y-4">
+                        {quickActions.slice(0, 2).map((action) => (
+                            <Link key={action.title} href={action.href}>
+                                <div className="flex items-center gap-4 p-4 rounded-lg border hover:border-gray-300 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                                    <div className={`p-3 rounded-lg ${action.bgColor} group-hover:scale-110 transition-transform`}>
+                                        <action.icon className={`w-5 h-5 ${action.color}`} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                                            {action.title}
+                                        </h3>
+                                        <p className="text-sm text-gray-600">{action.description}</p>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
                     </CardContent>
                 </Card>
 
-                {/* System Status */}
-                <Card>
+                {/* Additional Actions Card */}
+                <Card className="shadow-lg">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <AlertCircle className="w-5 h-5" />
-                            시스템 상태
+                        <CardTitle className="flex items-center gap-3 text-xl">
+                            <div className="p-2 bg-green-100 rounded-lg">
+                                <Settings className="w-6 h-6 text-green-600" />
+                            </div>
+                            시스템 관리
                         </CardTitle>
+                        <p className="text-gray-600">콘텐츠 및 사용자 관리 기능입니다</p>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">회원 가입 처리</span>
-                            <div className="flex items-center gap-2">
-                                <CheckCircle className="w-4 h-4 text-green-600" />
-                                <span className="text-sm font-medium">정상</span>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">스터디 진행</span>
-                            <div className="flex items-center gap-2">
-                                <CheckCircle className="w-4 h-4 text-green-600" />
-                                <span className="text-sm font-medium">정상</span>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">보고서 제출</span>
-                            <div className="flex items-center gap-2">
-                                {stats.pendingReports > 5 ? (
-                                    <>
-                                        <AlertCircle className="w-4 h-4 text-yellow-600" />
-                                        <span className="text-sm font-medium">주의</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCircle className="w-4 h-4 text-green-600" />
-                                        <span className="text-sm font-medium">정상</span>
-                                    </>
-                                )}
-                            </div>
-                        </div>
+                        {quickActions.slice(2, 4).map((action) => (
+                            <Link key={action.title} href={action.href}>
+                                <div className="flex items-center gap-4 p-4 rounded-lg border hover:border-gray-300 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                                    <div className={`p-3 rounded-lg ${action.bgColor} group-hover:scale-110 transition-transform`}>
+                                        <action.icon className={`w-5 h-5 ${action.color}`} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                                            {action.title}
+                                        </h3>
+                                        <p className="text-sm text-gray-600">{action.description}</p>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
                     </CardContent>
                 </Card>
             </div>

@@ -15,7 +15,7 @@ import { ExpressionToAsk, ReportDocument, StudyRedis, Topic, TopicRecommendation
 import { AssignedTeam, RegularStudyApplicant, RegularStudyApplyRequest, TimeSlot } from "@/types/apply-regular";
 import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
 import { setCookie } from "cookies-next";
-import { MemberA, MemberStatus, LevelChangeRequest, Category, TopicA, TeamA } from "@/types/admin";
+import { MemberA, MemberStatus, LevelChangeRequest, Category, TopicA, TeamA, AdminSummary, } from "@/types/admin";
 
 interface ResponseDto<T> {
     success: boolean;
@@ -381,6 +381,11 @@ export const reviewApi = {
     submitReviewTest: (reviewId: string, test: ReviewTest): Promise<ResponseDto<ReviewTest>> =>
         api.patch(`/review/me/${reviewId}/test`, test),
 };
+
+export const adminApi = {
+    getSummary: (): Promise<ResponseDto<AdminSummary>> =>
+        api.get("/admin/main/summary")
+}
 
 // 관리자 회원 관리 API
 export const adminMemberApi = {

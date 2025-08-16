@@ -1,5 +1,13 @@
 // types/admin.ts
 
+export interface AdminSummary {
+    totalMembers: number;
+    pendingMembers: number;
+    regularTeams: number;
+    oneTimeTeams: number;
+    pendingReports: number;
+}
+
 export enum MemberStatus {
     ACTIVE = 'ACTIVE',
     PENDING = 'PENDING',

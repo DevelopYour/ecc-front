@@ -84,6 +84,10 @@ export default function AdminLayout({
         router.push('/');
     }
 
+    const goToAdminMain = () => {
+        router.push('/admin');
+    }
+
     if (!user || user.role !== 'ROLE_ADMIN') {
         return null;
     }
@@ -108,8 +112,8 @@ export default function AdminLayout({
             >
                 <div className="flex flex-col h-full">
                     {/* Logo */}
-                    <div className="p-6 border-b">
-                        <h1 className="text-2xl font-bold text-gray-800">
+                    <div className="p-6 border-b" onClick={goToAdminMain}>
+                        <h1 className="cursor-pointer text-2xl font-bold text-gray-800">
                             ECC Admin
                         </h1>
                     </div>
