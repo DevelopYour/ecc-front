@@ -6,6 +6,7 @@ export interface WeeklySummary {
 export interface StudySummary {
     teamId: number;
     week: number;
+    reportId: string;
     studyStatus: StudyStatus;
 }
 
@@ -52,11 +53,11 @@ export interface Topic {
     topic: string;
 }
 
-export type StudyStatus = 'WAITING' | 'IN_PROGRESS' | 'COMPLETE';
+export type StudyStatus = 'ONGOING' | 'IN_PROGRESS' | 'COMPLETE';
 export type ReviewStatus = 'NOT_READY' | 'INCOMPLETE' | 'COMPLETED';
 
 export const STUDY_STATUS_LABELS: Record<StudyStatus, string> = {
-    WAITING: '대기중',
+    ONGOING: '진행중',
     IN_PROGRESS: '진행중',
     COMPLETE: '완료',
 };
@@ -111,7 +112,7 @@ export interface ReportDocument {
 
 export const getStatusBadgeVariant = (status: StudyStatus | ReviewStatus): 'default' | 'secondary' | 'destructive' | 'outline' => {
     switch (status) {
-        case 'WAITING':
+        case 'ONGOING':
         case 'NOT_READY':
             return 'secondary';
         case 'INCOMPLETE':
