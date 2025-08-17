@@ -15,9 +15,6 @@ export default function ReviewLayout({
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-900">복습자료</h1>
-                    <p className="mt-2 text-gray-600">
-                        스터디에서 학습한 내용을 복습하고 테스트로 실력을 확인하세요
-                    </p>
                 </div>
                 {children}
             </div>
