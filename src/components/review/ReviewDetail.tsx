@@ -1,268 +1,120 @@
+import React from 'react';
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Review, ReviewStatus } from "@/types/review";
-import { ReportFeedback, ReportTopic, ReportTranslation } from "@/types/study";
-import { BookOpen, CheckCircle, Globe, Lightbulb, MessageSquare, Star, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BookOpen, CheckCircle2, Clock, Play, Star, MessageCircle } from "lucide-react";
+import { Review } from '@/types/review';
+import { ReportFeedback, ReportTopic, ReportTranslation } from '@/types/study';
 
 interface ReviewDetailProps {
     review: Review;
     onStartTest: () => void;
 }
 
-// 카테고리 라벨 매핑
-const getCategoryLabel = (category: string): string => {
-    const categoryMap: Record<string, string> = {
-        'business': '비즈니스',
-        'daily': '일상',
-        'travel': '여행',
-        'academic': '학술',
-        'technical': '기술',
-        'social': '사회',
-        'culture': '문화',
-        'other': '기타'
-    };
-    return categoryMap[category.toLowerCase()] || category;
-};
+// 표현 카드 컴포넌트 (교정/번역 통합)
+const ExpressionCard = ({ item, type }: {
+    item: ReportTranslation | ReportFeedback;
+    type: 'translation' | 'feedback'
+}) => {
+    const isFeedback = type === 'feedback' && 'feedback' in item;
 
-// 카테고리별 색상 및 아이콘
-const getCategoryStyle = (category: string) => {
-    const styleMap: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", icon: React.ReactNode }> = {
-        'business': { variant: "default", icon: <Users className="h-3 w-3" /> },
-        'daily': { variant: "secondary", icon: <MessageSquare className="h-3 w-3" /> },
-        'travel': { variant: "outline", icon: <Globe className="h-3 w-3" /> },
-        'academic': { variant: "default", icon: <BookOpen className="h-3 w-3" /> },
-        'technical': { variant: "secondary", icon: <Lightbulb className="h-3 w-3" /> },
-        'social': { variant: "outline", icon: <Users className="h-3 w-3" /> },
-        'culture': { variant: "default", icon: <Star className="h-3 w-3" /> },
-        'other': { variant: "secondary", icon: <MessageSquare className="h-3 w-3" /> }
-    };
-    return styleMap[category.toLowerCase()] || styleMap['other'];
-};
-
-// Translation 카드 컴포넌트
-const TranslationCard = ({ translation, index }: { translation: ReportTranslation; index: number }) => {
     return (
-        <Card className="bg-gray-50 hover:bg-gray-100 transition-colors">
-            <CardContent className="pt-4">
-                <div className="space-y-3">
-                    {/* 인덱스와 타입 배지 */}
-                    <div className="flex items-center justify-between">
-                        <Badge variant="outline" className="text-xs font-mono">
-                            {String(index + 1).padStart(2, '0')}
-                        </Badge>
-                        <Badge variant="default" className="text-xs gap-1">
-                            <Globe className="h-3 w-3" />
-                            번역
-                        </Badge>
+        <div className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
+            <div className="space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 space-y-1">
+                        <p className="font-medium text-gray-900 leading-relaxed">{item.english}</p>
+                        <p className="text-sm text-gray-600">{item.korean}</p>
                     </div>
-
-                    {/* 영어 표현 */}
-                    <div className="bg-white rounded-md p-3 border">
-                        <p className="font-semibold text-blue-600 text-lg">
-                            {translation.english}
-                        </p>
-                        <p className="text-gray-600 mt-1">
-                            {translation.korean}
-                        </p>
-                    </div>
-
-                    {/* 예시 문장 */}
-                    {(translation.exampleEnglish || translation.exampleKorean) && (
-                        <div className="bg-blue-50 border-l-4 border-blue-400 rounded-r-md p-3">
-                            <div className="flex items-start gap-2">
-                                <Lightbulb className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                                <div className="space-y-1">
-                                    <p className="text-xs font-medium text-blue-800 uppercase tracking-wide">
-                                        예시 문장
-                                    </p>
-                                    {translation.exampleEnglish && (
-                                        <p className="text-sm text-blue-700 italic">
-                                            {translation.exampleEnglish}
-                                        </p>
-                                    )}
-                                    {translation.exampleKorean && (
-                                        <p className="text-sm text-blue-600">
-                                            {translation.exampleKorean}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    <Badge variant={type === 'feedback' ? 'secondary' : 'outline'} className="text-xs flex-shrink-0">
+                        {type === 'feedback' ? '교정' : '번역'}
+                    </Badge>
                 </div>
-            </CardContent>
-        </Card>
+
+                {/* 예문 또는 피드백 */}
+                {'exampleEnglish' in item && item.exampleEnglish && (
+                    <div className="pt-2 border-t border-gray-100">
+                        <p className="text-sm text-blue-600 italic">
+                            💡 {item.exampleEnglish}
+                        </p>
+                    </div>
+                )}
+
+                {isFeedback && item.feedback && (
+                    <div className="pt-2 border-t border-gray-100">
+                        <p className="text-sm text-green-700">
+                            📝 {item.feedback}
+                        </p>
+                    </div>
+                )}
+            </div>
+        </div>
     );
 };
 
-// Feedback 카드 컴포넌트
-const FeedbackCard = ({ feedback, index }: { feedback: ReportFeedback; index: number }) => {
-    return (
-        <Card className="bg-gray-50 hover:bg-gray-100 transition-colors">
-            <CardContent className="pt-4">
-                <div className="space-y-3">
-                    {/* 인덱스와 타입 배지 */}
-                    <div className="flex items-center justify-between">
-                        <Badge variant="outline" className="text-xs font-mono">
-                            {String(index + 1).padStart(2, '0')}
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs gap-1">
-                            <MessageSquare className="h-3 w-3" />
-                            표현
-                        </Badge>
-                    </div>
-
-                    {/* 개선된 표현 */}
-                    <div className="bg-white rounded-md p-3 border">
-                        <p className="font-semibold text-blue-600 text-lg">
-                            {feedback.english}
-                        </p>
-                        <p className="text-gray-600 mt-1">
-                            {feedback.korean}
-                        </p>
-                        <p className="text-sm text-gray-700 mt-1 line-through">
-                            {feedback.original}
-                        </p>
-                    </div>
-
-                    {/* 피드백 */}
-                    {feedback.feedback && (
-                        <div className="bg-green-50 border-l-4 border-green-400 rounded-r-md p-3">
-                            <div className="flex items-start gap-2">
-                                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                                <div>
-                                    <p className="text-xs font-medium text-green-800 uppercase tracking-wide">
-                                        피드백
-                                    </p>
-                                    <p className="text-sm text-green-700 mt-1">
-                                        {feedback.feedback}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
-    );
-};
-
-// Topic 섹션 컴포넌트
-const TopicSection = ({ topic, isLastTopic }: {
+// 주제 섹션 컴포넌트 
+const TopicSection = ({ topic, topicIndex }: {
     topic: ReportTopic;
     topicIndex: number;
-    isLastTopic: boolean;
 }) => {
-    const categoryStyle = getCategoryStyle(topic.category);
-    const translationCount = topic.translations?.length || 0;
-    const feedbackCount = topic.feedbacks?.length || 0;
-    const totalCount = translationCount + feedbackCount;
+    const allExpressions = [
+        ...(topic.feedbacks?.map(f => ({ item: f, type: 'feedback' as const })) || []),
+        ...(topic.translations?.map(t => ({ item: t, type: 'translation' as const })) || [])
+    ];
+
+    if (allExpressions.length === 0) return null;
 
     return (
-        <div className="space-y-4">
-            {/* 주제 헤더 */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <Badge
-                        variant={categoryStyle.variant}
-                        className="gap-1"
-                    >
-                        {categoryStyle.icon}
-                        {getCategoryLabel(topic.category)}
-                    </Badge>
-                    <h4 className="font-semibold text-lg">{topic.topic}</h4>
-                </div>
-
-                {/* 학습 통계 */}
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                        <Globe className="h-3 w-3" />
-                        <span>{translationCount}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <MessageSquare className="h-3 w-3" />
-                        <span>{feedbackCount}</span>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                        총 {totalCount}개
-                    </Badge>
-                </div>
+        <div className="space-y-3">
+            {/* 주제 헤더 - 간소화 */}
+            <div className="flex items-center gap-2 py-2">
+                <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
+                <span className="font-medium text-gray-700 text-sm">
+                    {topic.topic}
+                </span>
+                <span className="text-xs text-gray-500">
+                    {allExpressions.length}개
+                </span>
             </div>
 
-            {/* 번역 목록 */}
-            {topic.translations && topic.translations.length > 0 && (
-                <div className="space-y-3">
-                    <h5 className="font-medium text-blue-700 flex items-center gap-2">
-                        <Globe className="h-4 w-4" />
-                        번역 ({topic.translations.length}개)
-                    </h5>
-                    <div className="grid gap-3">
-                        {topic.translations.map((translation, index) => (
-                            <TranslationCard
-                                key={`translation-${index}`}
-                                translation={translation}
-                                index={index}
-                            />
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* 피드백 목록 */}
-            {topic.feedbacks && topic.feedbacks.length > 0 && (
-                <div className="space-y-3">
-                    <h5 className="font-medium text-green-700 flex items-center gap-2">
-                        <MessageSquare className="h-4 w-4" />
-                        표현 피드백 ({topic.feedbacks.length}개)
-                    </h5>
-                    <div className="grid gap-3">
-                        {topic.feedbacks.map((feedback, index) => (
-                            <FeedbackCard
-                                key={`feedback-${index}`}
-                                feedback={feedback}
-                                index={index}
-                            />
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* 빈 상태 */}
-            {totalCount === 0 && (
-                <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-                    <BookOpen className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-500">
-                        이 주제에 대한 학습 내용이 없습니다.
-                    </p>
-                </div>
-            )}
-
-            {!isLastTopic && <Separator className="my-6" />}
+            {/* 표현 목록 */}
+            <div className="grid gap-3">
+                {allExpressions.map(({ item, type }, index) => (
+                    <ExpressionCard
+                        key={`${type}-${index}`}
+                        item={item}
+                        type={type}
+                    />
+                ))}
+            </div>
         </div>
     );
 };
 
 export default function ReviewDetail({ review, onStartTest }: ReviewDetailProps) {
-    const getStatusColor = (status: ReviewStatus) => {
+    // 상태별 스타일
+    const getStatusBadge = (status: Review['status']) => {
         switch (status) {
-            case ReviewStatus.NOT_READY:
-                return "bg-gray-100 text-gray-800";
-            case ReviewStatus.INCOMPLETE:
-                return "bg-yellow-100 text-yellow-800";
-            case ReviewStatus.COMPLETED:
-                return "bg-green-100 text-green-800";
-        }
-    };
-
-    const getStatusText = (status: ReviewStatus) => {
-        switch (status) {
-            case ReviewStatus.NOT_READY:
-                return "준비중";
-            case ReviewStatus.INCOMPLETE:
-                return "미완료";
-            case ReviewStatus.COMPLETED:
-                return "완료";
+            case 'NOT_READY':
+                return (
+                    <Badge variant="secondary" className="gap-1">
+                        <Clock className="h-3 w-3" />
+                        준비중
+                    </Badge>
+                );
+            case 'INCOMPLETE':
+                return (
+                    <Badge variant="outline" className="gap-1">
+                        <Clock className="h-3 w-3" />
+                        미완료
+                    </Badge>
+                );
+            case 'COMPLETED':
+                return (
+                    <Badge variant="default" className="gap-1 bg-green-600">
+                        <CheckCircle2 className="h-3 w-3" />
+                        완료
+                    </Badge>
+                );
         }
     };
 
@@ -282,82 +134,60 @@ export default function ReviewDetail({ review, onStartTest }: ReviewDetailProps)
     const studyStats = getStudyStats();
 
     return (
-        <div className="bg-white rounded-lg shadow-lg">
-            {/* Header */}
-            <div className="border-b p-6">
-                <div className="flex items-start justify-between">
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-900">Week {review.week}</h2>
-                        {/* 학습 통계 요약 */}
-                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                            <div className="flex items-center gap-1">
-                                <Globe className="h-4 w-4 text-blue-600" />
-                                <span>번역 {studyStats.translationCount}개</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <MessageSquare className="h-4 w-4 text-green-600" />
-                                <span>피드백 {studyStats.feedbackCount}개</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <BookOpen className="h-4 w-4 text-purple-600" />
-                                <span>총 {studyStats.totalExpressions}개</span>
-                            </div>
-                        </div>
-                    </div>
-                    <span className={`px-4 py-2 rounded-full text-sm font-medium ${getStatusColor(review.status)}`}>
-                        {getStatusText(review.status)}
-                    </span>
-                </div>
+        <div className="max-w-4xl mx-auto p-6 space-y-6">
+            {/* 헤더 */}
+            <div className="flex items-center gap-4">
+                <h1 className="text-xl font-bold text-gray-900">{review.week}주차 복습</h1>
+                <p className="text-gray-600">총 {studyStats.totalExpressions}개의 표현</p>
+                {getStatusBadge(review.status)}
             </div>
 
-            {/* Content */}
-            <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">복습 내용</h3>
-                    {review.topics && (
-                        <Badge variant="outline">
-                            {review.topics.length}개 주제
-                        </Badge>
-                    )}
-                </div>
-
+            {/* 메인 콘텐츠 */}
+            <div className="bg-white rounded-xl p-6 border border-gray-200">
                 {review.topics && review.topics.length > 0 ? (
-                    <div className="space-y-6 max-h-96 overflow-y-auto">
+                    <div className="space-y-8">
                         {review.topics.map((topic, topicIndex) => (
                             <TopicSection
                                 key={topicIndex}
                                 topic={topic}
                                 topicIndex={topicIndex}
-                                isLastTopic={topicIndex === review.topics.length - 1}
                             />
                         ))}
                     </div>
                 ) : (
-                    <div className="text-center py-12 bg-gray-50 rounded-lg">
-                        <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                        <p className="text-gray-500">복습 내용이 아직 준비되지 않았습니다</p>
+                    <div className="text-center py-12">
+                        <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                            <MessageCircle className="h-8 w-8 text-gray-400" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">복습 내용이 없습니다</h3>
+                        <p className="text-gray-500">아직 이 주차에 대한 복습 내용이 준비되지 않았습니다.</p>
                     </div>
                 )}
             </div>
 
-            {/* Actions */}
-            {review.status !== ReviewStatus.NOT_READY && (
-                <div className="p-6 border-t bg-gray-50">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h4 className="font-medium text-gray-900">복습 테스트</h4>
-                            <p className="text-sm text-gray-500 mt-1">
-                                {review.status === ReviewStatus.COMPLETED
-                                    ? "테스트를 완료했습니다. 다시 도전해보세요!"
-                                    : "학습한 내용을 테스트로 확인해보세요"}
+            {/* 테스트 시작 버튼 */}
+            {review.status !== 'NOT_READY' && studyStats.totalExpressions > 0 && (
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <Play className="h-6 w-6 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900 mb-1">복습 테스트</h3>
+                            <p className="text-sm text-gray-600">
+                                {review.status === 'COMPLETED'
+                                    ? `테스트를 완료했습니다. 다시 도전해보세요! (${studyStats.totalExpressions}개 표현)`
+                                    : `학습한 ${studyStats.totalExpressions}개 표현을 테스트로 확인해보세요`}
                             </p>
                         </div>
-                        <button
+                        <Button
                             onClick={onStartTest}
-                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                            className="gap-2 bg-blue-600 hover:bg-blue-700"
+                            size="lg"
                         >
-                            {review.status === ReviewStatus.COMPLETED ? "다시 테스트하기" : "테스트 시작하기"}
-                        </button>
+                            <Play className="h-4 w-4" />
+                            {review.status === 'COMPLETED' ? '다시 테스트' : '테스트 시작'}
+                        </Button>
                     </div>
                 </div>
             )}
