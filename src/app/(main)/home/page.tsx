@@ -5,7 +5,10 @@ import {
     ArrowRight,
     BookText,
     Calendar,
-    Clock
+    Clock,
+    TrendingUp,
+    Users,
+    Zap
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -171,10 +174,12 @@ export default function HomePage() {
                     title={`안녕하세요, ${user?.name}님!`}
                     description="오늘의 일정과 복습 자료를 확인하세요."
                 />
-                <Card>
+                <Card className="border-destructive/20 bg-destructive/5">
                     <CardContent className="flex flex-col items-center justify-center p-8">
                         <p className="text-center text-destructive mb-4">{error}</p>
-                        <Button onClick={() => window.location.reload()}>다시 시도</Button>
+                        <Button onClick={() => window.location.reload()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            다시 시도
+                        </Button>
                     </CardContent>
                 </Card>
             </div>
@@ -192,48 +197,71 @@ export default function HomePage() {
                 {/* 캘린더/일정 섹션 */}
                 <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-bold flex items-center gap-2">
-                            <Calendar className="h-5 w-5" />
+                        <h2 className="text-2xl font-bold flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400">
+                                <Calendar className="h-5 w-5" />
+                            </div>
                             다가오는 일정
                         </h2>
                     </div>
 
                     {upcomingEvents.length > 0 ? (
-                        <div className="space-y-3">
-                            {upcomingEvents.map((event) => (
-                                <Card key={event.id} className="hover:shadow-md transition-shadow">
-                                    <CardContent className="p-4">
+                        <div className="space-y-4">
+                            {upcomingEvents.map((event, index) => (
+                                <Card
+                                    key={event.id}
+                                    className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 bg-gradient-to-r from-white to-gray-50/30 dark:from-gray-900 dark:to-gray-800/30 animate-in slide-in-from-left-5"
+                                    style={{ animationDelay: `${index * 100}ms` }}
+                                >
+                                    <CardContent className="p-6">
                                         <div className="flex items-center justify-between">
                                             <div className="flex-1">
-                                                <h3 className="font-medium text-sm mb-1">
-                                                    {event.title} - {event.teamName}
-                                                </h3>
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <div className="p-2 rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                                        {event.type === 'regular' ? <Users className="h-4 w-4" /> : <Zap className="h-4 w-4" />}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-semibold text-base">
+                                                            {event.title}
+                                                        </h3>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {event.teamName}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
                                                 {event.subject && (
-                                                    <p className="text-xs text-muted-foreground mb-1">
+                                                    <div className="inline-block px-3 py-1 text-xs bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-400 mb-3">
                                                         {event.subject}
-                                                    </p>
+                                                    </div>
                                                 )}
-                                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                                    <div className="flex items-center gap-1">
-                                                        <Calendar className="h-3 w-3" />
+
+                                                <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                                                    <div className="flex items-center gap-2">
+                                                        <Calendar className="h-4 w-4" />
                                                         {formatDate(event.date, "MM월 dd일 (EEE)")}
                                                     </div>
-                                                    <div className="flex items-center gap-1">
-                                                        <Clock className="h-3 w-3" />
-                                                        {event.time}시 시작
+                                                    <div className="flex items-center gap-2">
+                                                        <Clock className="h-4 w-4" />
+                                                        {event.time}:00 시작
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className={`text-xs px-2 py-1 rounded-full ${event.type === 'regular'
-                                                    ? 'bg-blue-100 text-blue-800'
-                                                    : 'bg-orange-100 text-orange-800'
+
+                                            <div className="flex items-center gap-3">
+                                                <span className={`text-xs font-medium px-3 py-1 rounded-full ${event.type === 'regular'
+                                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                                                    : 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
                                                     }`}>
                                                     {event.type === 'regular' ? '정규' : '번개'}
                                                 </span>
                                                 <Link href={`/team/${event.teamId}`}>
-                                                    <Button variant="ghost" size="sm">
-                                                        <ArrowRight className="h-4 w-4" />
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors"
+                                                    >
+                                                        <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                                                     </Button>
                                                 </Link>
                                             </div>
@@ -243,18 +271,25 @@ export default function HomePage() {
                             ))}
                         </div>
                     ) : (
-                        <Card>
-                            <CardContent className="flex flex-col items-center justify-center p-8">
-                                <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-                                <p className="text-center text-muted-foreground mb-4">
-                                    예정된 스터디가 없습니다.
+                        <Card className="border-dashed border-2 border-gray-200 dark:border-gray-700">
+                            <CardContent className="flex flex-col items-center justify-center p-12">
+                                <div className="p-4 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+                                    <Calendar className="h-8 w-8 text-gray-400" />
+                                </div>
+                                <h3 className="font-semibold text-lg mb-2">예정된 스터디가 없습니다</h3>
+                                <p className="text-center text-muted-foreground mb-6">
+                                    새로운 스터디에 참여하거나 직접 만들어보세요!
                                 </p>
-                                <div className="flex gap-2">
+                                <div className="flex gap-3">
                                     <Link href={ROUTES.REGULAR}>
-                                        <Button variant="outline" size="sm">정규 스터디 보기</Button>
+                                        <Button variant="outline" size="sm" className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200">
+                                            정규 스터디 보기
+                                        </Button>
                                     </Link>
                                     <Link href={ROUTES.ONE_TIME}>
-                                        <Button variant="outline" size="sm">번개 스터디 보기</Button>
+                                        <Button variant="outline" size="sm" className="hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200">
+                                            번개 스터디 보기
+                                        </Button>
                                     </Link>
                                 </div>
                             </CardContent>
@@ -265,35 +300,52 @@ export default function HomePage() {
                 {/* 복습 자료 섹션 */}
                 <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-bold flex items-center gap-2">
-                            <BookText className="h-5 w-5" />
+                        <h2 className="text-2xl font-bold flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400">
+                                <BookText className="h-5 w-5" />
+                            </div>
                             최근 복습 자료
                         </h2>
                         <Link href={ROUTES.REVIEW}>
-                            <Button variant="ghost" size="sm" className="gap-1">
-                                모두 보기 <ArrowRight className="h-4 w-4" />
+                            <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700 hover:bg-green-50">
+                                모두 보기 <ArrowRight className="h-4 w-4 ml-1" />
                             </Button>
                         </Link>
                     </div>
 
                     {recentReviews.length > 0 ? (
-                        <div className="space-y-3">
-                            {recentReviews.map((review) => (
-                                <Card key={review.id} className="hover:shadow-md transition-shadow">
-                                    <CardContent className="p-4">
+                        <div className="space-y-4">
+                            {recentReviews.map((review, index) => (
+                                <Card
+                                    key={review.id}
+                                    className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 bg-gradient-to-r from-white to-green-50/30 dark:from-gray-900 dark:to-green-800/10 animate-in slide-in-from-right-5"
+                                    style={{ animationDelay: `${index * 100}ms` }}
+                                >
+                                    <CardContent className="p-6">
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
-                                                <h3 className="font-medium text-sm mb-1">
-                                                    {`${review.week}주차 복습 자료`}
-                                                </h3>
-                                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                    <Calendar className="h-3 w-3" />
-                                                    {formatDate(review.createdAt, "MM월 dd일")}
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <div className="p-2 rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                                        <BookText className="h-4 w-4" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-semibold text-base">
+                                                            {`${review.week}주차 복습 자료`}
+                                                        </h3>
+                                                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                                            <Calendar className="h-3 w-3" />
+                                                            {formatDate(review.createdAt, "MM월 dd일")}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2 ml-4">
+                                            <div className="flex items-center gap-3 ml-4">
                                                 <Link href={`${ROUTES.REVIEW}/${review.id}`}>
-                                                    <Button variant="ghost" size="sm">
+                                                    <Button
+                                                        variant="default"
+                                                        size="sm"
+                                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                                    >
                                                         학습하기
                                                     </Button>
                                                 </Link>
@@ -304,17 +356,23 @@ export default function HomePage() {
                             ))}
                         </div>
                     ) : (
-                        <Card>
-                            <CardContent className="flex flex-col items-center justify-center p-8">
-                                <BookText className="h-12 w-12 text-muted-foreground mb-4" />
-                                <p className="text-center text-muted-foreground mb-4">
-                                    아직 복습 자료가 없습니다.
+                        <Card className="border-dashed border-2 border-gray-200 dark:border-gray-700">
+                            <CardContent className="flex flex-col items-center justify-center p-12">
+                                <div className="p-4 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+                                    <BookText className="h-8 w-8 text-gray-400" />
+                                </div>
+                                <h3 className="font-semibold text-lg mb-2">복습 자료가 없습니다</h3>
+                                <p className="text-center text-muted-foreground mb-6">
+                                    스터디에 참여하면 복습 자료가 생성됩니다
                                 </p>
+                                <Button variant="outline" size="sm" className="hover:bg-green-50 hover:text-green-600 hover:border-green-200">
+                                    스터디 둘러보기
+                                </Button>
                             </CardContent>
                         </Card>
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
