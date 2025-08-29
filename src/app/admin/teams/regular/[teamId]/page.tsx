@@ -1,3 +1,4 @@
+// app/admin/teams/[teamId]/page.tsx
 "use client";
 
 import {
@@ -24,14 +25,20 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { adminTeamApi } from "@/lib/api";
+import { formatDate } from "@/lib/utils";
 import { TeamA } from "@/types/admin";
+import { ReportDocument } from "@/types/study";
 import {
     AlertCircle,
     ArrowLeft,
     BookOpen,
     Calendar,
+    CheckCircle2,
     Clock,
+    Eye,
     FileText,
+    Globe,
+    MessageSquare,
     Star,
     Target,
     Trash2,
@@ -48,7 +55,9 @@ export default function AdminTeamDetailPage() {
     const teamId = parseInt(params.teamId as string);
 
     const [team, setTeam] = useState<TeamA | null>(null);
+    const [reports, setReports] = useState<ReportDocument[]>([]);
     const [loading, setLoading] = useState(true);
+    const [reportsLoading, setReportsLoading] = useState(false);
     const [selectedWeek, setSelectedWeek] = useState("1");
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showScoreDialog, setShowScoreDialog] = useState(false);
@@ -57,8 +66,17 @@ export default function AdminTeamDetailPage() {
     useEffect(() => {
         if (teamId) {
             loadTeamDetail();
+            if (team?.regular) {
+                loadTeamReports();
+            }
         }
     }, [teamId]);
+
+    useEffect(() => {
+        if (team?.regular) {
+            loadTeamReports();
+        }
+    }, [team]);
 
     const loadTeamDetail = async () => {
         try {
@@ -76,6 +94,21 @@ export default function AdminTeamDetailPage() {
         }
     };
 
+    const loadTeamReports = async () => {
+        try {
+            setReportsLoading(true);
+            const response = await adminTeamApi.getTeamReports(teamId);
+            if (response.success && response.data) {
+                setReports(response.data);
+            }
+        } catch (error) {
+            console.error("Failed to load team reports:", error);
+            toast.error("보고서 목록을 불러오는데 실패했습니다.");
+        } finally {
+            setReportsLoading(false);
+        }
+    };
+
     const handleDeleteTeam = async () => {
         if (!team || team.regular) return;
 
@@ -83,7 +116,6 @@ export default function AdminTeamDetailPage() {
             const response = await adminTeamApi.deleteOneTimeTeam(teamId);
             if (response.success) {
                 toast.success("번개 스터디가 삭제되었습니다.");
-
                 router.push("/admin/teams");
             }
         } catch (error) {
@@ -118,6 +150,18 @@ export default function AdminTeamDetailPage() {
 
         const config = statusConfig[status] || { label: status, variant: "outline" };
         return <Badge variant={config.variant}>{config.label}</Badge>;
+    };
+
+    const getReportStats = (report: ReportDocument) => {
+        if (!report.topics) return { totalExpressions: 0, translationCount: 0, feedbackCount: 0 };
+
+        const translationCount = report.topics.reduce((acc, topic) =>
+            acc + (topic.translations?.length || 0), 0);
+        const feedbackCount = report.topics.reduce((acc, topic) =>
+            acc + (topic.feedbacks?.length || 0), 0);
+        const totalExpressions = translationCount + feedbackCount;
+
+        return { totalExpressions, translationCount, feedbackCount };
     };
 
     if (loading) {
@@ -338,6 +382,111 @@ export default function AdminTeamDetailPage() {
                     </Table>
                 </CardContent>
             </Card>
+
+            {/* Reports Section - Only for Regular Teams */}
+            {team.regular && (
+                <Card className="mt-6">
+                    <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                            <span>제출된 보고서</span>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => router.push(`/admin/teams/${teamId}/reports`)}
+                            >
+                                <FileText className="w-4 h-4 mr-2" />
+                                전체 보기
+                            </Button>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {reportsLoading ? (
+                            <div className="space-y-3">
+                                {[...Array(3)].map((_, i) => (
+                                    <Skeleton key={i} className="h-16 w-full" />
+                                ))}
+                            </div>
+                        ) : reports.length > 0 ? (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>주차</TableHead>
+                                        <TableHead>작성자</TableHead>
+                                        <TableHead>학습 내용</TableHead>
+                                        <TableHead>제출일</TableHead>
+                                        <TableHead>상태</TableHead>
+                                        <TableHead className="text-right">작업</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {reports.slice(0, 5).map((report) => {
+                                        const stats = getReportStats(report);
+                                        return (
+                                            <TableRow key={report.id}>
+                                                <TableCell className="font-medium">
+                                                    {report.week}주차
+                                                </TableCell>
+                                                <TableCell>
+                                                    {report.memberName}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-3">
+                                                        {stats.translationCount > 0 && (
+                                                            <Badge variant="outline" className="text-xs gap-1">
+                                                                <Globe className="h-3 w-3" />
+                                                                {stats.translationCount}
+                                                            </Badge>
+                                                        )}
+                                                        {stats.feedbackCount > 0 && (
+                                                            <Badge variant="outline" className="text-xs gap-1">
+                                                                <MessageSquare className="h-3 w-3" />
+                                                                {stats.feedbackCount}
+                                                            </Badge>
+                                                        )}
+                                                        <span className="text-sm text-muted-foreground">
+                                                            총 {stats.totalExpressions}개
+                                                        </span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-sm text-muted-foreground">
+                                                    {formatDate(report.submittedAt || report.createdAt, 'PPP')}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {report.submitted ? (
+                                                        <Badge variant="default" className="gap-1">
+                                                            <CheckCircle2 className="h-3 w-3" />
+                                                            제출완료
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="secondary" className="gap-1">
+                                                            <Clock className="h-3 w-3" />
+                                                            작성중
+                                                        </Badge>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => router.push(`/admin/teams/${teamId}/${report.id}`)}
+                                                    >
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        ) : (
+                            <div className="text-center py-12">
+                                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                                <p className="text-gray-600">아직 제출된 보고서가 없습니다.</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Delete Dialog */}
             <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

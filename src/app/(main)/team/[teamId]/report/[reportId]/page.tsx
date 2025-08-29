@@ -4,8 +4,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { handleApiResponse, studyApi } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import { ReportDocument, ReportFeedback, ReportTopic, ReportTranslation } from '@/types/study';
@@ -311,7 +309,7 @@ export default function ReportPage({ params }: ReportPageProps) {
                                 스터디 보고서
                             </h1>
                             <p className="text-muted-foreground mt-1">
-                                {formatDate(report.createdAt, 'PP')} ({report.week}주차) 스터디 결과를 확인하고 제출하세요
+                                {formatDate(report.createdAt, 'PP')} ({report.week}주차) 스터디
                             </p>
                         </div>
                     </div>
@@ -395,27 +393,28 @@ export default function ReportPage({ params }: ReportPageProps) {
                 {/* 제출 완료 안내 */}
                 {report.submitted && (
                     <Card className="border-green-200 bg-green-50">
-                        <CardContent className="pt-6">
-                            <div className="flex items-start gap-3">
-                                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                                <div className="flex-1">
-                                    <p className="font-medium text-green-900">
-                                        보고서 제출 완료
-                                    </p>
-                                    <p className="text-sm text-green-700 mt-1">
-                                        보고서가 성공적으로 제출되었습니다.
-                                        {report.submittedAt && ` (${formatDate(report.submittedAt, 'PPP p')})`}
-                                        <br />
-                                        복습 자료가 자동으로 생성되었으며, 복습 메뉴에서 확인할 수 있습니다.
-                                    </p>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => router.push('/review')}
-                                        className="mt-4"
-                                    >
-                                        복습 자료 보러가기
-                                    </Button>
+                        <CardContent className="py-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
+                                    <div>
+                                        <p className="font-medium text-green-900">
+                                            보고서 제출 완료
+                                        </p>
+                                        <p className="text-sm text-green-700">
+                                            {report.submittedAt && `${formatDate(report.submittedAt, 'PPP p')}에 제출되었습니다.`}
+                                        </p>
+                                    </div>
                                 </div>
+                                <Button
+                                    variant="default"
+                                    size="sm"
+                                    onClick={() => router.push(`/review/${reportId}`)}
+                                    className="bg-green-600 hover:bg-green-700 text-white gap-2 px-4 py-2"
+                                >
+                                    <BookOpen className="h-4 w-4" />
+                                    복습하기
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>

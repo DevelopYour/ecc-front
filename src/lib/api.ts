@@ -354,10 +354,6 @@ export const studyApi = {
     getReport: (reportId: string): Promise<ResponseDto<ReportDocument>> =>
         api.get(`/study/report/${reportId}`),
 
-    // 보고서 업데이트 (최종 코멘트 등)
-    updateReport: (reportId: string, data: { finalComments?: string }): Promise<ResponseDto<ReportDocument>> =>
-        api.patch(`/study/report/${reportId}/update`, data),
-
     // 보고서 제출
     submitReport: (reportId: string): Promise<ResponseDto<string>> =>
         api.patch(`/study/report/${reportId}`),
