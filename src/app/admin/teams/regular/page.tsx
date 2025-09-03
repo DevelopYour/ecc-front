@@ -88,7 +88,7 @@ export default function AdminRegularTeamsPage() {
     };
 
     const handleTeamClick = (teamId: number) => {
-        router.push(`/admin/teams/${teamId}`);
+        router.push(`/admin/teams/regular/${teamId}`);
     };
 
     // Generate year options

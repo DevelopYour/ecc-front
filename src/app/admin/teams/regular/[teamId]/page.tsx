@@ -389,14 +389,6 @@ export default function AdminTeamDetailPage() {
                     <CardHeader>
                         <CardTitle className="flex items-center justify-between">
                             <span>제출된 보고서</span>
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => router.push(`/admin/teams/${teamId}/reports`)}
-                            >
-                                <FileText className="w-4 h-4 mr-2" />
-                                전체 보기
-                            </Button>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
