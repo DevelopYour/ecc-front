@@ -49,6 +49,14 @@ const adminNavItems = [
             { title: "주제 관리", href: "/admin/content/topics" },
         ],
     },
+    {
+        title: "기타 설정",
+        href: "/admin/settings",
+        icon: Settings,
+        subItems: [
+            { title: "학기 관리", href: "/admin/settings/semester" }
+        ],
+    },
 ];
 
 export default function AdminLayout({
@@ -154,11 +162,6 @@ export default function AdminLayout({
                                 </p>
                                 <p className="text-xs text-gray-500">관리자</p>
                             </div>
-                            <Link href="/admin/settings">
-                                <Button variant="ghost" size="icon">
-                                    <Settings className="w-5 h-5" />
-                                </Button>
-                            </Link>
                         </div>
                         <Button
                             variant="outline"

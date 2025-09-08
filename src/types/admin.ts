@@ -97,4 +97,10 @@ export interface TopicA {
     usageCount?: number;
 }
 
+export interface Semester {
+    id: number;
+    year: number;
+    semester: number;
+}
+
 
