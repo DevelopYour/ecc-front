@@ -15,6 +15,16 @@ export function formatDate(date: string | Date, formatStr: string = "PPP"): stri
   return format(dateObj, formatStr, { locale: ko });
 }
 
+export const getSemesterLabel = (semesterNumber: number): string => {
+  const semesterMap: Record<number, string> = {
+    1: "1학기",
+    2: "여름방학",
+    3: "2학기",
+    4: "겨울방학"
+  };
+  return semesterMap[semesterNumber] || `${semesterNumber}학기`;
+};
+
 // 에러 메시지 추출
 export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;

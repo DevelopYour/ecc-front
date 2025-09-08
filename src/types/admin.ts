@@ -97,10 +97,22 @@ export interface TopicA {
     usageCount?: number;
 }
 
+export interface CreateSemester {
+    year: number;
+    semester: number;
+}
+
 export interface Semester {
     id: number;
     year: number;
     semester: number;
 }
+
+export interface AdminSettings {
+    currentSemester: Semester;
+    isRecruiting: boolean;
+    semesters: Semester[];
+}
+
 
 

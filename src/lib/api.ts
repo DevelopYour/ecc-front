@@ -15,7 +15,8 @@ import { ExpressionToAsk, ReportDocument, StudyRedis, Topic, TopicRecommendation
 import { AssignedTeam, RegularStudyApplicant, RegularStudyApplyRequest, TimeSlot } from "@/types/apply-regular";
 import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
 import { setCookie } from "cookies-next";
-import { MemberA, MemberStatus, LevelChangeRequest, Category, TopicA, TeamA, AdminSummary, } from "@/types/admin";
+import { MemberA, MemberStatus, LevelChangeRequest, Category, TopicA, TeamA, AdminSummary, Semester, AdminSettings, CreateSemester, } from "@/types/admin";
+import { get } from "lodash";
 
 interface ResponseDto<T> {
     success: boolean;
@@ -380,7 +381,23 @@ export const reviewApi = {
 
 export const adminApi = {
     getSummary: (): Promise<ResponseDto<AdminSummary>> =>
-        api.get("/admin/main/summary")
+        api.get("/admin/main/summary"),
+
+    getSettings: (): Promise<ResponseDto<AdminSettings>> =>
+        api.get("/admin/setting"),
+
+    getCurrentSemester: (): Promise<ResponseDto<Semester>> =>
+        api.get("/admin/setting/semester"),
+
+    // 새로운 학기 추가 및 현재 학기 변경
+    updateCurrentSemester: (semesterData: CreateSemester): Promise<ResponseDto<Boolean>> =>
+        api.post("/admin/setting/semester", semesterData),
+
+    getRecruitmentStatus: (): Promise<ResponseDto<Boolean>> =>
+        api.get("/admin/setting/study-recruitment"),
+
+    updateRecruitmentStatus: (status: Boolean): Promise<ResponseDto<Boolean>> =>
+        api.patch("/admin/setting/study-recruitment", {}, { params: { status } }),
 }
 
 // 관리자 회원 관리 API
