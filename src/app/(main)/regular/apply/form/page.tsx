@@ -85,35 +85,6 @@ export default function RegularStudyApplyFormPage() {
         });
     };
 
-    const validateTimeSelection = (): boolean => {
-        if (selectedTimes.length === 0) return true;
-
-        // 요일별로 그룹화
-        const timesByDay = new Map<string, number[]>();
-
-        selectedTimes.forEach(timeId => {
-            const timeSlot = timeSlots.find(t => t.timeId === timeId);
-            if (timeSlot) {
-                if (!timesByDay.has(timeSlot.day)) {
-                    timesByDay.set(timeSlot.day, []);
-                }
-                timesByDay.get(timeSlot.day)!.push(timeSlot.startTime);
-            }
-        });
-
-        // 각 요일별로 최소 2시간 이상 선택했는지만 확인
-        for (const [day, times] of timesByDay) {
-            if (times.length < 2) {
-                toast.error('선택 오류', {
-                    description: `${getDayKorean(day)}요일에 최소 2시간 이상 선택해야 합니다.`,
-                });
-                return false;
-            }
-        }
-
-        return true;
-    };
-
     const handleSubmit = async () => {
         if (selectedSubjects.length === 0) {
             toast.error('선택 오류', {
@@ -126,10 +97,6 @@ export default function RegularStudyApplyFormPage() {
             toast.error('선택 오류', {
                 description: '최소 1개 이상의 시간을 선택해주세요.',
             });
-            return;
-        }
-
-        if (!validateTimeSelection()) {
             return;
         }
 
@@ -252,7 +219,7 @@ export default function RegularStudyApplyFormPage() {
             <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-4">시간 선택</h2>
                 <p className="text-sm text-gray-600 mb-4">
-                    * 각 요일별로 최소 2시간 이상 연속으로 선택해주세요.
+                    * 원하는 시간을 자유롭게 선택해주세요. (1시간 단위로 선택 가능)
                 </p>
 
                 <div className="overflow-x-auto">
