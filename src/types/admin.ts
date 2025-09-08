@@ -114,5 +114,10 @@ export interface AdminSettings {
     semesters: Semester[];
 }
 
-
+export const SEMESTER_OPTIONS = [
+    { value: 1, label: "1학기" },
+    { value: 2, label: "여름방학" },
+    { value: 3, label: "2학기" },
+    { value: 4, label: "겨울방학" }
+];
 

@@ -50,7 +50,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { AdminSettings, CreateSemester, Semester } from "@/types/admin";
+import { AdminSettings, CreateSemester, Semester, SEMESTER_OPTIONS } from "@/types/admin";
 import { getSemesterLabel } from "@/lib/utils";
 
 export default function SemesterSettingsPage() {
@@ -334,10 +334,11 @@ function AddNewSemesterSection({
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="1">{getSemesterLabel(1)}</SelectItem>
-                                            <SelectItem value="2">{getSemesterLabel(2)}</SelectItem>
-                                            <SelectItem value="3">{getSemesterLabel(3)}</SelectItem>
-                                            <SelectItem value="4">{getSemesterLabel(4)}</SelectItem>
+                                            {SEMESTER_OPTIONS.map((option) => (
+                                                <SelectItem key={option.value} value={option.value.toString()}>
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                 </div>

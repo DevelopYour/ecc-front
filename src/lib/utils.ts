@@ -3,6 +3,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { format, parseISO } from "date-fns";
 import { ko } from "date-fns/locale";
+import { SEMESTER_OPTIONS } from "@/types/admin";
 
 // Tailwind 클래스 병합
 export function cn(...inputs: ClassValue[]) {
@@ -16,13 +17,8 @@ export function formatDate(date: string | Date, formatStr: string = "PPP"): stri
 }
 
 export const getSemesterLabel = (semesterNumber: number): string => {
-  const semesterMap: Record<number, string> = {
-    1: "1학기",
-    2: "여름방학",
-    3: "2학기",
-    4: "겨울방학"
-  };
-  return semesterMap[semesterNumber] || `${semesterNumber}학기`;
+  const semester = SEMESTER_OPTIONS.find(s => s.value === semesterNumber);
+  return semester?.label || `${semesterNumber}학기`;
 };
 
 // 에러 메시지 추출

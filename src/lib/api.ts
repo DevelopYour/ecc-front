@@ -248,6 +248,9 @@ export const userApi = {
 // 팀 관련 API
 export const teamApi = {
 
+    getRecruitmentStatus: (): Promise<ResponseDto<Boolean>> =>
+        api.get("/teams/regular/apply/status"),
+
     // 정규 스터디 신청
     applyRegular: (data: RegularStudyApplyRequest): Promise<ResponseDto<RegularStudyApplicant>> =>
         api.post("/teams/regular/apply", data),
