@@ -16,7 +16,6 @@ import { AssignedTeam, RegularStudyApplicant, RegularStudyApplyRequest, TimeSlot
 import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
 import { setCookie } from "cookies-next";
 import { MemberA, MemberStatus, LevelChangeRequest, Category, TopicA, TeamA, AdminSummary, Semester, AdminSettings, CreateSemester, } from "@/types/admin";
-import { get } from "lodash";
 
 interface ResponseDto<T> {
     success: boolean;

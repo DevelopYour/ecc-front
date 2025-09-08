@@ -27,10 +27,32 @@ export default function RegularStudyApplyFormPage() {
     const [isEditing, setIsEditing] = useState(false);
     const [showCancelDialog, setShowCancelDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+
+    // 과목별 가격 설정
+    const subjectPrices: { [key: string]: number } = {
+        '자유회화': 5000,
+        'OPIc': 15000,
+        'TOEIC': 15000,
+        'TOEFL': 15000,
+        'IELTS': 15000,
+    };
 
     useEffect(() => {
         loadInitialData();
     }, []);
+
+    // 총 회비 계산
+    const calculateTotalFee = () => {
+        return selectedSubjects.reduce((total, subjectId) => {
+            const subject = subjects.find(s => s.subjectId === subjectId);
+            if (subject) {
+                const price = subjectPrices[subject.name] || 0;
+                return total + price;
+            }
+            return total;
+        }, 0);
+    };
 
     // 기존 신청 내역 처리 부분 수정
     const loadInitialData = async () => {
@@ -54,6 +76,7 @@ export default function RegularStudyApplyFormPage() {
                     setSelectedSubjects(subjectIds);
                     setSelectedTimes(timeIds);
                     setIsEditing(true);
+                    setPaymentConfirmed(true); // 기존 신청자는 이미 입금했다고 가정
                 }
             });
         } catch (error) {
@@ -108,6 +131,13 @@ export default function RegularStudyApplyFormPage() {
         if (selectedTimes.length === 0) {
             toast.error('선택 오류', {
                 description: '최소 1개 이상의 시간을 선택해주세요.',
+            });
+            return;
+        }
+
+        if (!isEditing && !paymentConfirmed) {
+            toast.error('입금 확인 필요', {
+                description: '회비 입금 후 체크박스를 선택해주세요.',
             });
             return;
         }
@@ -202,6 +232,10 @@ export default function RegularStudyApplyFormPage() {
         return selectedTimes.includes(timeId);
     };
 
+    const formatPrice = (price: number): string => {
+        return price.toLocaleString();
+    };
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-64 px-4">
@@ -217,23 +251,97 @@ export default function RegularStudyApplyFormPage() {
         <div className="container mx-auto p-4 sm:p-6 max-w-6xl">
             <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 px-2">정규 스터디 신청</h1>
 
+            {/* 안내 메시지 */}
+            <div className="mb-6 sm:mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg mx-2">
+                <h3 className="font-semibold text-blue-800 mb-2">📋 신청 안내</h3>
+                <div className="text-sm text-blue-700 space-y-1">
+                    <p>• 원하는 과목을 선택하고 가능한 시간대를 모두 선택해주세요</p>
+                    <p>• 3~5명 인원으로 팀을 배정해드립니다</p>
+                    <p>• 팀 배정이 실패된 과목은 회비를 환불해드립니다</p>
+                </div>
+            </div>
+
             {/* 과목 선택 */}
             <div className="mb-6 sm:mb-8">
                 <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 px-2">과목 선택</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-2">
-                    {subjects.map(subject => (
-                        <label key={subject.subjectId} className="flex items-center space-x-3 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                            <input
-                                type="checkbox"
-                                checked={selectedSubjects.includes(subject.subjectId)}
-                                onChange={() => handleSubjectToggle(subject.subjectId)}
-                                className="w-4 h-4 text-mygreen rounded focus:ring-mygreen focus:ring-2"
-                            />
-                            <span className="text-sm sm:text-base">{subject.name}</span>
-                        </label>
-                    ))}
+                    {subjects.map(subject => {
+                        const price = subjectPrices[subject.name] || 0;
+                        return (
+                            <label key={subject.subjectId} className="flex items-center justify-between space-x-3 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                <div className="flex items-center space-x-3">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedSubjects.includes(subject.subjectId)}
+                                        onChange={() => handleSubjectToggle(subject.subjectId)}
+                                        className="w-4 h-4 text-mygreen rounded focus:ring-mygreen focus:ring-2"
+                                    />
+                                    <span className="text-sm sm:text-base">{subject.name}</span>
+                                </div>
+                                <span className="text-sm font-medium text-mygreen">
+                                    {formatPrice(price)}원
+                                </span>
+                            </label>
+                        );
+                    })}
                 </div>
             </div>
+
+            {/* 회비 안내 및 입금 확인 */}
+            {selectedSubjects.length > 0 && (
+                <div className="mb-6 sm:mb-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg mx-2">
+                    <h3 className="font-semibold text-yellow-800 mb-3">💰 회비 안내</h3>
+
+                    {/* 선택된 과목별 가격 */}
+                    <div className="mb-4">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">선택한 과목:</h4>
+                        <div className="space-y-1">
+                            {selectedSubjects.map(subjectId => {
+                                const subject = subjects.find(s => s.subjectId === subjectId);
+                                const price = subject ? subjectPrices[subject.name] || 0 : 0;
+                                return subject && (
+                                    <div key={subjectId} className="flex justify-between text-sm">
+                                        <span>{subject.name}</span>
+                                        <span className="font-medium">{formatPrice(price)}원</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <div className="border-t border-yellow-300 mt-2 pt-2">
+                            <div className="flex justify-between text-base font-semibold text-yellow-800">
+                                <span>총 회비</span>
+                                <span>{formatPrice(calculateTotalFee())}원</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 입금 계좌 정보 */}
+                    <div className="mb-4 p-3 bg-white border border-yellow-300 rounded">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">입금 계좌</h4>
+                        <div className="text-sm space-y-1">
+                            <p><strong>카카오뱅크 3333-26-9447428</strong></p>
+                            <p><strong>예금주: 조유진</strong></p>
+                        </div>
+                    </div>
+
+                    {/* 입금 확인 체크박스 */}
+                    {!isEditing && (
+                        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
+                            <label className="flex items-start space-x-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={paymentConfirmed}
+                                    onChange={(e) => setPaymentConfirmed(e.target.checked)}
+                                    className="w-5 h-5 text-mygreen rounded focus:ring-mygreen focus:ring-2 mt-0.5 flex-shrink-0"
+                                />
+                                <span className="text-sm font-medium text-green-800">
+                                    위 계좌로 회비(<span className="text-lg font-bold text-green-900">{formatPrice(calculateTotalFee())}원</span>)를 입금했습니다.
+                                </span>
+                            </label>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* 시간 선택 */}
             <div className="mb-6 sm:mb-8">
@@ -328,6 +436,12 @@ export default function RegularStudyApplyFormPage() {
                         <span className="text-sm text-gray-700">선택한 시간:</span>
                         <span className="text-sm font-medium text-gray-900">{selectedTimes.length}개</span>
                     </div>
+                    {selectedSubjects.length > 0 && (
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-700">총 회비:</span>
+                            <span className="text-sm font-medium text-mygreen">{formatPrice(calculateTotalFee())}원</span>
+                        </div>
+                    )}
                 </div>
                 {selectedSubjects.length > 0 && selectedTimes.length > 0 && (
                     <div className={`mt-3 p-2 rounded text-sm font-medium ${selectedTimes.length >= selectedSubjects.length
@@ -356,7 +470,7 @@ export default function RegularStudyApplyFormPage() {
 
                 <button
                     onClick={handleSubmit}
-                    disabled={isLoading || selectedSubjects.length === 0 || selectedTimes.length === 0}
+                    disabled={isLoading || selectedSubjects.length === 0 || selectedTimes.length === 0 || (!isEditing && !paymentConfirmed)}
                     className="w-full sm:w-auto px-6 py-3 bg-mygreen text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm sm:text-base"
                 >
                     {isLoading ? (
