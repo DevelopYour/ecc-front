@@ -182,7 +182,6 @@ export default function RegularStudyApplyFormPage() {
 
     const formatTimeRange = (startTime: number): string => {
         const endTime = startTime + 1;
-        // return `${startTime}:00\n-\n${endTime}:00`;
         return `${startTime}-${endTime}`;
     };
 
@@ -191,44 +190,53 @@ export default function RegularStudyApplyFormPage() {
     };
 
     if (isLoading) {
-        return <div className="flex justify-center items-center h-64">로딩 중...</div>;
+        return (
+            <div className="flex justify-center items-center h-64 px-4">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mygreen mx-auto mb-2"></div>
+                    <p className="text-gray-600">로딩 중...</p>
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div className="container mx-auto p-6 max-w-6xl">
-            <h1 className="text-3xl font-bold mb-8">정규 스터디 신청</h1>
+        <div className="container mx-auto p-4 sm:p-6 max-w-6xl">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 px-2">정규 스터디 신청</h1>
 
-            <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4">과목 선택</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {/* 과목 선택 */}
+            <div className="mb-6 sm:mb-8">
+                <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 px-2">과목 선택</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-2">
                     {subjects.map(subject => (
-                        <label key={subject.subjectId} className="flex items-center space-x-2 cursor-pointer">
+                        <label key={subject.subjectId} className="flex items-center space-x-3 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
                             <input
                                 type="checkbox"
                                 checked={selectedSubjects.includes(subject.subjectId)}
                                 onChange={() => handleSubjectToggle(subject.subjectId)}
-                                className="w-4 h-4 text-mygreen"
+                                className="w-4 h-4 text-mygreen rounded focus:ring-mygreen focus:ring-2"
                             />
-                            <span>{subject.name}</span>
+                            <span className="text-sm sm:text-base">{subject.name}</span>
                         </label>
                     ))}
                 </div>
             </div>
 
             {/* 시간 선택 */}
-            <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4">시간 선택</h2>
-                <p className="text-sm text-gray-600 mb-4">
+            <div className="mb-6 sm:mb-8">
+                <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 px-2">시간 선택</h2>
+                <p className="text-xs sm:text-sm text-gray-600 mb-4 px-2">
                     * 원하는 시간을 자유롭게 선택해주세요. (1시간 단위로 선택 가능)
                 </p>
 
-                <div className="overflow-x-auto">
-                    <table className="min-w-[300px]">
+                {/* 데스크톱 테이블 뷰 */}
+                <div className="hidden sm:block overflow-x-auto px-2">
+                    <table className="min-w-full border-collapse">
                         <thead>
                             <tr>
-                                <th className="text-left p-2 w-20"></th>
+                                <th className="text-left p-2 w-16 sm:w-20 text-sm font-medium text-gray-700"></th>
                                 {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map(day => (
-                                    <th key={day} className="text-center p-2 w-30">
+                                    <th key={day} className="text-center p-2 w-16 sm:w-20 text-sm font-medium text-gray-700 border-b border-gray-200">
                                         {getDayKorean(day)}
                                     </th>
                                 ))}
@@ -236,8 +244,10 @@ export default function RegularStudyApplyFormPage() {
                         </thead>
                         <tbody>
                             {Array.from({ length: 17 }, (_, i) => i + 6).map(hour => (
-                                <tr key={hour}>
-                                    <td className="p-2 font-medium text-sm">{formatTimeRange(hour)}</td>
+                                <tr key={hour} className="border-b border-gray-100">
+                                    <td className="p-2 font-medium text-xs sm:text-sm text-gray-600 bg-gray-50">
+                                        {formatTimeRange(hour)}
+                                    </td>
                                     {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map(day => {
                                         const timeSlot = timeSlots.find(t => t.day === day && t.startTime === hour);
                                         return (
@@ -245,10 +255,11 @@ export default function RegularStudyApplyFormPage() {
                                                 {timeSlot && (
                                                     <div
                                                         onClick={() => handleTimeToggle(timeSlot.timeId)}
-                                                        className={`p-3 mx-5 border border-gray-300 text-center cursor-pointer transition-colors 
-                                                            ${isTimeSelected(timeSlot.timeId) ? 'bg-mygreen' : 'hover:bg-gray-100'}`}
-                                                    >
-                                                    </div>
+                                                        className={`h-8 sm:h-10 border border-gray-300 rounded cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95
+                                                            ${isTimeSelected(timeSlot.timeId)
+                                                                ? 'bg-mygreen border-mygreen shadow-md'
+                                                                : 'bg-white hover:bg-gray-100 hover:border-gray-400'}`}
+                                                    />
                                                 )}
                                             </td>
                                         );
@@ -258,27 +269,73 @@ export default function RegularStudyApplyFormPage() {
                         </tbody>
                     </table>
                 </div>
+
+                {/* 모바일 카드 뷰 */}
+                <div className="sm:hidden space-y-4">
+                    {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map(day => (
+                        <div key={day} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                                <h3 className="font-semibold text-gray-800">{getDayKorean(day)}요일</h3>
+                            </div>
+                            <div className="p-3">
+                                <div className="grid grid-cols-4 gap-2">
+                                    {Array.from({ length: 17 }, (_, i) => i + 6).map(hour => {
+                                        const timeSlot = timeSlots.find(t => t.day === day && t.startTime === hour);
+                                        return timeSlot && (
+                                            <div
+                                                key={timeSlot.timeId}
+                                                onClick={() => handleTimeToggle(timeSlot.timeId)}
+                                                className={`p-3 border rounded-lg text-center cursor-pointer transition-all duration-200 active:scale-95
+                                                    ${isTimeSelected(timeSlot.timeId)
+                                                        ? 'bg-mygreen text-white border-mygreen shadow-md'
+                                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'}`}
+                                            >
+                                                <div className="text-xs font-medium">
+                                                    {formatTimeRange(hour)}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
-
             {/* 선택 요약 */}
-            <div className="mb-8 p-4 bg-gray-50 rounded">
-                <h3 className="font-semibold mb-2">선택 요약</h3>
-                <p className="text-sm text-gray-700">
-                    선택한 과목: {selectedSubjects.length}개
-                </p>
-                <p className="text-sm text-gray-700">
-                    선택한 시간: {selectedTimes.length}개
-                </p>
+            <div className="mb-6 sm:mb-8 p-4 bg-gray-50 rounded-lg mx-2">
+                <h3 className="font-semibold mb-3 text-gray-800">선택 요약</h3>
+                <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-700">선택한 과목:</span>
+                        <span className="text-sm font-medium text-gray-900">{selectedSubjects.length}개</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-700">선택한 시간:</span>
+                        <span className="text-sm font-medium text-gray-900">{selectedTimes.length}개</span>
+                    </div>
+                </div>
+                {selectedSubjects.length > 0 && selectedTimes.length > 0 && (
+                    <div className={`mt-3 p-2 rounded text-sm font-medium ${selectedTimes.length >= selectedSubjects.length
+                            ? 'text-green-700 bg-green-50 border border-green-200'
+                            : 'text-orange-700 bg-orange-50 border border-orange-200'
+                        }`}>
+                        {selectedTimes.length >= selectedSubjects.length
+                            ? '✓ 조건을 만족합니다'
+                            : `⚠ 선택하신 전체 과목 배정을 위해 시간을 ${selectedSubjects.length - selectedTimes.length}개 이상 더 선택해주세요`
+                        }
+                    </div>
+                )}
             </div>
 
             {/* 버튼 */}
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 px-2">
                 {isEditing && (
                     <button
                         onClick={handleCancel}
                         disabled={isLoading}
-                        className="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                        className="w-full sm:w-auto px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm sm:text-base"
                     >
                         신청 취소
                     </button>
@@ -286,16 +343,23 @@ export default function RegularStudyApplyFormPage() {
 
                 <button
                     onClick={handleSubmit}
-                    disabled={isLoading}
-                    className="px-6 py-2 bg-mygreen text-white rounded hover:bg-mygreen disabled:opacity-50"
+                    disabled={isLoading || selectedSubjects.length === 0 || selectedTimes.length === 0}
+                    className="w-full sm:w-auto px-6 py-3 bg-mygreen text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm sm:text-base"
                 >
-                    {isEditing ? '수정하기' : '신청하기'}
+                    {isLoading ? (
+                        <span className="flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            처리 중...
+                        </span>
+                    ) : (
+                        isEditing ? '수정하기' : '신청하기'
+                    )}
                 </button>
 
                 <button
                     onClick={() => router.back()}
                     disabled={isLoading}
-                    className="px-6 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 disabled:opacity-50"
+                    className="w-full sm:w-auto px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm sm:text-base"
                 >
                     뒤로가기
                 </button>
