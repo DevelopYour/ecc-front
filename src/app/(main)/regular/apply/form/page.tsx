@@ -3,6 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { teamApi, generateTimeSlots, handleApiResponse } from '@/lib/api';
 import { TimeSlot } from '@/types/apply-regular';
 import { Subject } from '@/types/team';
@@ -15,6 +25,8 @@ export default function RegularStudyApplyFormPage() {
     const [selectedTimes, setSelectedTimes] = useState<number[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [showCancelDialog, setShowCancelDialog] = useState(false);
+    const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
         loadInitialData();
@@ -149,19 +161,20 @@ export default function RegularStudyApplyFormPage() {
         }
     };
 
-    const handleCancel = async () => {
-        if (!confirm('정말로 신청을 취소하시겠습니까?')) {
-            return;
-        }
+    const handleCancelClick = () => {
+        setShowCancelDialog(true);
+    };
 
+    const handleCancelConfirm = async () => {
         try {
-            setIsLoading(true);
+            setProcessing(true);
             const response = await teamApi.cancelRegularApplication();
             handleApiResponse(response,
                 () => {
                     toast.success('취소 완료', {
                         description: '신청이 취소되었습니다.',
                     });
+                    setShowCancelDialog(false);
                     router.push('/regular/apply');
                 },
                 (error) => {
@@ -176,7 +189,7 @@ export default function RegularStudyApplyFormPage() {
                 description: '취소 처리 중 오류가 발생했습니다.',
             });
         } finally {
-            setIsLoading(false);
+            setProcessing(false);
         }
     };
 
@@ -318,8 +331,8 @@ export default function RegularStudyApplyFormPage() {
                 </div>
                 {selectedSubjects.length > 0 && selectedTimes.length > 0 && (
                     <div className={`mt-3 p-2 rounded text-sm font-medium ${selectedTimes.length >= selectedSubjects.length
-                            ? 'text-green-700 bg-green-50 border border-green-200'
-                            : 'text-orange-700 bg-orange-50 border border-orange-200'
+                        ? 'text-green-700 bg-green-50 border border-green-200'
+                        : 'text-orange-700 bg-orange-50 border border-orange-200'
                         }`}>
                         {selectedTimes.length >= selectedSubjects.length
                             ? '✓ 조건을 만족합니다'
@@ -333,7 +346,7 @@ export default function RegularStudyApplyFormPage() {
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 px-2">
                 {isEditing && (
                     <button
-                        onClick={handleCancel}
+                        onClick={handleCancelClick}
                         disabled={isLoading}
                         className="w-full sm:w-auto px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm sm:text-base"
                     >
@@ -364,6 +377,28 @@ export default function RegularStudyApplyFormPage() {
                     뒤로가기
                 </button>
             </div>
+
+            {/* Cancel Dialog */}
+            <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>신청 취소</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            정말로 신청을 취소하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>아니오</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleCancelConfirm}
+                            disabled={processing}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            {processing ? "처리중..." : "네, 취소합니다"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

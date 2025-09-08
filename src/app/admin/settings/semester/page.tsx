@@ -38,6 +38,16 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
     Settings,
     RefreshCw,
     Calendar,
@@ -62,8 +72,11 @@ export default function SemesterSettingsPage() {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [newSemester, setNewSemester] = useState({ year: new Date().getFullYear(), semester: 1 });
 
-    // 현재 학기 변경용 상태
-    const [selectedSemesterId, setSelectedSemesterId] = useState<string>("");
+    // AlertDialog 상태들
+    const [showRecruitmentAlert, setShowRecruitmentAlert] = useState(false);
+    const [showSemesterAlert, setShowSemesterAlert] = useState(false);
+    const [pendingRecruitmentStatus, setPendingRecruitmentStatus] = useState(false);
+    const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
         loadSummary();
@@ -75,7 +88,6 @@ export default function SemesterSettingsPage() {
             const response = await adminApi.getSettings();
             if (response.success && response.data) {
                 setSummary(response.data);
-                setSelectedSemesterId(response.data.currentSemester.id.toString());
             }
         } catch (error) {
             console.error("Failed to load summary:", error);
@@ -85,31 +97,42 @@ export default function SemesterSettingsPage() {
         }
     };
 
-    const updateRecruitmentStatus = async (isRecruiting: boolean) => {
+    const handleRecruitmentToggle = (isRecruiting: boolean) => {
+        setPendingRecruitmentStatus(isRecruiting);
+        setShowRecruitmentAlert(true);
+    };
+
+    const confirmRecruitmentChange = async () => {
         try {
-            setUpdating(true);
-            const response = await adminApi.updateRecruitmentStatus(isRecruiting);
+            setProcessing(true);
+            const response = await adminApi.updateRecruitmentStatus(pendingRecruitmentStatus);
             if (response.success) {
-                setSummary(prev => prev ? { ...prev, isRecruiting } : undefined);
+                setSummary(prev => prev ? { ...prev, isRecruiting: pendingRecruitmentStatus } : undefined);
                 toast.success(
-                    isRecruiting ? "스터디 모집이 시작되었습니다." : "스터디 모집이 중단되었습니다."
+                    pendingRecruitmentStatus ? "스터디 모집이 시작되었습니다." : "스터디 모집이 중단되었습니다."
                 );
+                setShowRecruitmentAlert(false);
             }
         } catch (error) {
             console.error("Failed to update recruitment status:", error);
             toast.error("모집 상태 변경에 실패했습니다.");
         } finally {
-            setUpdating(false);
+            setProcessing(false);
         }
     };
 
-    const addNewSemester = async () => {
+    const handleAddSemesterClick = () => {
+        setShowSemesterAlert(true);
+    };
+
+    const confirmAddSemester = async () => {
         try {
-            setUpdating(true);
+            setProcessing(true);
             const response = await adminApi.updateCurrentSemester(newSemester);
             if (response.success) {
                 await loadSummary(); // 데이터 새로고침
                 setIsAddDialogOpen(false);
+                setShowSemesterAlert(false);
                 setNewSemester({ year: new Date().getFullYear(), semester: 1 });
                 toast.success("새 학기가 추가되고 현재 학기로 설정되었습니다.");
             }
@@ -117,7 +140,7 @@ export default function SemesterSettingsPage() {
             console.error("Failed to add new semester:", error);
             toast.error("새 학기 추가에 실패했습니다.");
         } finally {
-            setUpdating(false);
+            setProcessing(false);
         }
     };
 
@@ -135,7 +158,7 @@ export default function SemesterSettingsPage() {
             <CurrentStatusSection
                 summary={summary}
                 updating={updating}
-                onRecruitmentChange={updateRecruitmentStatus}
+                onRecruitmentChange={handleRecruitmentToggle}
             />
 
             {/* 새 학기 추가 */}
@@ -144,7 +167,7 @@ export default function SemesterSettingsPage() {
                 onOpenChange={setIsAddDialogOpen}
                 newSemester={newSemester}
                 onSemesterChange={setNewSemester}
-                onAddSemester={addNewSemester}
+                onAddSemester={handleAddSemesterClick}
                 updating={updating}
             />
 
@@ -153,6 +176,53 @@ export default function SemesterSettingsPage() {
                 summary={summary}
                 onRefresh={loadSummary}
             />
+
+            {/* 모집 상태 변경 확인 AlertDialog */}
+            <AlertDialog open={showRecruitmentAlert} onOpenChange={setShowRecruitmentAlert}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>모집 상태 변경</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            스터디 모집을 {pendingRecruitmentStatus ? '시작' : '중단'}하시겠습니까?
+                            {pendingRecruitmentStatus
+                                ? ' 학생들이 새로운 스터디에 신청할 수 있게 됩니다.'
+                                : ' 진행 중인 모집이 중단됩니다.'}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>취소</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmRecruitmentChange}
+                            disabled={processing}
+                            className={pendingRecruitmentStatus ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+                        >
+                            {processing ? "처리중..." : (pendingRecruitmentStatus ? "모집 시작" : "모집 중단")}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* 새 학기 추가 확인 AlertDialog */}
+            <AlertDialog open={showSemesterAlert} onOpenChange={setShowSemesterAlert}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>새 학기 추가 및 설정</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {newSemester.year}년 {getSemesterLabel(newSemester.semester)}를 추가하고 현재 학기로 설정하시겠습니까?
+                            기존 현재 학기({summary?.currentSemester.year}년 {getSemesterLabel(summary?.currentSemester.semester || 1)})는 비활성화됩니다.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>취소</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmAddSemester}
+                            disabled={processing}
+                        >
+                            {processing ? "처리중..." : "추가하기"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
@@ -184,7 +254,7 @@ function CurrentStatusSection({
                             <div>
                                 <p className="font-semibold text-blue-900">현재 학기</p>
                                 <p className="text-sm text-blue-700">
-                                    {summary.currentSemester.year}년 {summary.currentSemester.semester}학기
+                                    {summary.currentSemester.year}년 {getSemesterLabel(summary.currentSemester.semester)}
                                 </p>
                             </div>
                         </div>
@@ -353,7 +423,6 @@ function SemesterListSection({
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>ID</TableHead>
                             <TableHead>연도</TableHead>
                             <TableHead>학기</TableHead>
                             <TableHead>상태</TableHead>
@@ -374,9 +443,6 @@ function SemesterListSection({
                                 })
                                 .map((semester) => (
                                     <TableRow key={semester.id}>
-                                        <TableCell className="font-medium">
-                                            {semester.id}
-                                        </TableCell>
                                         <TableCell>{semester.year}년</TableCell>
                                         <TableCell>{getSemesterLabel(semester.semester)}</TableCell>
                                         <TableCell>
@@ -416,7 +482,7 @@ function LoadingSkeleton() {
                     <Skeleton className="h-6 w-32" />
                 </CardHeader>
                 <CardContent>
-                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-264 w-full" />
                 </CardContent>
             </Card>
         </div>
