@@ -121,40 +121,6 @@ export default function SemesterSettingsPage() {
         }
     };
 
-    const changeSemester = async () => {
-        if (!selectedSemesterId || selectedSemesterId === summary?.currentSemester.id.toString()) {
-            toast.warning("현재 학기와 동일한 학기입니다.");
-            return;
-        }
-
-        const selectedSemester = summary?.semesters.find(s => s.id.toString() === selectedSemesterId);
-        if (!selectedSemester) {
-            toast.error("선택된 학기를 찾을 수 없습니다.");
-            return;
-        }
-
-        try {
-            setUpdating(true);
-            const response = await adminApi.updateCurrentSemester({
-                year: selectedSemester.year,
-                semester: selectedSemester.semester
-            });
-            if (response.success) {
-                await loadSummary();
-                toast.success(`${selectedSemester.year}년 ${selectedSemester.semester}학기로 변경되었습니다.`);
-            }
-        } catch (error) {
-            console.error("Failed to change semester:", error);
-            toast.error("학기 변경에 실패했습니다.");
-        } finally {
-            setUpdating(false);
-        }
-    };
-
-    const getSemesterLabel = (semester: Semester): string => {
-        return `${semester.year}년 ${semester.semester}학기`;
-    };
-
     if (loading) {
         return <LoadingSkeleton />;
     }
