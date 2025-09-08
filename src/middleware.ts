@@ -9,6 +9,7 @@ const AUTH_PATHS = [
     "/one-time",
     "/review",
     "/my",
+    "/team",
 ];
 
 // 로그인한 사용자가 접근하면 리다이렉트할 경로 패턴
