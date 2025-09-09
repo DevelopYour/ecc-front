@@ -154,21 +154,22 @@ export default function AdminTeamAssignPage() {
             });
 
             const response = await adminTeamMatchApi.executeTeamAssignment();
-            handleApiResponse(response,
-                (data) => {
-                    console.log('팀 배정 결과:', data);
-                    setAssignmentResults(data || []);
-                    setShowResults(true);
+            if (response.data) {
+                console.log('팀 배정 API 응답:', response.data); // 전체 응답 로깅
+
+                setAssignmentResults(response.data);
+                setShowResults(true);
+
+                if (response.data.length > 0) {
                     toast.success('팀 배정 완료', {
-                        description: '팀 배정이 성공적으로 완료되었습니다.',
+                        description: `${response.data.length}개 팀이 성공적으로 배정되었습니다.`,
                     });
-                },
-                (error) => {
-                    toast.error('팀 배정 실패', {
-                        description: error,
+                } else {
+                    toast.warning('팀 배정 완료', {
+                        description: '배정된 팀이 없습니다. 신청자 조건을 확인해주세요.',
                     });
                 }
-            );
+            }
 
         } catch (error) {
             console.error('팀 배정 실패:', error);
@@ -246,39 +247,70 @@ export default function AdminTeamAssignPage() {
             </div>
 
             {/* 배정 결과 */}
-            {showResults && assignmentResults.length > 0 && (
+            {showResults && (
                 <div className="bg-white border rounded-lg p-6 mb-8">
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-semibold">배정 결과</h2>
-                        <button
-                            onClick={saveAssignmentResults}
-                            disabled={isLoading}
-                            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
-                        >
-                            결과 저장
-                        </button>
+                        <h2 className="text-xl font-semibold">
+                            배정 결과
+                            {assignmentResults.length > 0 && (
+                                <span className="ml-2 text-sm text-gray-500">
+                                    ({assignmentResults.length}개 팀)
+                                </span>
+                            )}
+                        </h2>
+                        {assignmentResults.length > 0 && (
+                            <button
+                                onClick={saveAssignmentResults}
+                                disabled={isLoading}
+                                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+                            >
+                                결과 저장
+                            </button>
+                        )}
                     </div>
 
-                    {/* 팀 목록 */}
-                    <div className="space-y-6">
-                        {assignmentResults.map((result) => (
-                            <div key={`${result.subjectId}-${result.day}-${result.startTime}`} className="border border-gray-200 rounded-lg p-4">
-                                <h3 className="font-semibold text-lg mb-2">
-                                    {result.subjectName} - {getDayKorean(result.day)} {formatTimeRange(result.startTime)} ({result.members.length}명)
-                                </h3>
+                    {assignmentResults.length > 0 ? (
+                        // 기존 팀 목록 렌더링
+                        <div className="space-y-6">
+                            {assignmentResults.map((result, index) => (
+                                <div key={`${result.subjectId}-${result.timeId}-${index}`} className="border border-gray-200 rounded-lg p-4">
+                                    <h3 className="font-semibold text-lg mb-2">
+                                        {result.subjectName} - {getDayKorean(result.day)} {formatTimeRange(result.startTime)} ({result.members.length}명)
+                                    </h3>
 
-                                <div key={result.timeId} className="bg-gray-50 p-4 rounded">
-                                    <span className="space-x-3">
-                                        {result.members.map((member) => (
-                                            <span key={member.id} className="text-sm font-semibold">{member.name} ({member.studentId})</span>
-                                        ))}
-                                    </span>
+                                    <div className="bg-gray-50 p-4 rounded">
+                                        <div className="flex flex-wrap gap-3">
+                                            {result.members.map((member, memberIndex) => (
+                                                <span key={member.id || memberIndex} className="text-sm font-semibold bg-white px-3 py-1 rounded border">
+                                                    {member.name} ({member.studentId})
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
+                            ))}
+                        </div>
+                    ) : (
+                        // 빈 결과 상태
+                        <div className="text-center py-12 bg-gray-50 rounded-lg">
+                            <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
+                                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
                             </div>
-                        ))}
-                    </div>
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">배정된 팀이 없습니다</h3>
+                            <p className="text-gray-500 mb-4">
+                                신청자가 부족하거나 시간 조건이 맞지 않아 팀이 배정되지 않았습니다.
+                            </p>
+                            <div className="text-sm text-gray-400 space-y-1">
+                                <p>• 최소 3명 이상의 신청자가 필요합니다</p>
+                                <p>• 같은 과목과 시간대에 신청한 사용자가 있어야 합니다</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
+
 
             {/* 신청자 목록 */}
             <div className="bg-white border rounded-lg p-6">
@@ -293,8 +325,8 @@ export default function AdminTeamAssignPage() {
                                 <button
                                     onClick={() => setViewMode('user')}
                                     className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === 'user'
-                                            ? 'bg-white text-blue-600 shadow-sm'
-                                            : 'text-gray-600 hover:text-gray-900'
+                                        ? 'bg-white text-blue-600 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                 >
                                     사용자별
@@ -302,8 +334,8 @@ export default function AdminTeamAssignPage() {
                                 <button
                                     onClick={() => setViewMode('subject')}
                                     className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === 'subject'
-                                            ? 'bg-white text-blue-600 shadow-sm'
-                                            : 'text-gray-600 hover:text-gray-900'
+                                        ? 'bg-white text-blue-600 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                 >
                                     과목별
@@ -311,8 +343,8 @@ export default function AdminTeamAssignPage() {
                                 <button
                                     onClick={() => setViewMode('time')}
                                     className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === 'time'
-                                            ? 'bg-white text-blue-600 shadow-sm'
-                                            : 'text-gray-600 hover:text-gray-900'
+                                        ? 'bg-white text-blue-600 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                 >
                                     시간대별
