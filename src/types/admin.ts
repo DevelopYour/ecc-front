@@ -53,8 +53,7 @@ export interface TeamA {
     subjectId: number;
     subjectName: string;
     regular: boolean;
-    year?: number;
-    semester?: number;
+    semesterId?: number;
     timeId?: number;
     day?: string;
     startTime?: number;
