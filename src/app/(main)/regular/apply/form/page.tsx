@@ -255,7 +255,7 @@ export default function RegularStudyApplyFormPage() {
             <div className="mb-6 sm:mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg mx-2">
                 <h3 className="font-semibold text-blue-800 mb-2">📋 신청 안내</h3>
                 <div className="text-sm text-blue-700 space-y-1">
-                    <p>• 원하는 과목을 선택하고 가능한 시간대를 모두 선택해주세요</p>
+                    <p>• 원하는 과목과 가능한 시간대를 모두 선택해주세요</p>
                     <p>• 3~5명 인원으로 팀을 배정해드립니다</p>
                     <p>• 팀 배정이 실패된 과목은 회비를 환불해드립니다</p>
                 </div>

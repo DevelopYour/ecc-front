@@ -11,7 +11,8 @@ export default function AdminApplicationsPage() {
     const [filteredUsers, setFilteredUsers] = useState<RegularStudyApplicant[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedSubject, setSelectedSubject] = useState<string>('all');
-    const [viewMode, setViewMode] = useState<'user' | 'subject' | 'time'>('user');
+    const [viewMode, setViewMode] = useState<'user' | 'subject' | 'time' | 'subject-time'>('user');
+    const [showMinimumGroupsOnly, setShowMinimumGroupsOnly] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -141,6 +142,65 @@ export default function AdminApplicationsPage() {
         return grouped;
     };
 
+    // 과목&시간대별로 그룹화하는 함수
+    const groupUsersBySubjectAndTime = () => {
+        const grouped: {
+            [key: string]: { // 과목명
+                [key: string]: { // 요일
+                    [key: string]: RegularStudyApplicant[] // 시간대
+                }
+            }
+        } = {};
+
+        filteredUsers.forEach(user => {
+            user.subjects.forEach(subject => {
+                user.times.forEach(time => {
+                    const subjectName = subject.subjectName;
+                    const day = time.day;
+                    const timeSlot = formatTimeRange(time.startTime);
+
+                    if (!grouped[subjectName]) {
+                        grouped[subjectName] = {};
+                    }
+                    if (!grouped[subjectName][day]) {
+                        grouped[subjectName][day] = {};
+                    }
+                    if (!grouped[subjectName][day][timeSlot]) {
+                        grouped[subjectName][day][timeSlot] = [];
+                    }
+
+                    // 중복 추가 방지
+                    if (!grouped[subjectName][day][timeSlot].some(u => u.memberUuid === user.memberUuid)) {
+                        grouped[subjectName][day][timeSlot].push(user);
+                    }
+                });
+            });
+        });
+
+        // 3명 이상 필터링이 활성화된 경우 필터링 적용
+        if (showMinimumGroupsOnly) {
+            Object.keys(grouped).forEach(subjectName => {
+                Object.keys(grouped[subjectName]).forEach(day => {
+                    Object.keys(grouped[subjectName][day]).forEach(timeSlot => {
+                        if (grouped[subjectName][day][timeSlot].length < 3) {
+                            delete grouped[subjectName][day][timeSlot];
+                        }
+                    });
+                    // 빈 요일 제거
+                    if (Object.keys(grouped[subjectName][day]).length === 0) {
+                        delete grouped[subjectName][day];
+                    }
+                });
+                // 빈 과목 제거
+                if (Object.keys(grouped[subjectName]).length === 0) {
+                    delete grouped[subjectName];
+                }
+            });
+        }
+
+        return grouped;
+    };
+
     const navigateToTeamAssign = () => {
         router.push('/admin/teams/assign');
     };
@@ -205,6 +265,15 @@ export default function AdminApplicationsPage() {
                                 >
                                     시간대별
                                 </button>
+                                <button
+                                    onClick={() => setViewMode('subject-time')}
+                                    className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === 'subject-time'
+                                        ? 'bg-white text-blue-600 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                        }`}
+                                >
+                                    과목&시간대별
+                                </button>
                             </div>
                         </div>
 
@@ -229,6 +298,22 @@ export default function AdminApplicationsPage() {
                                 </select>
                             </div>
                         )}
+
+                        {/* 3명 이상 필터 (과목&시간대별 보기에서만) */}
+                        {viewMode === 'subject-time' && (
+                            <div className="flex items-center gap-2">
+                                <label htmlFor="minimum-groups" className="text-sm font-medium text-gray-700">
+                                    <input
+                                        id="minimum-groups"
+                                        type="checkbox"
+                                        checked={showMinimumGroupsOnly}
+                                        onChange={(e) => setShowMinimumGroupsOnly(e.target.checked)}
+                                        className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    3명 이상만 조회
+                                </label>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -242,11 +327,21 @@ export default function AdminApplicationsPage() {
                         )}
                         {viewMode === 'subject' && `총 ${Object.keys(groupUsersBySubject()).length}개 과목`}
                         {viewMode === 'time' && `전체 신청자 ${filteredUsers.length}명`}
+                        {viewMode === 'subject-time' && (
+                            (() => {
+                                const grouped = groupUsersBySubjectAndTime();
+                                const totalGroups = Object.values(grouped).reduce((total, subject) =>
+                                    total + Object.values(subject).reduce((subtotal, day) =>
+                                        subtotal + Object.keys(day).length, 0), 0);
+                                return `총 ${totalGroups}개 그룹 ${showMinimumGroupsOnly ? '(3명 이상)' : ''}`;
+                            })()
+                        )}
                     </div>
                     <div className="text-xs text-gray-500">
                         {viewMode === 'user' && `총 ${getAllSubjects().length}개 과목`}
                         {viewMode === 'subject' && `전체 신청자 ${users.length}명`}
                         {viewMode === 'time' && `총 ${getAllSubjects().length}개 과목`}
+                        {viewMode === 'subject-time' && `전체 신청자 ${filteredUsers.length}명`}
                     </div>
                 </div>
 
@@ -262,20 +357,22 @@ export default function AdminApplicationsPage() {
                                     <div className="mb-4">
                                         <h3 className="font-semibold text-lg text-gray-900 mb-2">{user.memberName}</h3>
 
-                                        {/* 신청 과목 */}
-                                        <div className="mb-3">
-                                            <p className="text-xs font-medium text-gray-500 mb-2">신청 과목</p>
-                                            <div className="flex flex-wrap gap-2">
-                                                {user.subjects.map((subject) => (
-                                                    <span
-                                                        key={subject.id}
-                                                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                                                    >
-                                                        {subject.subjectName}
-                                                    </span>
-                                                ))}
+                                        {/* 신청 과목 (전체 과목 조회시에만 표시) */}
+                                        {selectedSubject === 'all' && (
+                                            <div className="mb-3">
+                                                <p className="text-xs font-medium text-gray-500 mb-2">신청 과목</p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {user.subjects.map((subject) => (
+                                                        <span
+                                                            key={subject.id}
+                                                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                                        >
+                                                            {subject.subjectName}
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
 
                                     {/* 가능 시간 */}
@@ -436,10 +533,75 @@ export default function AdminApplicationsPage() {
                     </div>
                 )}
 
+                {/* 과목&시간대별 보기 */}
+                {viewMode === 'subject-time' && (
+                    <div className="space-y-8">
+                        {Object.entries(groupUsersBySubjectAndTime()).map(([subjectName, dayGroups]) => (
+                            <div key={subjectName} className="border border-gray-200 rounded-lg p-6">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                            {subjectName}
+                                        </span>
+                                        <span className="text-sm text-gray-500">
+                                            ({Object.values(dayGroups).reduce((total, day) =>
+                                                total + Object.keys(day).length, 0)}개 그룹)
+                                        </span>
+                                    </h3>
+                                </div>
+
+                                <div className="space-y-6">
+                                    {Object.entries(dayGroups).map(([day, timeSlots]) => (
+                                        <div key={day} className="bg-gray-50 rounded-lg p-4">
+                                            <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
+                                                <span className="inline-flex items-center justify-center w-6 h-6 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                                                    {getDayKorean(day)}
+                                                </span>
+                                                <span>{getDayKorean(day)}요일</span>
+                                            </h4>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                                                {Object.entries(timeSlots)
+                                                    .sort(([timeA], [timeB]) => {
+                                                        const hourA = parseInt(timeA.split(':')[0]);
+                                                        const hourB = parseInt(timeB.split(':')[0]);
+                                                        return hourA - hourB;
+                                                    })
+                                                    .map(([timeSlot, users]) => (
+                                                        <div key={timeSlot} className="bg-white rounded-lg p-3 border border-gray-200 hover:shadow-sm transition-shadow">
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <h5 className="font-medium text-sm text-gray-900">{timeSlot}</h5>
+                                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${users.length >= 3
+                                                                        ? 'bg-green-100 text-green-800'
+                                                                        : 'bg-gray-100 text-gray-700'
+                                                                    }`}>
+                                                                    {users.length}
+                                                                </span>
+                                                            </div>
+
+                                                            <div className="space-y-1">
+                                                                {users.map((user) => (
+                                                                    <div key={user.memberUuid} className="bg-gray-50 rounded px-2 py-1">
+                                                                        <span className="text-xs text-gray-800 font-medium">{user.memberName}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
                 {/* 빈 상태 */}
                 {((viewMode === 'user' && filteredUsers.length === 0) ||
                     (viewMode === 'subject' && Object.keys(groupUsersBySubject()).length === 0) ||
-                    (viewMode === 'time' && Object.keys(groupUsersByTime()).length === 0)) && (
+                    (viewMode === 'time' && Object.keys(groupUsersByTime()).length === 0) ||
+                    (viewMode === 'subject-time' && Object.keys(groupUsersBySubjectAndTime()).length === 0)) && (
                         <div className="text-center py-12">
                             <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                                 <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -450,6 +612,7 @@ export default function AdminApplicationsPage() {
                                 {viewMode === 'user' && (selectedSubject === 'all' ? '신청자가 없습니다' : `${selectedSubject} 신청자가 없습니다`)}
                                 {viewMode === 'subject' && '등록된 과목이 없습니다'}
                                 {viewMode === 'time' && '신청자가 없습니다'}
+                                {viewMode === 'subject-time' && (showMinimumGroupsOnly ? '3명 이상 그룹이 없습니다' : '신청자가 없습니다')}
                             </h3>
                             <p className="text-gray-500">
                                 {viewMode === 'user' && (selectedSubject === 'all'
@@ -458,6 +621,10 @@ export default function AdminApplicationsPage() {
                                 )}
                                 {viewMode === 'subject' && '신청자가 등록되면 과목별로 표시됩니다.'}
                                 {viewMode === 'time' && '아직 등록된 신청자가 없습니다.'}
+                                {viewMode === 'subject-time' && (showMinimumGroupsOnly
+                                    ? '필터를 해제하거나 다른 조건을 시도해보세요.'
+                                    : '아직 등록된 신청자가 없습니다.'
+                                )}
                             </p>
                         </div>
                     )}

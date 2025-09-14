@@ -210,7 +210,7 @@ export default function AdminTeamAssignPage() {
                             {assignmentResults.map((result, index) => (
                                 <div key={`${result.subjectId}-${result.timeId}-${index}`} className="border border-gray-200 rounded-lg p-4">
                                     <h3 className="font-semibold text-lg mb-2">
-                                        {result.subjectName} - {getDayKorean(result.day)} {formatTimeRange(result.startTime)} ({result.members.length}명)
+                                        [{result.subjectName}] {getDayKorean(result.day)} {formatTimeRange(result.startTime)}
                                     </h3>
 
                                     <div className="bg-gray-50 p-4 rounded">
@@ -220,6 +220,7 @@ export default function AdminTeamAssignPage() {
                                                     {member.name} ({member.studentId})
                                                 </span>
                                             ))}
+                                            ({result.members.length}명)
                                         </div>
                                     </div>
                                 </div>
