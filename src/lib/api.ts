@@ -518,6 +518,10 @@ export const adminTeamApi = {
     getTeamAttendanceStats: (teamId: number): Promise<ResponseDto<Record<string, any>>> =>
         api.get(`/admin/teams/${teamId}/attendance`),
 
+    // 팀 신규 생성
+    saveTeams: (results: AssignedTeam[]): Promise<ResponseDto<number>> =>
+        api.post("/admin/teams", results),
+
     // // 정규 스터디 보고서 제출/평가 현황 조회
     // getTeamReportsStatus: (params?: {
     //     year?: number;
