@@ -74,7 +74,7 @@ export interface TeamA {
 }
 
 export interface TeamMemberA {
-    uuid: number;
+    id: number;
     name: string;
     studentId: string;
     level: number;

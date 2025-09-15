@@ -1,4 +1,4 @@
-// app/admin/teams/[teamId]/page.tsx
+// app/admin/teams/regular/[teamId]/page.tsx
 "use client";
 
 import {
@@ -27,15 +27,21 @@ import {
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { adminTeamApi } from "@/lib/api";
-import { formatDate } from "@/lib/utils";
-import { TeamA } from "@/types/admin";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command";
+import { adminTeamApi, adminMemberApi } from "@/lib/api";
+import { formatDate, cn } from "@/lib/utils";
+import { TeamA, MemberA } from "@/types/admin";
 import { ReportDocument } from "@/types/study";
 import {
     AlertCircle,
@@ -64,6 +70,7 @@ export default function AdminTeamDetailPage() {
     const router = useRouter();
     const teamId = parseInt(params.teamId as string);
 
+    // 기존 상태들
     const [team, setTeam] = useState<TeamA | null>(null);
     const [reports, setReports] = useState<ReportDocument[]>([]);
     const [loading, setLoading] = useState(true);
@@ -72,16 +79,32 @@ export default function AdminTeamDetailPage() {
     const [showScoreDialog, setShowScoreDialog] = useState(false);
     const [showMemberDialog, setShowMemberDialog] = useState(false);
     const [showRemoveMemberDialog, setShowRemoveMemberDialog] = useState(false);
-    const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+    const [memberToRemove, setMemberToRemove] = useState<{ id: number, name: string } | null>(null);
     const [newScore, setNewScore] = useState(0);
     const [newMemberStudentId, setNewMemberStudentId] = useState("");
+
+    // 멤버 추가 관련 상태들
+    const [allMembers, setAllMembers] = useState<MemberA[]>([]);
+    const [memberSearch, setMemberSearch] = useState("");
+    const [selectedMemberToAdd, setSelectedMemberToAdd] = useState<MemberA | null>(null);
+    const [showAddConfirmDialog, setShowAddConfirmDialog] = useState(false);
+
+    const loadMembers = async () => {
+        try {
+            const response = await adminMemberApi.getAllMembers();
+            if (response.success && response.data) {
+                setAllMembers(response.data);
+            }
+        } catch (error) {
+            console.error("Failed to load members:", error);
+            toast.error("멤버 목록을 불러오는데 실패했습니다.");
+        }
+    };
 
     useEffect(() => {
         if (teamId) {
             loadTeamDetail();
-            if (team?.regular) {
-                loadTeamReports();
-            }
+            loadMembers();
         }
     }, [teamId]);
 
@@ -137,6 +160,30 @@ export default function AdminTeamDetailPage() {
         }
     };
 
+    const handleMemberSelect = (member: MemberA) => {
+        setSelectedMemberToAdd(member);
+        setShowAddConfirmDialog(true);
+    };
+
+    const handleConfirmAddMember = async () => {
+        if (!selectedMemberToAdd) return;
+
+        try {
+            const response = await adminTeamApi.addTeamMember(teamId, selectedMemberToAdd.uuid);
+            if (response.success) {
+                toast.success(`${selectedMemberToAdd.name}님이 성공적으로 추가되었습니다.`);
+                loadTeamDetail();
+                setShowMemberDialog(false);
+                setShowAddConfirmDialog(false);
+                setSelectedMemberToAdd(null);
+                setMemberSearch("");
+                setNewMemberStudentId("");
+            }
+        } catch (error) {
+            toast.error("멤버 추가에 실패했습니다.");
+        }
+    };
+
     const handleAddMember = async () => {
         if (!newMemberStudentId.trim()) {
             toast.error("학번을 입력해주세요.");
@@ -150,24 +197,30 @@ export default function AdminTeamDetailPage() {
                 loadTeamDetail();
                 setShowMemberDialog(false);
                 setNewMemberStudentId("");
+                setMemberSearch("");
             }
         } catch (error) {
             toast.error("멤버 추가에 실패했습니다.");
         }
     };
 
-    const handleRemoveMember = async () => {
-        if (!selectedMemberId) return;
-
+    const handleRemoveMember = async (memberId: number) => {
         try {
-            const response = await adminTeamApi.removeTeamMember(teamId, selectedMemberId);
+            console.log('멤버 삭제 시작:', memberId, teamId);
+            const response = await adminTeamApi.removeTeamMember(teamId, memberId);
+            console.log('API 응답:', response);
+
             if (response.success) {
                 toast.success("멤버가 성공적으로 제거되었습니다.");
                 loadTeamDetail();
                 setShowRemoveMemberDialog(false);
-                setSelectedMemberId(null);
+                setMemberToRemove(null);
+            } else {
+                console.error('API 실패:', response);
+                toast.error("멤버 제거에 실패했습니다.");
             }
         } catch (error) {
+            console.error('멤버 제거 에러:', error);
             toast.error("멤버 제거에 실패했습니다.");
         }
     };
@@ -186,6 +239,26 @@ export default function AdminTeamDetailPage() {
         const totalExpressions = translationCount + feedbackCount;
 
         return { totalExpressions, translationCount, feedbackCount };
+    };
+
+    // 필터링된 멤버 목록 생성 (이미 팀에 속한 멤버 제외)
+    const filteredMembers = allMembers.filter(member => {
+        const searchTerm = memberSearch.toLowerCase();
+        const isNotInTeam = !team?.members.some(teamMember =>
+            teamMember.studentId === member.studentId
+        );
+        return isNotInTeam && (
+            member.name.toLowerCase().includes(searchTerm) ||
+            member.studentId.includes(searchTerm)
+        );
+    });
+
+    const resetMemberDialog = () => {
+        setShowMemberDialog(false);
+        setMemberSearch("");
+        setNewMemberStudentId("");
+        setSelectedMemberToAdd(null);
+        setShowAddConfirmDialog(false);
     };
 
     if (loading) {
@@ -352,9 +425,9 @@ export default function AdminTeamDetailPage() {
                             <TableBody>
                                 {team.members.map((member, idx) => (
                                     <TableRow
-                                        key={member.uuid || member.studentId || idx}
+                                        key={member.id || member.studentId || idx}
                                         className="cursor-pointer hover:bg-gray-50"
-                                        onClick={() => handleMemberClick(member.uuid)}
+                                        onClick={() => handleMemberClick(member.id)}
                                     >
                                         <TableCell className="font-medium">
                                             {member.name}
@@ -374,7 +447,10 @@ export default function AdminTeamDetailPage() {
                                                 variant="ghost"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    setSelectedMemberId(member.uuid || member.studentId);
+                                                    setMemberToRemove({
+                                                        id: member.id,
+                                                        name: member.name
+                                                    });
                                                     setShowRemoveMemberDialog(true);
                                                 }}
                                             >
@@ -487,7 +563,6 @@ export default function AdminTeamDetailPage() {
                 </Card>
             )}
 
-
             {/* Score Dialog */}
             <AlertDialog open={showScoreDialog} onOpenChange={setShowScoreDialog}>
                 <AlertDialogContent>
@@ -516,35 +591,79 @@ export default function AdminTeamDetailPage() {
 
             {/* Member Management Dialog */}
             <Dialog open={showMemberDialog} onOpenChange={setShowMemberDialog}>
-                <DialogContent>
+                <DialogContent className="max-w-md max-h-[70vh]">
                     <DialogHeader>
                         <DialogTitle>멤버 추가</DialogTitle>
-                        <DialogDescription>
-                            새로운 멤버의 학번을 입력해주세요.
-                        </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="studentId" className="text-right">
-                                학번
-                            </Label>
-                            <Input
-                                id="studentId"
-                                value={newMemberStudentId}
-                                onChange={(e) => setNewMemberStudentId(e.target.value)}
-                                className="col-span-3"
-                                placeholder="학번을 입력하세요"
+                    <div className="space-y-4">
+                        <Command>
+                            <CommandInput
+                                placeholder="멤버 이름 또는 학번으로 검색..."
+                                value={memberSearch}
+                                onValueChange={setMemberSearch}
                             />
+                            <CommandList className="max-h-[400px] overflow-y-auto">
+                                <CommandEmpty>
+                                    {memberSearch ? "검색 결과가 없습니다." : "이름 또는 학번을 입력하세요."}
+                                </CommandEmpty>
+                                <CommandGroup>
+                                    {filteredMembers.slice(0, 50).map((member) => (
+                                        <CommandItem
+                                            key={member.uuid}
+                                            onSelect={() => handleMemberSelect(member)}
+                                            className="flex items-center space-x-2 py-2 cursor-pointer hover:bg-gray-100"
+                                        >
+                                            <div className="flex flex-col flex-1 min-w-0">
+                                                <span className="font-medium truncate">{member.name}</span>
+                                                <span className="text-sm text-gray-500 truncate">
+                                                    {member.studentId} | {member.majorName}
+                                                </span>
+                                            </div>
+                                        </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
+
+                        {/* 검색 결과가 너무 많을 때 안내 */}
+                        {memberSearch && filteredMembers.length > 50 && (
+                            <p className="text-xs text-gray-500">
+                                {filteredMembers.length}개의 결과 중 상위 50개만 표시됩니다. 더 구체적으로 검색해보세요.
+                            </p>
+                        )}
+
+                        {/* 직접 입력 섹션 */}
+                        <div className="border-t pt-4">
+                            <Label htmlFor="directInput" className="text-sm text-gray-600">
+                                또는 학번을 직접 입력:
+                            </Label>
+                            <div className="flex gap-2 mt-2">
+                                <Input
+                                    id="directInput"
+                                    value={newMemberStudentId}
+                                    onChange={(e) => setNewMemberStudentId(e.target.value)}
+                                    placeholder="학번을 직접 입력하세요"
+                                    className="flex-1"
+                                />
+                                <Button
+                                    onClick={handleAddMember}
+                                    disabled={!newMemberStudentId.trim()}
+                                    size="sm"
+                                >
+                                    추가
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end pt-4 border-t">
+                            <Button
+                                variant="outline"
+                                onClick={resetMemberDialog}
+                            >
+                                취소
+                            </Button>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowMemberDialog(false)}>
-                            취소
-                        </Button>
-                        <Button onClick={handleAddMember}>
-                            추가
-                        </Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
@@ -554,18 +673,45 @@ export default function AdminTeamDetailPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>멤버 제거 확인</AlertDialogTitle>
                         <AlertDialogDescription>
-                            정말로 이 멤버를 팀에서 제거하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                            정말로 <strong>{memberToRemove?.name}</strong>님을 팀에서 제거하시겠습니까? 이 작업은 되돌릴 수 없습니다.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setSelectedMemberId(null)}>
+                        <AlertDialogCancel onClick={() => setMemberToRemove(null)}>
                             취소
                         </AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={handleRemoveMember}
+                            onClick={() => {
+                                if (memberToRemove) {
+                                    handleRemoveMember(memberToRemove.id);
+                                }
+                            }}
                             className="bg-red-600 hover:bg-red-700"
                         >
                             제거
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Add Member Confirmation Dialog */}
+            <AlertDialog open={showAddConfirmDialog} onOpenChange={setShowAddConfirmDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>멤버 추가 확인</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            <strong>{selectedMemberToAdd?.name}</strong>님 ({selectedMemberToAdd?.studentId})을 팀에 추가하시겠습니까?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => {
+                            setShowAddConfirmDialog(false);
+                            setSelectedMemberToAdd(null);
+                        }}>
+                            취소
+                        </AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmAddMember}>
+                            추가
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
