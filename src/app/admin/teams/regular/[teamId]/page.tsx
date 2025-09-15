@@ -24,6 +24,15 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { adminTeamApi } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import { TeamA } from "@/types/admin";
@@ -44,6 +53,7 @@ import {
     Trash2,
     UserPlus,
     Users,
+    UserMinus,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -58,10 +68,13 @@ export default function AdminTeamDetailPage() {
     const [reports, setReports] = useState<ReportDocument[]>([]);
     const [loading, setLoading] = useState(true);
     const [reportsLoading, setReportsLoading] = useState(false);
-    const [selectedWeek, setSelectedWeek] = useState("1");
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showScoreDialog, setShowScoreDialog] = useState(false);
+    const [showMemberDialog, setShowMemberDialog] = useState(false);
+    const [showRemoveMemberDialog, setShowRemoveMemberDialog] = useState(false);
+    const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
     const [newScore, setNewScore] = useState(0);
+    const [newMemberStudentId, setNewMemberStudentId] = useState("");
 
     useEffect(() => {
         if (teamId) {
@@ -109,20 +122,6 @@ export default function AdminTeamDetailPage() {
         }
     };
 
-    const handleDeleteTeam = async () => {
-        if (!team || team.regular) return;
-
-        try {
-            const response = await adminTeamApi.deleteOneTimeTeam(teamId);
-            if (response.success) {
-                toast.success("번개 스터디가 삭제되었습니다.");
-                router.push("/admin/teams");
-            }
-        } catch (error) {
-            toast.error("팀 삭제에 실패했습니다.");
-        }
-    };
-
     const handleScoreUpdate = async () => {
         if (!team || !team.regular) return;
 
@@ -138,18 +137,43 @@ export default function AdminTeamDetailPage() {
         }
     };
 
-    const getStatusBadge = (status: string) => {
-        const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-            RECRUITING: { label: "모집중", variant: "secondary" },
-            UPCOMING: { label: "시작 예정", variant: "outline" },
-            ACTIVE: { label: "진행중", variant: "default" },
-            IN_PROGRESS: { label: "진행중", variant: "default" },
-            COMPLETED: { label: "완료", variant: "outline" },
-            CANCELED: { label: "취소됨", variant: "destructive" },
-        };
+    const handleAddMember = async () => {
+        if (!newMemberStudentId.trim()) {
+            toast.error("학번을 입력해주세요.");
+            return;
+        }
 
-        const config = statusConfig[status] || { label: status, variant: "outline" };
-        return <Badge variant={config.variant}>{config.label}</Badge>;
+        try {
+            const response = await adminTeamApi.addTeamMember(teamId, newMemberStudentId);
+            if (response.success) {
+                toast.success("멤버가 성공적으로 추가되었습니다.");
+                loadTeamDetail();
+                setShowMemberDialog(false);
+                setNewMemberStudentId("");
+            }
+        } catch (error) {
+            toast.error("멤버 추가에 실패했습니다.");
+        }
+    };
+
+    const handleRemoveMember = async () => {
+        if (!selectedMemberId) return;
+
+        try {
+            const response = await adminTeamApi.removeTeamMember(teamId, selectedMemberId);
+            if (response.success) {
+                toast.success("멤버가 성공적으로 제거되었습니다.");
+                loadTeamDetail();
+                setShowRemoveMemberDialog(false);
+                setSelectedMemberId(null);
+            }
+        } catch (error) {
+            toast.error("멤버 제거에 실패했습니다.");
+        }
+    };
+
+    const handleMemberClick = (memberId: number) => {
+        router.push(`/admin/members/${memberId}`);
     };
 
     const getReportStats = (report: ReportDocument) => {
@@ -200,13 +224,34 @@ export default function AdminTeamDetailPage() {
                 팀 목록으로
             </Button>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Team Info와 Members Section을 양옆에 배치 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* Team Info */}
-                <Card className="lg:col-span-2">
+                <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center justify-between">
                             <span>{team.name}</span>
-                            {getStatusBadge(team.status)}
+                            <div className="flex gap-2">
+                                {team.regular && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setShowScoreDialog(true)}
+                                    >
+                                        점수 수정
+                                    </Button>
+                                )}
+                                {!team.regular && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setShowDeleteDialog(true)}
+                                    >
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        삭제
+                                    </Button>
+                                )}
+                            </div>
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -222,7 +267,7 @@ export default function AdminTeamDetailPage() {
                                 <label className="text-sm font-medium text-gray-500">유형</label>
                                 <div className="mt-1">
                                     <Badge variant="outline">
-                                        {team.regular ? "정규 스터디" : "번개 스터디"}
+                                        정규 스터디
                                     </Badge>
                                 </div>
                             </div>
@@ -231,7 +276,7 @@ export default function AdminTeamDetailPage() {
                                 <div className="flex items-center gap-2 mt-1">
                                     <Users className="w-4 h-4 text-gray-400" />
                                     <p className="font-medium">
-                                        {team.currentMembers}/{team.maxMembers}명
+                                        {team.members.length}명
                                     </p>
                                 </div>
                             </div>
@@ -279,113 +324,75 @@ export default function AdminTeamDetailPage() {
                     </CardContent>
                 </Card>
 
-                {/* Actions */}
-                <div className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>관리 작업</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            {team.regular && (
-                                <Button
-                                    variant="outline"
-                                    className="w-full"
-                                    onClick={() => setShowScoreDialog(true)}
-                                >
-                                    <Target className="w-4 h-4 mr-2" />
-                                    점수 수정
-                                </Button>
-                            )}
+                {/* Members Section */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                            <span>팀 멤버</span>
                             <Button
+                                size="sm"
                                 variant="outline"
-                                className="w-full"
-                                onClick={() => router.push(`/admin/teams/${teamId}/members`)}
+                                onClick={() => setShowMemberDialog(true)}
                             >
-                                <Users className="w-4 h-4 mr-2" />
-                                멤버 관리
+                                <UserPlus className="w-4 h-4 mr-2" />
+                                팀원 추가
                             </Button>
-                            {team.regular && (
-                                <Button
-                                    variant="outline"
-                                    className="w-full"
-                                    onClick={() => router.push(`/admin/teams/${teamId}/reports`)}
-                                >
-                                    <FileText className="w-4 h-4 mr-2" />
-                                    보고서 관리
-                                </Button>
-                            )}
-                            {!team.regular && (
-                                <Button
-                                    variant="destructive"
-                                    className="w-full"
-                                    onClick={() => setShowDeleteDialog(true)}
-                                >
-                                    <Trash2 className="w-4 h-4 mr-2" />
-                                    팀 삭제
-                                </Button>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-
-            {/* Members Section */}
-            <Card className="mt-6">
-                <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                        <span>팀 멤버</span>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => router.push(`/admin/teams/${teamId}/members`)}
-                        >
-                            <UserPlus className="w-4 h-4 mr-2" />
-                            멤버 관리
-                        </Button>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>이름</TableHead>
-                                <TableHead>학번</TableHead>
-                                <TableHead>레벨</TableHead>
-                                <TableHead>역할</TableHead>
-                                <TableHead>가입일</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {team.members.map((member, idx) => (
-                                <TableRow key={member.uuid || member.studentId || idx}>
-                                    <TableCell className="font-medium">
-                                        {member.name}
-                                    </TableCell>
-                                    <TableCell>{member.studentId}</TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline">Level {member.level}</Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        {member.leader && (
-                                            <Badge variant="default">
-                                                <Star className="w-3 h-3 mr-1" />
-                                                팀장
-                                            </Badge>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="text-gray-500">
-                                        {new Date(member.joinedAt).toLocaleDateString()}
-                                    </TableCell>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>이름</TableHead>
+                                    <TableHead>학번</TableHead>
+                                    <TableHead>역할</TableHead>
+                                    <TableHead className="text-right">작업</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+                            </TableHeader>
+                            <TableBody>
+                                {team.members.map((member, idx) => (
+                                    <TableRow
+                                        key={member.uuid || member.studentId || idx}
+                                        className="cursor-pointer hover:bg-gray-50"
+                                        onClick={() => handleMemberClick(member.uuid)}
+                                    >
+                                        <TableCell className="font-medium">
+                                            {member.name}
+                                        </TableCell>
+                                        <TableCell>{member.studentId}</TableCell>
+                                        <TableCell>
+                                            {member.leader && (
+                                                <Badge variant="default">
+                                                    <Star className="w-3 h-3 mr-1" />
+                                                    팀장
+                                                </Badge>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedMemberId(member.uuid || member.studentId);
+                                                    setShowRemoveMemberDialog(true);
+                                                }}
+                                            >
+                                                <UserMinus className="h-4 w-4" />
+                                                삭제
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </div>
 
             {/* Reports Section - Only for Regular Teams */}
             {team.regular && (
-                <Card className="mt-6">
+                <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center justify-between">
                             <span>제출된 보고서</span>
@@ -480,26 +487,6 @@ export default function AdminTeamDetailPage() {
                 </Card>
             )}
 
-            {/* Delete Dialog */}
-            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>팀 삭제 확인</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            정말로 이 번개 스터디를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>취소</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={handleDeleteTeam}
-                            className="bg-red-600 hover:bg-red-700"
-                        >
-                            삭제
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
 
             {/* Score Dialog */}
             <AlertDialog open={showScoreDialog} onOpenChange={setShowScoreDialog}>
@@ -522,6 +509,63 @@ export default function AdminTeamDetailPage() {
                         <AlertDialogCancel>취소</AlertDialogCancel>
                         <AlertDialogAction onClick={handleScoreUpdate}>
                             변경
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Member Management Dialog */}
+            <Dialog open={showMemberDialog} onOpenChange={setShowMemberDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>멤버 추가</DialogTitle>
+                        <DialogDescription>
+                            새로운 멤버의 학번을 입력해주세요.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="studentId" className="text-right">
+                                학번
+                            </Label>
+                            <Input
+                                id="studentId"
+                                value={newMemberStudentId}
+                                onChange={(e) => setNewMemberStudentId(e.target.value)}
+                                className="col-span-3"
+                                placeholder="학번을 입력하세요"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowMemberDialog(false)}>
+                            취소
+                        </Button>
+                        <Button onClick={handleAddMember}>
+                            추가
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Remove Member Dialog */}
+            <AlertDialog open={showRemoveMemberDialog} onOpenChange={setShowRemoveMemberDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>멤버 제거 확인</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            정말로 이 멤버를 팀에서 제거하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setSelectedMemberId(null)}>
+                            취소
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleRemoveMember}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            제거
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

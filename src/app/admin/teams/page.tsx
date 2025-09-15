@@ -62,22 +62,23 @@ export default function AdminTeamsPage() {
         }
     };
 
-    const getStatusBadge = (status: string) => {
-        const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-            RECRUITING: { label: "모집중", variant: "secondary" },
-            UPCOMING: { label: "시작 예정", variant: "outline" },
-            ACTIVE: { label: "진행중", variant: "default" },
-            IN_PROGRESS: { label: "진행중", variant: "default" },
-            COMPLETED: { label: "완료", variant: "outline" },
-            CANCELED: { label: "취소됨", variant: "destructive" },
-        };
+    // const getStatusBadge = (status: string) => {
+    //     const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+    //         RECRUITING: { label: "모집중", variant: "secondary" },
+    //         UPCOMING: { label: "시작 예정", variant: "outline" },
+    //         ACTIVE: { label: "진행중", variant: "default" },
+    //         IN_PROGRESS: { label: "진행중", variant: "default" },
+    //         COMPLETED: { label: "완료", variant: "outline" },
+    //         CANCELED: { label: "취소됨", variant: "destructive" },
+    //     };
 
-        const config = statusConfig[status] || { label: status, variant: "outline" };
-        return <Badge variant={config.variant}>{config.label}</Badge>;
-    };
+    //     const config = statusConfig[status] || { label: status, variant: "outline" };
+    //     return <Badge variant={config.variant}>{config.label}</Badge>;
+    // };
 
-    const handleTeamClick = (teamId: number) => {
-        router.push(`/admin/teams/${teamId}`);
+    const handleTeamClick = (regular: boolean, teamId: number) => {
+        const path = regular ? 'regular' : 'one-time';
+        router.push(`/admin/teams/${path}/${teamId}`);
     };
 
     const filteredTeams = getFilteredTeams();
@@ -172,8 +173,6 @@ export default function AdminTeamsPage() {
                                             <TableHead>팀명</TableHead>
                                             <TableHead>과목</TableHead>
                                             <TableHead>유형</TableHead>
-                                            <TableHead>상태</TableHead>
-                                            <TableHead>인원</TableHead>
                                             <TableHead>시간</TableHead>
                                             <TableHead>점수</TableHead>
                                             <TableHead></TableHead>
@@ -191,7 +190,7 @@ export default function AdminTeamsPage() {
                                                 <TableRow
                                                     key={`team-${team.id || index}`}
                                                     className="cursor-pointer hover:bg-gray-50"
-                                                    onClick={() => handleTeamClick(team.id)}
+                                                    onClick={() => handleTeamClick(team.regular, team.id)}
                                                 >
                                                     <TableCell className="font-medium">
                                                         <div className="flex items-center gap-2">
@@ -209,13 +208,6 @@ export default function AdminTeamsPage() {
                                                         <Badge variant="outline">
                                                             {team.regular ? "정규" : "번개"}
                                                         </Badge>
-                                                    </TableCell>
-                                                    <TableCell>{getStatusBadge(team.status)}</TableCell>
-                                                    <TableCell>
-                                                        <div className="flex items-center gap-2">
-                                                            <Users className="w-4 h-4 text-gray-400" />
-                                                            {team.currentMembers}/{team.maxMembers}
-                                                        </div>
                                                     </TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center gap-2">
