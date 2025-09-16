@@ -1,4 +1,3 @@
-// app/(main)/team/[teamId]/report/[reportId]/page.tsx
 'use client';
 
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { handleApiResponse, reviewApi, studyApi } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
-import { ReportDocument, ReportFeedback, ReportTopic, ReportTranslation } from '@/types/study';
+import {
+    ReportDocument,
+    ReportFeedback,
+    ReportTopic,
+    ReportTranslation,
+    CorrectionRedis,
+    VocabRedis
+} from '@/types/study';
 import {
     AlertCircle,
     ArrowLeft,
@@ -15,6 +21,7 @@ import {
     Clock,
     FileText,
     Globe,
+    Languages,
     Lightbulb,
     Loader2,
     MessageSquare,
@@ -104,7 +111,44 @@ const FeedbackCard = ({ feedback }: { feedback: ReportFeedback }) => {
     );
 };
 
-// Topic 섹션 컴포넌트
+// 오답 카드 컴포넌트
+const CorrectionCard = ({ correction }: { correction: CorrectionRedis }) => {
+    return (
+        <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+            <div className="space-y-2">
+                <div className="flex gap-2">
+                    <span className="text-sm font-medium text-red-600">Q:</span>
+                    <span className="text-sm">{correction.question}</span>
+                </div>
+                <div className="flex gap-2">
+                    <span className="text-sm font-medium text-green-600">A:</span>
+                    <span className="text-sm">{correction.answer}</span>
+                </div>
+                {correction.description && (
+                    <div className="flex gap-2">
+                        <span className="text-sm font-medium text-blue-600">설명:</span>
+                        <span className="text-sm text-muted-foreground">{correction.description}</span>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+// 단어 카드 컴포넌트
+const VocabCard = ({ vocab }: { vocab: VocabRedis }) => {
+    return (
+        <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+            <div className="flex items-center gap-2">
+                <span className="font-medium text-sm">{vocab.english}</span>
+                <span className="text-sm text-muted-foreground">-</span>
+                <span className="text-sm text-muted-foreground">{vocab.korean}</span>
+            </div>
+        </div>
+    );
+};
+
+// Topic 섹션 컴포넌트 (Speaking용)
 const TopicSection = ({ topic, topicIndex }: {
     topic: ReportTopic;
     topicIndex: number;
@@ -187,6 +231,117 @@ const TopicSection = ({ topic, topicIndex }: {
                 </div>
             </CardContent>
         </Card>
+    );
+};
+
+// General 섹션 컴포넌트 (시험과목용)
+const GeneralSection = ({ report }: { report: ReportDocument }) => {
+    const correctionCount = report.corrections?.length || 0;
+    const vocabCount = report.vocabs?.length || 0;
+    const translationCount = report.translations?.length || 0;
+    const feedbackCount = report.feedbacks?.length || 0;
+    const totalCount = correctionCount + vocabCount + translationCount + feedbackCount;
+
+    if (totalCount === 0) {
+        return (
+            <Card className="border-dashed">
+                <CardContent className="py-12">
+                    <div className="text-center">
+                        <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-xl font-medium text-muted-foreground mb-2">
+                            학습된 내용이 없습니다
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                            아직 이 주차에 대한 학습 내용이 없습니다.
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    return (
+        <div className="space-y-4">
+            {/* 오답 섹션 */}
+            {correctionCount > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <BookOpen className="h-5 w-5" />
+                                오답정리
+                            </div>
+                            <Badge variant="secondary">{correctionCount}개</Badge>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {report.corrections!.map((correction, index) => (
+                            <CorrectionCard key={`correction-${index}`} correction={correction} />
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* 단어 섹션 */}
+            {vocabCount > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Languages className="h-5 w-5" />
+                                단어정리
+                            </div>
+                            <Badge variant="secondary">{vocabCount}개</Badge>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {report.vocabs!.map((vocab, index) => (
+                            <VocabCard key={`vocab-${index}`} vocab={vocab} />
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* 번역 섹션 */}
+            {translationCount > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Globe className="h-5 w-5" />
+                                번역 표현
+                            </div>
+                            <Badge variant="secondary">{translationCount}개</Badge>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {report.translations!.map((translation, index) => (
+                            <TranslationCard key={`translation-${index}`} translation={translation} />
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* 교정 섹션 */}
+            {feedbackCount > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <MessageSquare className="h-5 w-5" />
+                                교정 표현
+                            </div>
+                            <Badge variant="secondary">{feedbackCount}개</Badge>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {report.feedbacks!.map((feedback, index) => (
+                            <FeedbackCard key={`feedback-${index}`} feedback={feedback} />
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
+        </div>
     );
 };
 
@@ -276,7 +431,7 @@ export default function ReportPage({ params }: ReportPageProps) {
                 description: '복습 자료를 불러오는데 실패했습니다.',
             });
         }
-    }
+    };
 
     if (loading || !report) {
         return (
@@ -288,6 +443,13 @@ export default function ReportPage({ params }: ReportPageProps) {
             </div>
         );
     }
+
+    // Speaking 보고서인지 General 보고서인지 판단
+    const isSpeakingReport = report.topics && report.topics.length > 0;
+    const isGeneralReport = (report.corrections && report.corrections.length > 0) ||
+        (report.vocabs && report.vocabs.length > 0) ||
+        (report.translations && report.translations.length > 0) ||
+        (report.feedbacks && report.feedbacks.length > 0);
 
     return (
         <div className="container mx-auto p-6 max-w-5xl">
@@ -328,39 +490,45 @@ export default function ReportPage({ params }: ReportPageProps) {
                     </div>
                 </div>
 
-                <div className="space-y-4">
+                {/* Speaking 보고서 내용 */}
+                {isSpeakingReport && (
+                    <div className="space-y-4">
+                        {report.topics!.map((topic, topicIndex) => (
+                            <TopicSection
+                                key={topicIndex}
+                                topic={topic}
+                                topicIndex={topicIndex}
+                            />
+                        ))}
+                    </div>
+                )}
 
-                    {report.topics && report.topics.length > 0 ? (
-                        <div className="space-y-4">
-                            {report.topics.map((topic, topicIndex) => (
-                                <TopicSection
-                                    key={topicIndex}
-                                    topic={topic}
-                                    topicIndex={topicIndex}
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <Card className="border-dashed">
-                            <CardContent className="py-12">
-                                <div className="text-center">
-                                    <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                                    <p className="text-xl font-medium text-muted-foreground mb-2">
-                                        학습된 주제가 없습니다
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                        아직 이 주차에 대한 학습 내용이 없습니다.
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-                </div>
+                {/* General 보고서 내용 */}
+                {isGeneralReport && (
+                    <GeneralSection report={report} />
+                )}
+
+                {/* 둘 다 없는 경우 */}
+                {!isSpeakingReport && !isGeneralReport && (
+                    <Card className="border-dashed">
+                        <CardContent className="py-12">
+                            <div className="text-center">
+                                <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                                <p className="text-xl font-medium text-muted-foreground mb-2">
+                                    학습된 내용이 없습니다
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    아직 이 주차에 대한 학습 내용이 없습니다.
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* 제출 버튼 */}
                 {!report.submitted && (
                     <Card className="border-orange-200 bg-orange-50">
-                        <CardContent className="pt-1">
+                        <CardContent className="pt-6">
                             <div className="flex items-start gap-2">
                                 <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                                 <div className="flex-1">

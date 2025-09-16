@@ -38,14 +38,14 @@ export interface GeneralRedis {
 }
 
 export interface CorrectionRedis {
-    id: string;
+    id?: string;
     question?: string;
     answer?: string;
     description?: string;
 }
 
 export interface VocabRedis {
-    id: string;
+    id?: string;
     english: string;
     korean: string;
 }
@@ -130,7 +130,11 @@ export interface ReportDocument {
     id: string;
     teamId: number;
     week: number;
-    topics: ReportTopic[];
+    topics: ReportTopic[]; // speaking
+    corrections: CorrectionRedis[]; // general
+    vocabs: VocabRedis[]; // general
+    translations: ReportTranslation[]; // general
+    feedbacks: ReportFeedback[]; // general
     comments?: string;
     submitted: boolean;
     submittedAt?: string;
