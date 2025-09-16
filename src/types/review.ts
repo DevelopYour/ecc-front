@@ -1,5 +1,5 @@
 import { MemberIdAndName } from "./apply-onetime";
-import { ReportTopic } from "./study";
+import { CorrectionRedis, ReportFeedback, ReportTopic, ReportTranslation, VocabRedis } from "./study";
 
 export enum ReviewStatus {
     NOT_READY = "NOT_READY",
@@ -19,7 +19,11 @@ export interface Review {
     week: number;
     member: MemberIdAndName;
     status: ReviewStatus;
-    topics: ReportTopic[];
+    topics: ReportTopic[]; // speaking
+    corrections: CorrectionRedis[]; // general
+    vocabs: VocabRedis[]; // general
+    translations: ReportTranslation[]; // general
+    feedbacks: ReportFeedback[]; // general
     createdAt: string;
     updatedAt?: string;
 }
