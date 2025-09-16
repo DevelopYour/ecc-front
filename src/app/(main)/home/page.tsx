@@ -63,8 +63,8 @@ export default function HomePage() {
                         time: team.startTime,
                         type: 'regular',
                         teamId: team.id,
-                        teamName: team.name || `${team.subject} 스터디`,
-                        subject: team.subject
+                        teamName: team.name,
+                        subject: team.subjectName
                     });
                 }
             });
@@ -82,8 +82,8 @@ export default function HomePage() {
                     time: team.startTime,
                     type: 'onetime',
                     teamId: team.id,
-                    teamName: team.name || `${team.subject} 번개 스터디`,
-                    subject: team.subject
+                    teamName: team.name,
+                    subject: team.subjectName
                 });
             });
 
