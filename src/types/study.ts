@@ -26,7 +26,7 @@ export interface StudyRedis {
     id: string;
     teamId: number;
     topics?: TopicRedis[]; // speaking
-    generals?: GeneralRedis[]; // general
+    general: GeneralRedis; // general
 }
 
 // 일반

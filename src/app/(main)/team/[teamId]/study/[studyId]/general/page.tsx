@@ -316,7 +316,7 @@ export default function GeneralStudyPage({ params }: StudyPageProps) {
 
         setLoading(true);
         try {
-            const response = await studyApi.finishStudy(studyId);
+            const response = await studyApi.finishGeneralStudy(studyId);
 
             handleApiResponse(
                 response,
@@ -348,7 +348,13 @@ export default function GeneralStudyPage({ params }: StudyPageProps) {
         );
     }
 
-    const currentGeneral = studyRoom.generals?.[0];
+    const currentGeneral = studyRoom.general;  // generals가 아니라 general (단수형)
+
+    // 전체 항목 수 계산
+    const totalItems =
+        (currentGeneral?.corrections?.length || 0) +
+        (currentGeneral?.vocabs?.length || 0) +
+        (currentGeneral?.expressions?.length || 0);
 
     return (
         <div className="container mx-auto p-6 max-w-7xl">
@@ -380,230 +386,270 @@ export default function GeneralStudyPage({ params }: StudyPageProps) {
                     </Button>
                 </div>
 
-                {/* 4개 영역을 한 번에 표시 */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* 오답정리 */}
+                {/* 저장된 모든 학습 내용 통합 표시 */}
+                {totalItems > 0 && (
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <BookOpen className="h-5 w-5" />
-                                    오답정리
+                                    저장된 학습 내용
                                 </div>
-                                <Badge variant="secondary">
-                                    {currentGeneral?.corrections?.length || 0}개
-                                </Badge>
+                                <div className="flex gap-2">
+                                    {currentGeneral?.corrections && currentGeneral.corrections.length > 0 && (
+                                        <Badge variant="secondary">
+                                            오답 {currentGeneral.corrections.length}개
+                                        </Badge>
+                                    )}
+                                    {currentGeneral?.vocabs && currentGeneral.vocabs.length > 0 && (
+                                        <Badge variant="secondary">
+                                            단어 {currentGeneral.vocabs.length}개
+                                        </Badge>
+                                    )}
+                                    {currentGeneral?.expressions && currentGeneral.expressions.length > 0 && (
+                                        <Badge variant="secondary">
+                                            표현 {currentGeneral.expressions.length}개
+                                        </Badge>
+                                    )}
+                                </div>
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-6 max-h-[600px] overflow-y-auto">
-                            {/* 저장된 오답들 */}
-                            {currentGeneral?.corrections && currentGeneral.corrections.length > 0 && (
-                                <div className="space-y-3">
-                                    <h4 className="text-sm font-medium text-muted-foreground">저장된 오답</h4>
-                                    {currentGeneral.corrections.map((correction) => (
-                                        <div key={correction.id} className="p-3 bg-gray-50 rounded-lg">
-                                            <div className="space-y-2">
-                                                <div>
-                                                    <span className="text-sm font-medium text-red-600">문제: </span>
-                                                    <span className="text-sm">{correction.question}</span>
+                        <CardContent className="space-y-3 max-h-[400px] overflow-y-auto">
+                            {/* 오답 */}
+                            {currentGeneral?.corrections?.map((correction) => (
+                                <div key={correction.id} className="p-3 bg-red-50 rounded-lg border border-red-100">
+                                    <div className="flex items-start gap-2">
+                                        <Badge variant="outline" className="text-red-600 border-red-300 mt-0.5">오답</Badge>
+                                        <div className="flex-1 space-y-1">
+                                            <div className="flex gap-2">
+                                                <span className="text-sm font-medium text-red-600">Q:</span>
+                                                <span className="text-sm">{correction.question}</span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <span className="text-sm font-medium text-green-600">A:</span>
+                                                <span className="text-sm">{correction.answer}</span>
+                                            </div>
+                                            {correction.description && (
+                                                <div className="flex gap-2">
+                                                    <span className="text-sm font-medium text-blue-600">설명:</span>
+                                                    <span className="text-sm text-muted-foreground">{correction.description}</span>
                                                 </div>
-                                                <div>
-                                                    <span className="text-sm font-medium text-green-600">정답: </span>
-                                                    <span className="text-sm">{correction.answer}</span>
-                                                </div>
-                                                {correction.description && (
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* 단어 */}
+                            {currentGeneral?.vocabs?.map((vocab) => (
+                                <div key={vocab.id} className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="outline" className="text-blue-600 border-blue-300">단어</Badge>
+                                        <div className="flex-1 flex items-center gap-2">
+                                            <span className="font-medium text-sm">{vocab.english}</span>
+                                            <span className="text-sm text-muted-foreground">-</span>
+                                            <span className="text-sm text-muted-foreground">{vocab.korean}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* 표현 */}
+                            {currentGeneral?.expressions?.map((expression) => (
+                                <div key={expression.expressionId} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div className="flex items-start gap-2">
+                                        <Badge variant="outline" className={expression.feedback ? "text-green-600 border-green-300" : "text-purple-600 border-purple-300"}>
+                                            {expression.feedback ? "교정" : "번역"}
+                                        </Badge>
+                                        <div className="flex-1 space-y-1">
+                                            <p className="font-medium text-sm">{expression.english}</p>
+                                            <p className="text-xs text-muted-foreground">{expression.korean}</p>
+                                            {expression.exampleEnglish && (
+                                                <p className="text-xs italic text-blue-600">{expression.exampleEnglish}</p>
+                                            )}
+                                            {expression.feedback && (
+                                                <div className="mt-2 space-y-1">
                                                     <div>
-                                                        <span className="text-sm font-medium text-blue-600">설명: </span>
-                                                        <span className="text-sm">{correction.description}</span>
+                                                        <span className="text-xs text-muted-foreground">원본: </span>
+                                                        <span className="text-xs text-muted-foreground line-through">{expression.original}</span>
                                                     </div>
-                                                )}
-                                            </div>
+                                                    <div className="p-2 bg-green-50 border border-green-200 rounded">
+                                                        <span className="text-xs text-green-600">피드백: </span>
+                                                        <span className="text-xs">{expression.feedback}</span>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-                                    ))}
+                                    </div>
                                 </div>
-                            )}
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
 
-                            {/* 새 오답 추가 */}
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <h4 className="text-sm font-medium text-muted-foreground">새 오답 추가</h4>
-                                    <Button
-                                        onClick={addNewCorrection}
-                                        size="sm"
-                                        variant="outline"
-                                    >
-                                        <Plus className="mr-2 h-3 w-3" />
-                                        오답 추가
-                                    </Button>
-                                </div>
-
-                                <div className="space-y-4">
-                                    {newCorrections.map((correction, index) => (
-                                        <div key={correction.id} className="p-4 border border-dashed border-gray-300 rounded-lg space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm font-medium">오답 {index + 1}</span>
-                                                <Button
-                                                    onClick={() => removeCorrection(index)}
-                                                    size="sm"
-                                                    variant="ghost"
-                                                >
-                                                    <X className="h-3 w-3" />
-                                                </Button>
-                                            </div>
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <Label htmlFor={`question-${index}`} className="text-xs">문제</Label>
-                                                    <Textarea
-                                                        id={`question-${index}`}
-                                                        placeholder="문제를 입력하세요"
-                                                        value={correction.question || ''}
-                                                        onChange={(e) => updateCorrection(index, 'question', e.target.value)}
-                                                        className="min-h-[60px] resize-none mt-1"
-                                                        rows={2}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Label htmlFor={`answer-${index}`} className="text-xs">정답</Label>
-                                                    <Textarea
-                                                        id={`answer-${index}`}
-                                                        placeholder="정답을 입력하세요"
-                                                        value={correction.answer || ''}
-                                                        onChange={(e) => updateCorrection(index, 'answer', e.target.value)}
-                                                        className="min-h-[60px] resize-none mt-1"
-                                                        rows={2}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Label htmlFor={`description-${index}`} className="text-xs">설명 (선택)</Label>
-                                                    <Textarea
-                                                        id={`description-${index}`}
-                                                        placeholder="추가 설명을 입력하세요 (선택사항)"
-                                                        value={correction.description || ''}
-                                                        onChange={(e) => updateCorrection(index, 'description', e.target.value)}
-                                                        className="min-h-[60px] resize-none mt-1"
-                                                        rows={2}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {newCorrections.length > 0 && (
-                                    <Button
-                                        onClick={handleSaveCorrections}
-                                        disabled={savingCorrections}
-                                        className="w-full"
-                                    >
-                                        {savingCorrections ? (
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <Check className="mr-2 h-4 w-4" />
-                                        )}
-                                        오답 저장 ({newCorrections.length}개)
-                                    </Button>
-                                )}
+                {/* 4개 영역 입력 */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* 오답정리 */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <BookOpen className="h-5 w-5" />
+                                오답정리
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-sm font-medium text-muted-foreground">새 오답 추가</h4>
+                                <Button
+                                    onClick={addNewCorrection}
+                                    size="sm"
+                                    variant="outline"
+                                >
+                                    <Plus className="mr-2 h-3 w-3" />
+                                    오답 추가
+                                </Button>
                             </div>
+
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                                {newCorrections.map((correction, index) => (
+                                    <div key={correction.id} className="p-4 border border-dashed border-gray-300 rounded-lg space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium">오답 {index + 1}</span>
+                                            <Button
+                                                onClick={() => removeCorrection(index)}
+                                                size="sm"
+                                                variant="ghost"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </Button>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <div>
+                                                <Label htmlFor={`question-${index}`} className="text-xs">문제</Label>
+                                                <Input
+                                                    id={`question-${index}`}
+                                                    placeholder="문제를 입력하세요"
+                                                    value={correction.question || ''}
+                                                    onChange={(e) => updateCorrection(index, 'question', e.target.value)}
+                                                    className="mt-1"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor={`answer-${index}`} className="text-xs">정답</Label>
+                                                <Input
+                                                    id={`answer-${index}`}
+                                                    placeholder="정답을 입력하세요"
+                                                    value={correction.answer || ''}
+                                                    onChange={(e) => updateCorrection(index, 'answer', e.target.value)}
+                                                    className="mt-1"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor={`description-${index}`} className="text-xs">설명 (선택)</Label>
+                                                <Input
+                                                    id={`description-${index}`}
+                                                    placeholder="추가 설명 (선택사항)"
+                                                    value={correction.description || ''}
+                                                    onChange={(e) => updateCorrection(index, 'description', e.target.value)}
+                                                    className="mt-1"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {newCorrections.length > 0 && (
+                                <Button
+                                    onClick={handleSaveCorrections}
+                                    disabled={savingCorrections}
+                                    className="w-full"
+                                >
+                                    {savingCorrections ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Check className="mr-2 h-4 w-4" />
+                                    )}
+                                    오답 저장 ({newCorrections.length}개)
+                                </Button>
+                            )}
                         </CardContent>
                     </Card>
 
                     {/* 단어정리 */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Languages className="h-5 w-5" />
-                                    단어정리
-                                </div>
-                                <Badge variant="secondary">
-                                    {currentGeneral?.vocabs?.length || 0}개
-                                </Badge>
+                            <CardTitle className="flex items-center gap-2">
+                                <Languages className="h-5 w-5" />
+                                단어정리
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-6 max-h-[600px] overflow-y-auto">
-                            {/* 저장된 단어들 */}
-                            {currentGeneral?.vocabs && currentGeneral.vocabs.length > 0 && (
-                                <div className="space-y-3">
-                                    <h4 className="text-sm font-medium text-muted-foreground">저장된 단어</h4>
-                                    <div className="grid grid-cols-1 gap-3">
-                                        {currentGeneral.vocabs.map((vocab) => (
-                                            <div key={vocab.id} className="p-3 bg-gray-50 rounded-lg">
-                                                <p className="font-medium text-sm">{vocab.english}</p>
-                                                <p className="text-xs text-muted-foreground mt-1">{vocab.korean}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                        <CardContent className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-sm font-medium text-muted-foreground">새 단어 추가</h4>
+                                <Button
+                                    onClick={addNewVocab}
+                                    size="sm"
+                                    variant="outline"
+                                >
+                                    <Plus className="mr-2 h-3 w-3" />
+                                    단어 추가
+                                </Button>
+                            </div>
 
-                            {/* 새 단어 추가 */}
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <h4 className="text-sm font-medium text-muted-foreground">새 단어 추가</h4>
-                                    <Button
-                                        onClick={addNewVocab}
-                                        size="sm"
-                                        variant="outline"
-                                    >
-                                        <Plus className="mr-2 h-3 w-3" />
-                                        단어 추가
-                                    </Button>
-                                </div>
-
-                                <div className="space-y-4">
-                                    {newVocabs.map((vocab, index) => (
-                                        <div key={vocab.id} className="p-4 border border-dashed border-gray-300 rounded-lg space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm font-medium">단어 {index + 1}</span>
-                                                <Button
-                                                    onClick={() => removeVocab(index)}
-                                                    size="sm"
-                                                    variant="ghost"
-                                                >
-                                                    <X className="h-3 w-3" />
-                                                </Button>
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                                {newVocabs.map((vocab, index) => (
+                                    <div key={vocab.id} className="p-4 border border-dashed border-gray-300 rounded-lg space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium">단어 {index + 1}</span>
+                                            <Button
+                                                onClick={() => removeVocab(index)}
+                                                size="sm"
+                                                variant="ghost"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </Button>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <Label htmlFor={`english-${index}`} className="text-xs">영어</Label>
+                                                <Input
+                                                    id={`english-${index}`}
+                                                    placeholder="영어 단어"
+                                                    value={vocab.english}
+                                                    onChange={(e) => updateVocab(index, 'english', e.target.value)}
+                                                    className="mt-1"
+                                                />
                                             </div>
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <Label htmlFor={`english-${index}`} className="text-xs">영어</Label>
-                                                    <Input
-                                                        id={`english-${index}`}
-                                                        placeholder="영어 단어"
-                                                        value={vocab.english}
-                                                        onChange={(e) => updateVocab(index, 'english', e.target.value)}
-                                                        className="mt-1"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Label htmlFor={`korean-${index}`} className="text-xs">한국어</Label>
-                                                    <Input
-                                                        id={`korean-${index}`}
-                                                        placeholder="한국어 뜻"
-                                                        value={vocab.korean}
-                                                        onChange={(e) => updateVocab(index, 'korean', e.target.value)}
-                                                        className="mt-1"
-                                                    />
-                                                </div>
+                                            <div>
+                                                <Label htmlFor={`korean-${index}`} className="text-xs">한국어</Label>
+                                                <Input
+                                                    id={`korean-${index}`}
+                                                    placeholder="한국어 뜻"
+                                                    value={vocab.korean}
+                                                    onChange={(e) => updateVocab(index, 'korean', e.target.value)}
+                                                    className="mt-1"
+                                                />
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-
-                                {newVocabs.length > 0 && (
-                                    <Button
-                                        onClick={handleSaveVocabs}
-                                        disabled={savingVocabs}
-                                        className="w-full"
-                                    >
-                                        {savingVocabs ? (
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <Check className="mr-2 h-4 w-4" />
-                                        )}
-                                        단어 저장 ({newVocabs.length}개)
-                                    </Button>
-                                )}
+                                    </div>
+                                ))}
                             </div>
+
+                            {newVocabs.length > 0 && (
+                                <Button
+                                    onClick={handleSaveVocabs}
+                                    disabled={savingVocabs}
+                                    className="w-full"
+                                >
+                                    {savingVocabs ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Check className="mr-2 h-4 w-4" />
+                                    )}
+                                    단어 저장 ({newVocabs.length}개)
+                                </Button>
+                            )}
                         </CardContent>
                     </Card>
 
@@ -615,7 +661,7 @@ export default function GeneralStudyPage({ params }: StudyPageProps) {
                                 번역 요청
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
+                        <CardContent className="space-y-4">
                             <div className="space-y-3 p-4 border border-blue-200 bg-blue-50/30 rounded-lg">
                                 <div className="flex items-center gap-2">
                                     <Languages className="h-4 w-4 text-blue-600" />
@@ -643,22 +689,6 @@ export default function GeneralStudyPage({ params }: StudyPageProps) {
                                     번역 요청
                                 </Button>
                             </div>
-
-                            {/* 번역 관련 표현들만 표시 */}
-                            {currentGeneral?.expressions && currentGeneral.expressions.filter(e => !e.feedback).length > 0 && (
-                                <div className="space-y-3">
-                                    <h4 className="text-sm font-medium text-muted-foreground">번역 결과</h4>
-                                    {currentGeneral.expressions.filter(e => !e.feedback).map((expression) => (
-                                        <div key={expression.expressionId} className="p-3 bg-gray-50 rounded-lg">
-                                            <p className="font-medium text-sm">{expression.english}</p>
-                                            <p className="text-xs text-muted-foreground mt-1">{expression.korean}</p>
-                                            {expression.exampleEnglish && (
-                                                <p className="text-xs mt-2 italic text-blue-600">{expression.exampleEnglish}</p>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
                         </CardContent>
                     </Card>
 
@@ -670,7 +700,7 @@ export default function GeneralStudyPage({ params }: StudyPageProps) {
                                 교정 요청
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
+                        <CardContent className="space-y-4">
                             <div className="space-y-3 p-4 border border-green-200 bg-green-50/30 rounded-lg">
                                 <div className="flex items-center gap-2">
                                     <MessageSquare className="h-4 w-4 text-green-600" />
@@ -698,31 +728,6 @@ export default function GeneralStudyPage({ params }: StudyPageProps) {
                                     교정 요청
                                 </Button>
                             </div>
-
-                            {/* 교정 관련 표현들만 표시 */}
-                            {currentGeneral?.expressions && currentGeneral.expressions.filter(e => e.feedback).length > 0 && (
-                                <div className="space-y-3">
-                                    <h4 className="text-sm font-medium text-muted-foreground">교정 결과</h4>
-                                    {currentGeneral.expressions.filter(e => e.feedback).map((expression) => (
-                                        <div key={expression.expressionId} className="p-3 bg-gray-50 rounded-lg">
-                                            <p className="font-medium text-sm">{expression.english}</p>
-                                            <p className="text-xs text-muted-foreground mt-1">{expression.korean}</p>
-                                            {expression.feedback && (
-                                                <div className="mt-2 space-y-1">
-                                                    <div>
-                                                        <span className="text-xs text-muted-foreground">원본: </span>
-                                                        <span className="text-xs text-muted-foreground line-through">{expression.original}</span>
-                                                    </div>
-                                                    <div className="p-2 bg-green-50 border border-green-200 rounded">
-                                                        <span className="text-xs text-green-600">피드백: </span>
-                                                        <span className="text-xs">{expression.feedback}</span>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
                         </CardContent>
                     </Card>
                 </div>

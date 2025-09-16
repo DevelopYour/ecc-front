@@ -366,6 +366,10 @@ export const studyApi = {
     getAiHelpGeneral: (studyId: string, question: ExpressionToAsk): Promise<ResponseDto<StudyRedis>> =>
         api.post(`/study/${studyId}/general/ai-help`, question),
 
+    // [일반 과목] 스터디 종료
+    finishGeneralStudy: (studyId: string): Promise<ResponseDto<string>> =>
+        api.put(`/study/${studyId}/general`),
+
     // 스터디 종료
     finishStudy: (studyId: string): Promise<ResponseDto<string>> =>
         api.put(`/study/${studyId}`),
