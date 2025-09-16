@@ -117,7 +117,7 @@ export function Sidebar() {
                                         className="text-xs"
                                         onClick={() => setIsMobileOpen(false)}
                                     >
-                                        Team {team.id}
+                                        {team.name}
                                     </NavItem>
                                 ))
                             )}
