@@ -1,4 +1,4 @@
-// app/(main)/team/[teamId]/study/page.tsx
+// app/(main)/team/[teamId]/study/speaking/page.tsx
 'use client';
 
 import { Badge } from '@/components/ui/badge';

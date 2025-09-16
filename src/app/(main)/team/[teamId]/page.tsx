@@ -77,26 +77,50 @@ export default function TeamPage({ params }: TeamPageProps) {
         }
     };
 
-    const handleEnterStudyRoom = async () => {
+    const handleEnterSpeakingStudyRoom = async () => {
         try {
             const response = await studyApi.enterStudyRoom(teamId);
 
             handleApiResponse(
                 response,
                 () => {
-                    router.push(`/team/${teamId}/study`);
+                    router.push(`/team/${teamId}/study/speaking`);
                 },
                 (error) => {
                     console.error('Error entering study room:', error);
                     toast.error('오류', {
-                        description: '공부방 입장에 실패했습니다.',
+                        description: '회화 공부방 입장에 실패했습니다.',
                     });
                 }
             );
         } catch (error) {
             console.error('Network error entering study room:', error);
             toast.error('오류', {
-                description: '공부방 입장에 실패했습니다.',
+                description: '회화 공부방 입장에 실패했습니다.',
+            });
+        }
+    };
+
+    const handleEnterGeneralStudyRoom = async () => {
+        try {
+            const response = await studyApi.enterStudyRoom(teamId);
+
+            handleApiResponse(
+                response,
+                () => {
+                    router.push(`/team/${teamId}/study/general`);
+                },
+                (error) => {
+                    console.error('Error entering study room:', error);
+                    toast.error('오류', {
+                        description: '일반 공부방 입장에 실패했습니다.',
+                    });
+                }
+            );
+        } catch (error) {
+            console.error('Network error entering study room:', error);
+            toast.error('오류', {
+                description: '일반 공부방 입장에 실패했습니다.',
             });
         }
     };
@@ -184,7 +208,7 @@ export default function TeamPage({ params }: TeamPageProps) {
 
                     {shouldShowEnterButton(team) && (
                         <Button
-                            onClick={handleEnterStudyRoom}
+                            onClick={team.subjectId < 2 ? handleEnterSpeakingStudyRoom : handleEnterGeneralStudyRoom}
                             size="lg"
                             className="bg-mygreen w-full sm:w-auto min-w-[160px] h-12 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200"
                         >
