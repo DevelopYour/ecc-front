@@ -4,7 +4,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { handleApiResponse, studyApi } from '@/lib/api';
+import { handleApiResponse, reviewApi, studyApi } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import { ReportDocument, ReportFeedback, ReportTopic, ReportTranslation } from '@/types/study';
 import {
@@ -264,18 +264,19 @@ export default function ReportPage({ params }: ReportPageProps) {
         }
     };
 
-    // 학습 통계 계산
-    const getStudyStats = () => {
-        if (!report || !report.topics) return { totalExpressions: 0, translationCount: 0, feedbackCount: 0 };
-
-        const translationCount = report.topics.reduce((acc, topic) =>
-            acc + (topic.translations?.length || 0), 0);
-        const feedbackCount = report.topics.reduce((acc, topic) =>
-            acc + (topic.feedbacks?.length || 0), 0);
-        const totalExpressions = translationCount + feedbackCount;
-
-        return { totalExpressions, translationCount, feedbackCount };
-    };
+    const goToReviewPage = async () => {
+        try {
+            const response = await reviewApi.getReviewIdByReportAndUser(reportId);
+            if (response.data) {
+                router.push(`/review/${response.data}`);
+            }
+        } catch (error) {
+            console.error('상세 정보 로드 실패:', error);
+            toast.error('오류', {
+                description: '복습 자료를 불러오는데 실패했습니다.',
+            });
+        }
+    }
 
     if (loading || !report) {
         return (
@@ -287,8 +288,6 @@ export default function ReportPage({ params }: ReportPageProps) {
             </div>
         );
     }
-
-    const studyStats = getStudyStats();
 
     return (
         <div className="container mx-auto p-6 max-w-5xl">
@@ -409,7 +408,7 @@ export default function ReportPage({ params }: ReportPageProps) {
                                 <Button
                                     variant="default"
                                     size="sm"
-                                    onClick={() => router.push(`/review/${reportId}`)}
+                                    onClick={() => goToReviewPage()}
                                     className="bg-green-600 hover:bg-green-700 text-white gap-2 px-4 py-2"
                                 >
                                     <BookOpen className="h-4 w-4" />

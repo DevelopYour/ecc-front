@@ -16,6 +16,7 @@ import { AssignedTeam, RegularStudyApplicant, RegularStudyApplyRequest, TimeSlot
 import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
 import { setCookie } from "cookies-next";
 import { MemberA, MemberStatus, LevelChangeRequest, Category, TopicA, TeamA, AdminSummary, Semester, AdminSettings, CreateSemester, } from "@/types/admin";
+import { get } from "lodash";
 
 interface ResponseDto<T> {
     success: boolean;
@@ -364,6 +365,10 @@ export const studyApi = {
 
 // 복습 관련 API
 export const reviewApi = {
+    // 보고서ID, 회원ID로 복습자료 ID 조회
+    getReviewIdByReportAndUser: (reportId: string): Promise<ResponseDto<String>> =>
+        api.get(`/review/me/report/${reportId}`),
+
     // 복습자료 목록 조회
     getMyReviews: (): Promise<ResponseDto<Review[]>> =>
         api.get("/review/me"),
