@@ -1,7 +1,8 @@
 export interface Team {
     id: string;
     name: string;
-    subject: string;
+    subjectId: number;
+    subjectName: string
     regular: boolean;
     status?: 'RECRUITING' | 'ACTIVE' | 'COMPLETED' | 'CANCELED';
     startTime: number;
@@ -16,6 +17,12 @@ export interface Team {
     score?: number;
     createdAt: string;
     updatedAt: string;
+    members?: SimpleMember[];
+}
+
+export interface SimpleMember {
+    studentId: string,
+    name: string
 }
 
 export interface TeamMember {
@@ -29,7 +36,6 @@ export interface TeamMember {
         level: string;
         profileImage?: string;
     };
-    joinedAt: string;
 }
 
 export interface Subject {

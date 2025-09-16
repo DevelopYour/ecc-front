@@ -312,7 +312,7 @@ export const teamApi = {
 
     // 특정 팀 상세 조회
     getTeam: (teamId: string): Promise<ResponseDto<Team>> =>
-        api.get(`/teams/me/${teamId}`),
+        api.get(`/teams/${teamId}`),
 
     // 내 정규 팀 목록 조회
     getMyRegularTeams: (): Promise<ResponseDto<Team[]>> =>

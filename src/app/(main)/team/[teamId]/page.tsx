@@ -1,18 +1,17 @@
-// app/(main)/team/[teamId]/page.tsx
 'use client';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useTeams } from '@/context/teams-context';
-import { handleApiResponse, studyApi } from '@/lib/api';
+import { handleApiResponse, studyApi, teamApi } from '@/lib/api';
 import {
     REVIEW_STATUS_LABELS,
     STUDY_STATUS_LABELS,
     WeeklySummary,
     getStatusBadgeVariant
 } from '@/types/study';
-import { BookOpen, Calendar, FileText, Loader2, Users } from 'lucide-react';
+import { Team } from '@/types/team';
+import { BookOpen, Calendar, FileText, Loader2, Users, Clock, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -23,26 +22,39 @@ interface TeamPageProps {
 
 export default function TeamPage({ params }: TeamPageProps) {
     const router = useRouter();
-    const { getTeamById } = useTeams();
     const resolvedParams = use(params);
+    const [team, setTeam] = useState<Team | null>(null);
     const [weeklySummaries, setWeeklySummaries] = useState<WeeklySummary[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const teamId = resolvedParams.teamId;
-    const team = getTeamById(teamId);
-    const isRegular = team?.regular ?? true; // 기본값을 정규로 설정
 
     useEffect(() => {
-        loadTeamProgress();
+        loadTeamData();
     }, [teamId]);
 
-    const loadTeamProgress = async () => {
-        setLoading(true);
+    const loadTeamData = async () => {
         try {
-            const response = await studyApi.getTeamProgress(teamId);
+            setLoading(true);
+            setError(null);
 
+            // 팀 정보와 진행상황을 병렬로 로드
+            const [teamResponse, progressResponse] = await Promise.all([
+                teamApi.getTeam(teamId),
+                studyApi.getTeamProgress(teamId)
+            ]);
+
+            // 팀 정보 처리
+            if (teamResponse.success && teamResponse.data) {
+                setTeam(teamResponse.data);
+            } else {
+                throw new Error('팀 정보를 찾을 수 없습니다.');
+            }
+
+            // 진행상황 처리
             handleApiResponse(
-                response,
+                progressResponse,
                 (data) => {
                     setWeeklySummaries(data || []);
                 },
@@ -54,9 +66,11 @@ export default function TeamPage({ params }: TeamPageProps) {
                 }
             );
         } catch (error) {
-            console.error('Network error loading team progress:', error);
+            const errorMessage = error instanceof Error ? error.message : '팀 정보를 불러오는데 실패했습니다.';
+            console.error("Failed to load team data:", error);
+            setError(errorMessage);
             toast.error('오류', {
-                description: '팀 진행상황을 불러오는데 실패했습니다.',
+                description: errorMessage,
             });
         } finally {
             setLoading(false);
@@ -91,7 +105,8 @@ export default function TeamPage({ params }: TeamPageProps) {
         router.push(`/team/${summary.studySummary.teamId}/report/${summary.studySummary.reportId}`);
     };
 
-    const shouldShowEnterButton = () => {
+    const shouldShowEnterButton = (team: Team) => {
+        const isRegular = team.regular ?? true;
         if (!isRegular) {
             // 번개 스터디: 0개일 때만 표시
             return weeklySummaries.length === 0;
@@ -115,6 +130,36 @@ export default function TeamPage({ params }: TeamPageProps) {
         );
     }
 
+    if (error || !team) {
+        return (
+            <div className="container mx-auto px-4 py-8 max-w-6xl">
+                <Card className="border-destructive/50">
+                    <CardContent className="flex flex-col items-center justify-center py-16 px-6">
+                        <div className="flex items-center justify-center w-20 h-20 rounded-full bg-destructive/10 mb-6">
+                            <Users className="h-10 w-10 text-destructive" />
+                        </div>
+                        <h3 className="text-xl font-semibold mb-2 text-destructive">
+                            팀 정보를 불러올 수 없습니다
+                        </h3>
+                        <p className="text-muted-foreground text-center max-w-md leading-relaxed mb-4">
+                            {error || '팀이 존재하지 않거나 접근 권한이 없습니다.'}
+                        </p>
+                        <Button
+                            onClick={loadTeamData}
+                            variant="outline"
+                            className="gap-2"
+                        >
+                            <Loader2 className="h-4 w-4" />
+                            다시 시도
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+
+    const isRegular = team.regular ?? true;
+
     return (
         <div className="container mx-auto px-4 py-8 max-w-6xl">
             <div className="space-y-8">
@@ -123,7 +168,7 @@ export default function TeamPage({ params }: TeamPageProps) {
                     <div className="space-y-2">
                         <div className="flex items-center gap-3">
                             <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-                                {team?.name || `Team ${teamId}`}
+                                {team.name}
                             </h1>
                             <Badge
                                 variant={isRegular ? "default" : "secondary"}
@@ -137,17 +182,109 @@ export default function TeamPage({ params }: TeamPageProps) {
                         </p>
                     </div>
 
-                    {shouldShowEnterButton() && (
+                    {shouldShowEnterButton(team) && (
                         <Button
                             onClick={handleEnterStudyRoom}
                             size="lg"
-                            className="w-full sm:w-auto min-w-[160px] h-12 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200"
+                            className="bg-mygreen w-full sm:w-auto min-w-[160px] h-12 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200"
                         >
                             <BookOpen className="mr-2 h-5 w-5" />
                             공부방 입장
                         </Button>
                     )}
                 </div>
+
+                {/* Team Info Section - 개선된 디자인 */}
+                <Card className="border-2 border-blue-200/50 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
+                    <CardContent className="space-y-5 pt-1">
+                        {/* 기본 정보 섹션 */}
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {/* 과목 정보 */}
+                                <div className="flex items-center gap-3 p-4 rounded-lg bg-white/60 border border-blue-100">
+                                    <div className="flex items-center justify-center w-8 h-8 rounded-md bg-green-500/10">
+                                        <BookOpen className="h-5 w-5 text-green-600" />
+                                    </div>
+                                    <div>
+                                        <span className="text-sm font-medium text-gray-600 block">과목</span>
+                                        <span className="text-base font-semibold text-gray-900">{team.subjectName}</span>
+                                    </div>
+                                </div>
+
+                                {/* 일정 정보 */}
+                                <div className="flex items-center gap-3 p-4 rounded-lg bg-white/60 border border-blue-100">
+                                    <div className="flex items-center justify-center w-8 h-8 rounded-md bg-purple-500/10">
+                                        <Clock className="h-5 w-5 text-purple-600" />
+                                    </div>
+                                    <div>
+                                        <span className="text-sm font-medium text-gray-600 block">일정</span>
+                                        <div className="flex items-center gap-2 text-base font-semibold text-gray-900">
+                                            {isRegular ? (
+                                                <span>{team.day} {String(Math.floor(team.startTime / 100)).padStart(2, '0')}:{String(team.startTime % 100).padStart(2, '0')}</span>
+                                            ) : (
+                                                <span>{team.date} {String(Math.floor(team.startTime / 100)).padStart(2, '0')}:{String(team.startTime % 100).padStart(2, '0')}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 팀원 정보 섹션 */}
+                        <div className="space-y-3 pt-1 border-t border-blue-100">
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center justify-center w-8 h-8 rounded-md bg-indigo-500/10">
+                                    <Users className="h-5 w-5 text-indigo-600" />
+                                </div>
+                                <div>
+                                    <span className="text-base font-semibold text-gray-900">팀원</span>
+                                    <span className="text-sm text-gray-600 ml-2">({team.members?.length || 0}명)</span>
+                                </div>
+                            </div>
+
+                            {team.members && team.members.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {team.members.map((member) => (
+                                        <div
+                                            key={member.studentId}
+                                            className="flex items-center justify-between p-3 rounded-lg bg-white/80 border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                                        >
+                                            <span className="text-sm font-semibold text-gray-900">{member.name}</span>
+                                            <span className="text-sm text-gray-600">{member.studentId}</span>
+                                        </div>
+                                    ))}
+                                    {team.currentMembers < team.maxMembers && (
+                                        <div className="flex items-center gap-3 p-3 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 bg-gray-50/50">
+                                            <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-dashed border-gray-400">
+                                                <span className="text-xl">+</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-sm font-medium">모집중</span>
+                                                <span className="text-xs block">{team.maxMembers - team.currentMembers}명 남음</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-gray-500 italic p-3 bg-gray-50/50 rounded-lg border border-gray-200">
+                                    팀원 정보를 불러올 수 없습니다
+                                </p>
+                            )}
+                        </div>
+
+                        {/* 설명 (있는 경우) */}
+                        {team.description && (
+                            <div className="space-y-3 pt-4 border-t border-blue-100">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-base font-semibold text-gray-900">설명</span>
+                                </div>
+                                <div className="p-4 rounded-lg bg-white/80 border border-gray-200">
+                                    <p className="text-sm leading-relaxed text-gray-700">{team.description}</p>
+                                </div>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
                 {/* Content Section */}
                 {weeklySummaries.length === 0 ? (
