@@ -11,7 +11,7 @@ import {
     getStatusBadgeVariant
 } from '@/types/study';
 import { Team } from '@/types/team';
-import { BookOpen, Calendar, FileText, Loader2, Users, Clock, User } from 'lucide-react';
+import { BookOpen, Calendar, FileText, Loader2, Users, Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -77,46 +77,13 @@ export default function TeamPage({ params }: TeamPageProps) {
         }
     };
 
-    const handleEnterSpeakingStudyRoom = async () => {
+    const handleEnterStudyRoom = async (teamId: number) => {
         try {
             const response = await studyApi.enterStudyRoom(teamId);
-
-            handleApiResponse(
-                response,
-                () => {
-                    router.push(`/team/${teamId}/study/speaking`);
-                },
-                (error) => {
-                    console.error('Error entering study room:', error);
-                    toast.error('오류', {
-                        description: '회화 공부방 입장에 실패했습니다.',
-                    });
-                }
-            );
-        } catch (error) {
-            console.error('Network error entering study room:', error);
-            toast.error('오류', {
-                description: '회화 공부방 입장에 실패했습니다.',
-            });
-        }
-    };
-
-    const handleEnterGeneralStudyRoom = async () => {
-        try {
-            const response = await studyApi.enterStudyRoom(teamId);
-
-            handleApiResponse(
-                response,
-                () => {
-                    router.push(`/team/${teamId}/study/general`);
-                },
-                (error) => {
-                    console.error('Error entering study room:', error);
-                    toast.error('오류', {
-                        description: '일반 공부방 입장에 실패했습니다.',
-                    });
-                }
-            );
+            if (response.success && response.data) {
+                const path = response.data.isGeneral ? 'general' : 'speaking';
+                router.push(`/team/${teamId}/study/${response.data.studyId}/${path}`);
+            }
         } catch (error) {
             console.error('Network error entering study room:', error);
             toast.error('오류', {
@@ -208,7 +175,7 @@ export default function TeamPage({ params }: TeamPageProps) {
 
                     {shouldShowEnterButton(team) && (
                         <Button
-                            onClick={team.subjectId < 2 ? handleEnterSpeakingStudyRoom : handleEnterGeneralStudyRoom}
+                            onClick={() => handleEnterStudyRoom(Number(teamId))}
                             size="lg"
                             className="bg-mygreen w-full sm:w-auto min-w-[160px] h-12 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200"
                         >
@@ -244,9 +211,9 @@ export default function TeamPage({ params }: TeamPageProps) {
                                         <span className="text-sm font-medium text-gray-600 block">일정</span>
                                         <div className="flex items-center gap-2 text-base font-semibold text-gray-900">
                                             {isRegular ? (
-                                                <span>{team.day} {String(Math.floor(team.startTime / 100)).padStart(2, '0')}:{String(team.startTime % 100).padStart(2, '0')}</span>
+                                                <span>{team.day} {team.startTime}시</span>
                                             ) : (
-                                                <span>{team.date} {String(Math.floor(team.startTime / 100)).padStart(2, '0')}:{String(team.startTime % 100).padStart(2, '0')}</span>
+                                                <span>{team.date} {team.startTime}시</span>
                                             )}
                                         </div>
                                     </div>

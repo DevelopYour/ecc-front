@@ -11,7 +11,7 @@ import {
 import { Review, ReviewTest } from "@/types/review";
 import { User } from "@/types/user";
 import { getRefreshToken, getToken, logout, setToken } from "./auth";
-import { ExpressionToAsk, ReportDocument, StudyRedis, Topic, TopicRecommendation, WeeklySummary } from "@/types/study";
+import { EnterStudy, ExpressionToAsk, ReportDocument, StudyRedis, Topic, TopicRecommendation, WeeklySummary } from "@/types/study";
 import { AssignedTeam, RegularStudyApplicant, RegularStudyApplyRequest, TimeSlot } from "@/types/apply-regular";
 import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
 import { setCookie } from "cookies-next";
@@ -332,15 +332,19 @@ export const teamApi = {
 export const studyApi = {
     // 팀별 메인페이지 입장 (진행상황 조회)
     getTeamProgress: (teamId: string): Promise<ResponseDto<WeeklySummary[]>> =>
-        api.get(`/study/${teamId}/overview`),
+        api.get(`/study/team/${teamId}/overview`),
 
     // 공부방 입장
-    enterStudyRoom: (teamId: string): Promise<ResponseDto<StudyRedis>> =>
-        api.post(`/study/${teamId}`),
+    enterStudyRoom: (teamId: number): Promise<ResponseDto<EnterStudy>> =>
+        api.post(`/study/team/${teamId}`),
+
+    // 공부방 데이터 조회
+    getStudyData: (studyId: string): Promise<ResponseDto<StudyRedis>> =>
+        api.get(`/study/${studyId}`),
 
     // 추천 주제 목록 조회
     getTopicRecommendations: (teamId: string): Promise<ResponseDto<TopicRecommendation[]>> =>
-        api.get(`/study/${teamId}/topic`),
+        api.get(`/study/team/${teamId}/topic`),
 
     // 주제 선정
     saveTopics: (studyId: string, topics: Topic[]): Promise<ResponseDto<StudyRedis>> =>

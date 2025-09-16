@@ -1,4 +1,4 @@
-// app/(main)/team/[teamId]/study/speaking/page.tsx
+// app/(main)/team/[teamId]/study/[studyId]/speaking/page.tsx
 'use client';
 
 import { Badge } from '@/components/ui/badge';
@@ -17,19 +17,19 @@ import {
     Topic,
     TopicRecommendation
 } from '@/types/study';
-import { ArrowLeft, Check, ChevronDown, ChevronRight, Languages, Loader2, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, Languages, Loader2, MessageSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface StudyPageProps {
-    params: Promise<{ teamId: string }>;
+    params: Promise<{ teamId: string; studyId: string }>;
 }
 
 export default function StudyPage({ params }: StudyPageProps) {
     const router = useRouter();
     const resolvedParams = use(params);
-    const teamId = resolvedParams.teamId;
+    const { teamId, studyId } = resolvedParams;
 
     const [studyRoom, setStudyRoom] = useState<StudyRedis | null>(null);
     const [topicRecommendations, setTopicRecommendations] = useState<TopicRecommendation[]>([]);
@@ -45,19 +45,19 @@ export default function StudyPage({ params }: StudyPageProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
-        enterStudyRoom();
-    }, [teamId]);
+        getStudyData();
+    }, [studyId]);
 
-    const enterStudyRoom = async () => {
+    const getStudyData = async () => {
         setLoading(true);
         try {
-            const response = await studyApi.enterStudyRoom(teamId);
+            const response = await studyApi.getStudyData(studyId);
 
             handleApiResponse(
                 response,
                 (data) => {
                     setStudyRoom(data);
-                    // 주제 추천 자동 로드
+                    // 주제 추천 자동 로드 - teamId 사용
                     loadTopicRecommendations(teamId);
                     // 이미 저장된 주제가 있으면 표현 학습 탭으로 이동
                     if (data.topics && data.topics.length > 0) {
@@ -152,7 +152,8 @@ export default function StudyPage({ params }: StudyPageProps) {
 
         setLoading(true);
         try {
-            const response = await studyApi.saveTopics(studyRoom.id, newTopics);
+            // studyRoom.id 대신 studyId 사용
+            const response = await studyApi.saveTopics(studyId, newTopics);
 
             handleApiResponse(
                 response,
@@ -204,7 +205,8 @@ export default function StudyPage({ params }: StudyPageProps) {
                 translation: true
             };
 
-            const response = await studyApi.getAiHelp(studyRoom.id, question);
+            // studyRoom.id 대신 studyId 사용
+            const response = await studyApi.getAiHelp(studyId, question);
 
             handleApiResponse(
                 response,
@@ -247,7 +249,8 @@ export default function StudyPage({ params }: StudyPageProps) {
                 translation: false
             };
 
-            const response = await studyApi.getAiHelp(studyRoom.id, question);
+            // studyRoom.id 대신 studyId 사용
+            const response = await studyApi.getAiHelp(studyId, question);
 
             handleApiResponse(
                 response,
@@ -280,7 +283,8 @@ export default function StudyPage({ params }: StudyPageProps) {
 
         setLoading(true);
         try {
-            const response = await studyApi.finishStudy(studyRoom.id);
+            // studyRoom.id 대신 studyId 사용
+            const response = await studyApi.finishStudy(studyId);
 
             handleApiResponse(
                 response,

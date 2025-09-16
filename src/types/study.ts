@@ -17,6 +17,11 @@ export interface ReviewSummary {
     reviewStatus: ReviewStatus;
 }
 
+export interface EnterStudy {
+    studyId: String;
+    isGeneral: Boolean;
+}
+
 export interface StudyRedis {
     id: string;
     teamId: number;
