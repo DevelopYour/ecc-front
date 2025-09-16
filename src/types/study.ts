@@ -25,9 +25,32 @@ export interface EnterStudy {
 export interface StudyRedis {
     id: string;
     teamId: number;
-    topics: TopicRedis[];
+    topics?: TopicRedis[]; // speaking
+    generals?: GeneralRedis[]; // general
 }
 
+// 일반
+export interface GeneralRedis {
+    id: string;
+    corrections: CorrectionRedis[];
+    vocabs: VocabRedis[];
+    expressions: ExpressionRedis[];
+}
+
+export interface CorrectionRedis {
+    id: string;
+    question?: string;
+    answer?: string;
+    description?: string;
+}
+
+export interface VocabRedis {
+    id: string;
+    english: string;
+    korean: string;
+}
+
+// 회화
 export interface TopicRedis {
     topicId: number;
     category: string;

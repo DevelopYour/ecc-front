@@ -11,7 +11,7 @@ import {
 import { Review, ReviewTest } from "@/types/review";
 import { User } from "@/types/user";
 import { getRefreshToken, getToken, logout, setToken } from "./auth";
-import { EnterStudy, ExpressionToAsk, ReportDocument, StudyRedis, Topic, TopicRecommendation, WeeklySummary } from "@/types/study";
+import { CorrectionRedis, EnterStudy, ExpressionToAsk, GeneralRedis, ReportDocument, StudyRedis, Topic, TopicRecommendation, VocabRedis, WeeklySummary } from "@/types/study";
 import { AssignedTeam, RegularStudyApplicant, RegularStudyApplyRequest, TimeSlot } from "@/types/apply-regular";
 import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
 import { setCookie } from "cookies-next";
@@ -353,6 +353,18 @@ export const studyApi = {
     // AI 도움 받기
     getAiHelp: (studyId: string, question: ExpressionToAsk): Promise<ResponseDto<StudyRedis>> =>
         api.post(`/study/${studyId}/ai-help`, question),
+
+    // [일반 과목] 오답 저장
+    saveGenerals: (studyId: string, corrections: CorrectionRedis[]): Promise<ResponseDto<StudyRedis>> =>
+        api.post(`/study/${studyId}/general/corrections`, corrections),
+
+    // [일반 과목] 단어 저장
+    saveVocabs: (studyId: string, vocabs: VocabRedis[]): Promise<ResponseDto<StudyRedis>> =>
+        api.post(`/study/${studyId}/general/vocabs`, vocabs),
+
+    // [일반 과목] AI 도움 받기
+    getAiHelpGeneral: (studyId: string, question: ExpressionToAsk): Promise<ResponseDto<StudyRedis>> =>
+        api.post(`/study/${studyId}/general/ai-help`, question),
 
     // 스터디 종료
     finishStudy: (studyId: string): Promise<ResponseDto<string>> =>

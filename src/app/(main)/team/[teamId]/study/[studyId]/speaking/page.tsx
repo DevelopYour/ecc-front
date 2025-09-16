@@ -191,9 +191,9 @@ export default function StudyPage({ params }: StudyPageProps) {
     };
 
     const handleTranslateHelp = async (topicIndex: number) => {
-        if (!studyRoom || !translateQuestion.trim() || studyRoom.topics.length === 0) return;
+        if (!studyRoom || !translateQuestion.trim() || studyRoom.topics!.length === 0) return;
 
-        const currentTopic = studyRoom.topics[topicIndex];
+        const currentTopic = studyRoom.topics![topicIndex];
         if (!currentTopic) return;
 
         setLoadingTranslate(true);
@@ -235,9 +235,9 @@ export default function StudyPage({ params }: StudyPageProps) {
     };
 
     const handleFeedbackHelp = async (topicIndex: number) => {
-        if (!studyRoom || !feedbackQuestion.trim() || studyRoom.topics.length === 0) return;
+        if (!studyRoom || !feedbackQuestion.trim() || studyRoom.topics!.length === 0) return;
 
-        const currentTopic = studyRoom.topics[topicIndex];
+        const currentTopic = studyRoom.topics![topicIndex];
         if (!currentTopic) return;
 
         setLoadingFeedback(true);
