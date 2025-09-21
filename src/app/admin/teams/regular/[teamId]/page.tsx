@@ -546,7 +546,7 @@ export default function AdminTeamDetailPage() {
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        onClick={() => router.push(`/admin/reports/${report.id}`)}
+                                                        onClick={() => router.push(`/admin/teams/regular/${teamId}/reports/${report.id}`)}
                                                     >
                                                         <Eye className="h-4 w-4" />
                                                     </Button>

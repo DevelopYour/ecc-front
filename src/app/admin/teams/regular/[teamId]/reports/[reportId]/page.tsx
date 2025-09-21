@@ -1,10 +1,12 @@
-// app/(main)/team/[teamId]/report/[reportId]/page.tsx
+// app/admin/teams/[teamId]/reports/[reportId]/page.tsx
 'use client';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { handleApiResponse, reviewApi, studyApi } from '@/lib/api';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { handleApiResponse, studyApi, adminTeamApi } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import {
     ReportDocument,
@@ -15,7 +17,6 @@ import {
     VocabRedis
 } from '@/types/study';
 import {
-    AlertCircle,
     ArrowLeft,
     BookOpen,
     CheckCircle2,
@@ -26,15 +27,16 @@ import {
     Lightbulb,
     Loader2,
     MessageSquare,
-    Send,
     Star,
-    Users
+    Users,
+    Save,
+    Award
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-interface ReportPageProps {
+interface AdminTeamReportPageProps {
     params: Promise<{ teamId: string; reportId: string }>;
 }
 
@@ -75,7 +77,6 @@ const TranslationCard = ({ translation }: { translation: ReportTranslation }) =>
             <div className="space-y-2">
                 <p className="font-medium text-sm">{translation.english}</p>
                 <p className="text-xs text-muted-foreground">{translation.korean}</p>
-
                 {translation.exampleEnglish && (
                     <p className="text-xs italic text-blue-600 border-l-2 border-blue-200 pl-2">
                         {translation.exampleEnglish}
@@ -93,14 +94,12 @@ const FeedbackCard = ({ feedback }: { feedback: ReportFeedback }) => {
             <div className="space-y-2">
                 <p className="font-medium text-sm">{feedback.english}</p>
                 <p className="text-xs text-muted-foreground">{feedback.korean}</p>
-
                 {feedback.original && (
                     <div>
                         <span className="text-xs text-muted-foreground">원본: </span>
                         <span className="text-xs text-muted-foreground line-through">{feedback.original}</span>
                     </div>
                 )}
-
                 {feedback.feedback && (
                     <div className="p-2 bg-green-100 rounded text-xs">
                         <span className="text-green-700 font-medium">피드백: </span>
@@ -170,7 +169,6 @@ const TopicSection = ({ topic, topicIndex }: {
                         </Badge>
                         <CardTitle className="text-base">{topic.topic}</CardTitle>
                     </div>
-
                     <div className="flex items-center gap-2">
                         {translationCount > 0 && (
                             <Badge variant="outline" className="text-xs gap-1">
@@ -346,14 +344,15 @@ const GeneralSection = ({ report }: { report: ReportDocument }) => {
     );
 };
 
-export default function ReportPage({ params }: ReportPageProps) {
+export default function AdminTeamReportPage({ params }: AdminTeamReportPageProps) {
     const router = useRouter();
     const resolvedParams = use(params);
     const { teamId, reportId } = resolvedParams;
 
     const [report, setReport] = useState<ReportDocument | null>(null);
+    const [gradeInput, setGradeInput] = useState<string>('');
     const [loading, setLoading] = useState(true);
-    const [submitting, setSubmitting] = useState(false);
+    const [savingGrade, setSavingGrade] = useState(false);
 
     useEffect(() => {
         loadReport();
@@ -368,70 +367,96 @@ export default function ReportPage({ params }: ReportPageProps) {
                 response,
                 (data: ReportDocument) => {
                     setReport(data);
+                    setGradeInput(data.grade?.toString() || '');
                 },
                 (error) => {
                     console.error('Error loading report:', error);
-                    toast.error('오류', {
-                        description: '보고서를 불러오는데 실패했습니다.',
-                    });
-                    router.push(`/team/${teamId}`);
+                    toast.error('보고서를 불러오는데 실패했습니다.');
+                    router.push(`/admin/teams/${teamId}`);
                 }
             );
         } catch (error) {
             console.error('Network error loading report:', error);
-            toast.error('오류', {
-                description: '보고서를 불러오는데 실패했습니다.',
-            });
-            router.push(`/team/${teamId}`);
+            toast.error('보고서를 불러오는데 실패했습니다.');
+            router.push(`/admin/teams/${teamId}`);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleSubmitReport = async () => {
+    const handleSaveGrade = async () => {
+        if (!gradeInput.trim()) {
+            toast.error('점수를 입력해주세요.');
+            return;
+        }
+
+        const grade = parseFloat(gradeInput);
+        if (isNaN(grade) || grade < 0 || grade > 100) {
+            toast.error('0-100 사이의 유효한 점수를 입력해주세요.');
+            return;
+        }
+
         if (!report) return;
 
-        setSubmitting(true);
         try {
-            const response = await studyApi.submitReport(reportId);
+            setSavingGrade(true);
+            const response = await adminTeamApi.updateReportGrade(Number(teamId), report.week, grade);
 
             handleApiResponse(
                 response,
-                () => {
-                    toast.success('성공', {
-                        description: '보고서가 성공적으로 제출되었습니다.',
-                    });
-                    router.push(`/team/${teamId}`);
+                (data) => {
+                    setReport(prev => prev ? { ...prev, grade } : null);
+                    toast.success('점수가 저장되었습니다.');
                 },
                 (error) => {
-                    console.error('Error submitting report:', error);
-                    toast.error('오류', {
-                        description: '보고서 제출에 실패했습니다.',
-                    });
+                    console.error('Error saving grade:', error);
+                    toast.error('점수 저장에 실패했습니다.');
                 }
             );
         } catch (error) {
-            console.error('Network error submitting report:', error);
-            toast.error('오류', {
-                description: '보고서 제출에 실패했습니다.',
-            });
+            console.error('Network error:', error);
+            toast.error('점수 저장에 실패했습니다.');
         } finally {
-            setSubmitting(false);
+            setSavingGrade(false);
         }
     };
 
-    const goToReviewPage = async () => {
-        try {
-            const response = await reviewApi.getReviewIdByReportAndUser(reportId);
-            if (response.data) {
-                router.push(`/review/${response.data}`);
-            }
-        } catch (error) {
-            console.error('상세 정보 로드 실패:', error);
-            toast.error('오류', {
-                description: '복습 자료를 불러오는데 실패했습니다.',
+    const getGradeBadgeVariant = (grade?: number) => {
+        if (!grade) return 'secondary' as const;
+        if (grade >= 90) return 'default' as const;
+        if (grade >= 80) return 'secondary' as const;
+        if (grade >= 70) return 'outline' as const;
+        return 'destructive' as const;
+    };
+
+    const calculateStats = () => {
+        if (!report) return { totalTranslations: 0, totalFeedbacks: 0, totalCorrections: 0, totalVocabs: 0, topicsCount: 0 };
+
+        let totalTranslations = 0;
+        let totalFeedbacks = 0;
+        const totalCorrections = report.corrections?.length || 0;
+        const totalVocabs = report.vocabs?.length || 0;
+        const topicsCount = report.topics?.length || 0;
+
+        // 일반 번역/피드백
+        totalTranslations += report.translations?.length || 0;
+        totalFeedbacks += report.feedbacks?.length || 0;
+
+        // 토픽별 번역/피드백
+        if (report.topics) {
+            report.topics.forEach(topic => {
+                totalTranslations += topic.translations?.length || 0;
+                totalFeedbacks += topic.feedbacks?.length || 0;
             });
         }
+
+        return {
+            totalTranslations,
+            totalFeedbacks,
+            totalCorrections,
+            totalVocabs,
+            topicsCount
+        };
     };
 
     if (loading || !report) {
@@ -452,8 +477,10 @@ export default function ReportPage({ params }: ReportPageProps) {
         (report.translations && report.translations.length > 0) ||
         (report.feedbacks && report.feedbacks.length > 0);
 
+    const stats = calculateStats();
+
     return (
-        <div className="container mx-auto p-6 max-w-5xl">
+        <div className="container mx-auto p-6 max-w-7xl">
             <div className="space-y-6">
                 {/* 헤더 */}
                 <div className="flex items-center justify-between">
@@ -461,132 +488,137 @@ export default function ReportPage({ params }: ReportPageProps) {
                         <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => router.push(`/team/${teamId}`)}
+                            onClick={() => router.push(`/admin/teams/${teamId}`)}
                         >
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                         <div>
                             <h1 className="text-3xl font-bold flex items-center gap-2">
                                 <FileText className="h-8 w-8" />
-                                스터디 보고서
+                                보고서 상세 관리
                             </h1>
                             <p className="text-muted-foreground mt-1">
-                                {formatDate(report.createdAt, 'PP')} ({report.week}주차) 스터디
+                                {formatDate(report.createdAt, 'PP')} ({report.week}주차) - 팀 {teamId}
                             </p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {report.submitted ? (
-                            <Badge variant="default" className="gap-1">
-                                <CheckCircle2 className="h-3 w-3" />
-                                제출 완료
-                            </Badge>
-                        ) : (
-                            <Badge variant="secondary" className="gap-1">
-                                <Clock className="h-3 w-3" />
-                                제출 대기
+                        {report.grade && (
+                            <Badge variant={getGradeBadgeVariant(report.grade)} className="gap-1">
+                                <Star className="h-3 w-3" />
+                                {report.grade}점
                             </Badge>
                         )}
                     </div>
                 </div>
 
-                {/* Speaking 보고서 내용 */}
-                {isSpeakingReport && (
-                    <div className="space-y-4">
-                        {report.topics!.map((topic, topicIndex) => (
-                            <TopicSection
-                                key={topicIndex}
-                                topic={topic}
-                                topicIndex={topicIndex}
-                            />
-                        ))}
-                    </div>
-                )}
-
-                {/* General 보고서 내용 */}
-                {isGeneralReport && (
-                    <GeneralSection report={report} />
-                )}
-
-                {/* 둘 다 없는 경우 */}
-                {!isSpeakingReport && !isGeneralReport && (
-                    <Card className="border-dashed">
-                        <CardContent className="py-12">
-                            <div className="text-center">
-                                <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                                <p className="text-xl font-medium text-muted-foreground mb-2">
-                                    학습된 내용이 없습니다
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                    아직 이 주차에 대한 학습 내용이 없습니다.
-                                </p>
+                {/* 점수 입력 카드 */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Award className="h-5 w-5" />
+                            점수 평가
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex gap-4 items-end">
+                            <div className="flex-1">
+                                <Label htmlFor="grade">점수 (0-100점)</Label>
+                                <Input
+                                    id="grade"
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    placeholder="점수를 입력하세요"
+                                    value={gradeInput}
+                                    onChange={(e) => setGradeInput(e.target.value)}
+                                />
                             </div>
-                        </CardContent>
-                    </Card>
-                )}
+                            <Button
+                                onClick={handleSaveGrade}
+                                disabled={savingGrade}
+                                className="gap-2"
+                            >
+                                {savingGrade ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Save className="h-4 w-4" />
+                                )}
+                                저장
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
 
-                {/* 제출 버튼 */}
-                {!report.submitted && (
-                    <Card className="border-orange-200 bg-orange-50">
-                        <CardContent className="pt-6">
-                            <div className="flex items-start gap-2">
-                                <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
-                                <div className="flex-1">
-                                    <p className="font-medium text-orange-900">
-                                        보고서 제출 안내
+                {/* 학습 통계 카드 */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>학습 통계</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                            <div className="text-center p-3 bg-blue-50 rounded-lg">
+                                <p className="text-2xl font-bold text-blue-600">{stats.totalTranslations}</p>
+                                <p className="text-sm text-muted-foreground">번역</p>
+                            </div>
+                            <div className="text-center p-3 bg-green-50 rounded-lg">
+                                <p className="text-2xl font-bold text-green-600">{stats.totalFeedbacks}</p>
+                                <p className="text-sm text-muted-foreground">교정</p>
+                            </div>
+                            <div className="text-center p-3 bg-red-50 rounded-lg">
+                                <p className="text-2xl font-bold text-red-600">{stats.totalCorrections}</p>
+                                <p className="text-sm text-muted-foreground">오답</p>
+                            </div>
+                            <div className="text-center p-3 bg-purple-50 rounded-lg">
+                                <p className="text-2xl font-bold text-purple-600">{stats.totalVocabs}</p>
+                                <p className="text-sm text-muted-foreground">단어</p>
+                            </div>
+                            <div className="text-center p-3 bg-gray-50 rounded-lg">
+                                <p className="text-2xl font-bold text-gray-600">{stats.topicsCount}</p>
+                                <p className="text-sm text-muted-foreground">주제</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* 보고서 내용 */}
+                <div className="space-y-4">
+                    {/* Speaking 보고서 내용 */}
+                    {isSpeakingReport && (
+                        <div className="space-y-4">
+                            {report.topics!.map((topic, topicIndex) => (
+                                <TopicSection
+                                    key={topicIndex}
+                                    topic={topic}
+                                    topicIndex={topicIndex}
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                    {/* General 보고서 내용 */}
+                    {isGeneralReport && (
+                        <GeneralSection report={report} />
+                    )}
+
+                    {/* 둘 다 없는 경우 */}
+                    {!isSpeakingReport && !isGeneralReport && (
+                        <Card className="border-dashed">
+                            <CardContent className="py-12">
+                                <div className="text-center">
+                                    <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                                    <p className="text-xl font-medium text-muted-foreground mb-2">
+                                        학습된 내용이 없습니다
                                     </p>
-                                    <p className="text-sm text-orange-700 mt-1">
-                                        보고서를 제출하면 수정할 수 없습니다. 내용을 다시 한 번 확인해주세요.
-                                        제출 후 복습 자료가 자동으로 생성됩니다.
+                                    <p className="text-sm text-muted-foreground">
+                                        아직 이 주차에 대한 학습 내용이 없습니다.
                                     </p>
-                                    <Button
-                                        onClick={handleSubmitReport}
-                                        disabled={submitting}
-                                        className="mt-4 gap-2"
-                                    >
-                                        {submitting ? (
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <Send className="h-4 w-4" />
-                                        )}
-                                        {submitting ? '제출 중...' : '보고서 제출'}
-                                    </Button>
                                 </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* 제출 완료 안내 */}
-                {report.submitted && (
-                    <Card className="border-green-200 bg-green-50">
-                        <CardContent className="py-4">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
-                                    <div>
-                                        <p className="font-medium text-green-900">
-                                            보고서 제출 완료
-                                        </p>
-                                        <p className="text-sm text-green-700">
-                                            {report.submittedAt && `${formatDate(report.submittedAt, 'PPP p')}에 제출되었습니다.`}
-                                        </p>
-                                    </div>
-                                </div>
-                                <Button
-                                    variant="default"
-                                    size="sm"
-                                    onClick={() => goToReviewPage()}
-                                    className="bg-green-600 hover:bg-green-700 text-white gap-2 px-4 py-2"
-                                >
-                                    <BookOpen className="h-4 w-4" />
-                                    복습하기
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
             </div>
         </div>
     );

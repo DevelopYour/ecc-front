@@ -11,12 +11,11 @@ import {
 import { Review, ReviewTest } from "@/types/review";
 import { User } from "@/types/user";
 import { getRefreshToken, getToken, logout, setToken } from "./auth";
-import { CorrectionRedis, EnterStudy, ExpressionToAsk, GeneralRedis, ReportDocument, StudyRedis, Topic, TopicRecommendation, VocabRedis, WeeklySummary } from "@/types/study";
+import { CorrectionRedis, EnterStudy, ExpressionToAsk, ReportDocument, StudyRedis, Topic, TopicRecommendation, VocabRedis, WeeklySummary } from "@/types/study";
 import { AssignedTeam, RegularStudyApplicant, RegularStudyApplyRequest, TimeSlot } from "@/types/apply-regular";
 import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
 import { setCookie } from "cookies-next";
 import { MemberA, MemberStatus, LevelChangeRequest, Category, TopicA, TeamA, AdminSummary, Semester, AdminSettings, CreateSemester, TeamDetail, } from "@/types/admin";
-import { get } from "lodash";
 
 interface ResponseDto<T> {
     success: boolean;
@@ -312,7 +311,7 @@ export const teamApi = {
         api.get("/teams/me"),
 
     // 특정 팀 상세 조회
-    getTeam: (teamId: string): Promise<ResponseDto<Team>> =>
+    getTeam: (teamId: number): Promise<ResponseDto<Team>> =>
         api.get(`/teams/${teamId}`),
 
     // 내 정규 팀 목록 조회
@@ -331,7 +330,7 @@ export const teamApi = {
 // 스터디 관련 API
 export const studyApi = {
     // 팀별 메인페이지 입장 (진행상황 조회)
-    getTeamProgress: (teamId: string): Promise<ResponseDto<WeeklySummary[]>> =>
+    getTeamProgress: (teamId: number): Promise<ResponseDto<WeeklySummary[]>> =>
         api.get(`/study/team/${teamId}/overview`),
 
     // 공부방 입장

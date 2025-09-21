@@ -1,3 +1,4 @@
+// app/(main)/team/[teamId]/page.tsx
 'use client';
 
 import { Badge } from '@/components/ui/badge';
@@ -28,7 +29,7 @@ export default function TeamPage({ params }: TeamPageProps) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const teamId = resolvedParams.teamId;
+    const teamId = Number(resolvedParams.teamId);
 
     useEffect(() => {
         loadTeamData();

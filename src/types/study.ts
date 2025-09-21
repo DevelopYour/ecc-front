@@ -6,6 +6,7 @@ export interface WeeklySummary {
 export interface StudySummary {
     teamId: number;
     week: number;
+    grade?: number;
     reportId: string;
     studyStatus: StudyStatus;
 }
@@ -130,6 +131,7 @@ export interface ReportDocument {
     id: string;
     teamId: number;
     week: number;
+    grade: number;
     topics: ReportTopic[]; // speaking
     corrections: CorrectionRedis[]; // general
     vocabs: VocabRedis[]; // general
