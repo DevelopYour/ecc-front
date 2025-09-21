@@ -1,5 +1,7 @@
 // types/admin.ts
 
+import { ReportDocument } from "./study";
+
 export interface AdminSummary {
     totalMembers: number;
     pendingMembers: number;
@@ -71,6 +73,11 @@ export interface TeamA {
     createdAt: string;
     updatedAt: string;
     members: TeamMemberA[];
+}
+
+export interface TeamDetail {
+    team: TeamA;
+    reports: ReportDocument[];
 }
 
 export interface TeamMemberA {

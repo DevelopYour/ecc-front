@@ -15,7 +15,7 @@ import { CorrectionRedis, EnterStudy, ExpressionToAsk, GeneralRedis, ReportDocum
 import { AssignedTeam, RegularStudyApplicant, RegularStudyApplyRequest, TimeSlot } from "@/types/apply-regular";
 import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
 import { setCookie } from "cookies-next";
-import { MemberA, MemberStatus, LevelChangeRequest, Category, TopicA, TeamA, AdminSummary, Semester, AdminSettings, CreateSemester, } from "@/types/admin";
+import { MemberA, MemberStatus, LevelChangeRequest, Category, TopicA, TeamA, AdminSummary, Semester, AdminSettings, CreateSemester, TeamDetail, } from "@/types/admin";
 import { get } from "lodash";
 
 interface ResponseDto<T> {
@@ -496,7 +496,7 @@ export const adminTeamApi = {
         api.get("/admin/teams", { params }),
 
     // 팀 상세 정보 조회
-    getTeamDetail: (teamId: number): Promise<ResponseDto<TeamA>> =>
+    getTeamDetail: (teamId: number): Promise<ResponseDto<TeamDetail>> =>
         api.get(`/admin/teams/${teamId}`),
 
     // 팀 주차별 상세 정보 조회
@@ -553,6 +553,10 @@ export const adminTeamApi = {
     //     semester?: number;
     // }): Promise<ResponseDto<TeamReportsStatusResponse>> =>
     //     api.get("/admin/teams/reports/status", { params }),
+
+    // 팀 삭제 생성
+    deleteTeam: (teamId: number): Promise<ResponseDto<number>> =>
+        api.delete("/admin/teams", { params: { teamId } }),
 };
 
 // 관리자 콘텐츠 관리 API
