@@ -15,7 +15,7 @@ import { CorrectionRedis, EnterStudy, ExpressionToAsk, ReportDocument, StudyRedi
 import { AssignedTeam, RegularStudyApplicant, RegularStudyApplyRequest, TimeSlot } from "@/types/apply-regular";
 import { CreateOneTimeRequest, OneTimeStudyDetail, OneTimeTeam } from "@/types/apply-onetime";
 import { setCookie } from "cookies-next";
-import { MemberA, MemberStatus, LevelChangeRequest, Category, TopicA, TeamA, AdminSummary, Semester, AdminSettings, CreateSemester, TeamDetail, } from "@/types/admin";
+import { MemberA, MemberStatus, LevelChangeRequest, Category, TopicA, TeamA, AdminSummary, Semester, AdminSettings, CreateSemester, TeamDetail, TeamReportDetail, } from "@/types/admin";
 
 interface ResponseDto<T> {
     success: boolean;
@@ -499,8 +499,8 @@ export const adminTeamApi = {
         api.get(`/admin/teams/${teamId}`),
 
     // 팀 주차별 상세 정보 조회
-    getTeamWeekDetail: (teamId: number, week: number): Promise<ResponseDto<any>> =>
-        api.get(`/admin/teams/${teamId}/${week}`),
+    getTeamWeeklyDetail: (teamId: number, reportId: string): Promise<ResponseDto<TeamReportDetail>> =>
+        api.get(`/admin/teams/${teamId}/report/${reportId}`),
 
     // 번개 스터디 보고서 조회
     getOneTimeTeamReport: (teamId: number): Promise<ResponseDto<ReportDocument>> =>

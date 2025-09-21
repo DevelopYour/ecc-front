@@ -1,5 +1,6 @@
 // types/admin.ts
 
+import { ReviewSummary } from "./review";
 import { ReportDocument } from "./study";
 
 export interface AdminSummary {
@@ -78,6 +79,12 @@ export interface TeamA {
 export interface TeamDetail {
     team: TeamA;
     reports: ReportDocument[];
+}
+
+export interface TeamReportDetail {
+    team: TeamA;
+    report: ReportDocument;
+    reviews: ReviewSummary[];
 }
 
 export interface TeamMemberA {

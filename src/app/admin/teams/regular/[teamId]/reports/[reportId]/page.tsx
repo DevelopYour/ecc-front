@@ -5,16 +5,18 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { handleApiResponse, studyApi, adminTeamApi } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
+import { ReviewStatus } from '@/types/review';
 import {
     ReportDocument,
     ReportFeedback,
     ReportTopic,
     ReportTranslation,
     CorrectionRedis,
-    VocabRedis
+    VocabRedis,
+    REVIEW_STATUS_LABELS,
+    getStatusBadgeVariant
 } from '@/types/study';
 import {
     ArrowLeft,
@@ -38,6 +40,13 @@ import { toast } from 'sonner';
 
 interface AdminTeamReportPageProps {
     params: Promise<{ teamId: string; reportId: string }>;
+}
+
+interface ReviewSummaryDto {
+    reviewId: string;
+    memberId: number;
+    memberName: string;
+    reviewStatus: ReviewStatus;
 }
 
 // 카테고리 라벨 매핑
@@ -350,6 +359,7 @@ export default function AdminTeamReportPage({ params }: AdminTeamReportPageProps
     const { teamId, reportId } = resolvedParams;
 
     const [report, setReport] = useState<ReportDocument | null>(null);
+    const [reviewSummaries, setReviewSummaries] = useState<ReviewSummaryDto[]>([]);
     const [gradeInput, setGradeInput] = useState<string>('');
     const [loading, setLoading] = useState(true);
     const [savingGrade, setSavingGrade] = useState(false);
@@ -361,24 +371,17 @@ export default function AdminTeamReportPage({ params }: AdminTeamReportPageProps
     const loadReport = async () => {
         setLoading(true);
         try {
-            const response = await studyApi.getReport(reportId);
+            const response = await adminTeamApi.getTeamWeeklyDetail(Number(teamId), reportId);
 
-            handleApiResponse(
-                response,
-                (data: ReportDocument) => {
-                    setReport(data);
-                    setGradeInput(data.grade?.toString() || '');
-                },
-                (error) => {
-                    console.error('Error loading report:', error);
-                    toast.error('보고서를 불러오는데 실패했습니다.');
-                    router.push(`/admin/teams/${teamId}`);
-                }
-            );
+            if (response.data) {
+                setReport(response.data!.report);
+                setGradeInput(response.data!.report.grade?.toString() || '');
+                setReviewSummaries(response.data!.reviews);
+
+            }
         } catch (error) {
             console.error('Network error loading report:', error);
             toast.error('보고서를 불러오는데 실패했습니다.');
-            router.push(`/admin/teams/${teamId}`);
         } finally {
             setLoading(false);
         }
@@ -386,7 +389,7 @@ export default function AdminTeamReportPage({ params }: AdminTeamReportPageProps
 
     const handleSaveGrade = async () => {
         if (!gradeInput.trim()) {
-            toast.error('점수를 입력해주세요.');
+            toast.error('점수를 입력해주세요. (0-100 사이)');
             return;
         }
 
@@ -510,6 +513,17 @@ export default function AdminTeamReportPage({ params }: AdminTeamReportPageProps
                                 {report.grade}점
                             </Badge>
                         )}
+                        {report.submitted ? (
+                            <Badge variant="default" className="gap-1">
+                                <CheckCircle2 className="h-3 w-3" />
+                                제출 완료
+                            </Badge>
+                        ) : (
+                            <Badge variant="secondary" className="gap-1">
+                                <Clock className="h-3 w-3" />
+                                제출 대기
+                            </Badge>
+                        )}
                     </div>
                 </div>
 
@@ -524,13 +538,12 @@ export default function AdminTeamReportPage({ params }: AdminTeamReportPageProps
                     <CardContent>
                         <div className="flex gap-4 items-end">
                             <div className="flex-1">
-                                <Label htmlFor="grade">점수 (0-100점)</Label>
                                 <Input
                                     id="grade"
                                     type="number"
                                     min="0"
                                     max="100"
-                                    placeholder="점수를 입력하세요"
+                                    placeholder="점수를 입력하세요. (0-100)"
                                     value={gradeInput}
                                     onChange={(e) => setGradeInput(e.target.value)}
                                 />
@@ -551,36 +564,38 @@ export default function AdminTeamReportPage({ params }: AdminTeamReportPageProps
                     </CardContent>
                 </Card>
 
-                {/* 학습 통계 카드 */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>학습 통계</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                            <div className="text-center p-3 bg-blue-50 rounded-lg">
-                                <p className="text-2xl font-bold text-blue-600">{stats.totalTranslations}</p>
-                                <p className="text-sm text-muted-foreground">번역</p>
+                {/* 팀원별 복습 현황 카드 */}
+                {reviewSummaries.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Users className="h-5 w-5" />
+                                팀원별 복습 현황
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {reviewSummaries.map((review) => (
+                                    <div
+                                        key={review.reviewId}
+                                        className="flex items-center justify-between p-3 bg-background border border-border rounded-lg shadow-sm"
+                                    >
+                                        <div>
+                                            <p className="font-medium text-sm">{review.memberName}</p>
+                                            <p className="text-xs text-muted-foreground">ID: {review.memberId}</p>
+                                        </div>
+                                        <Badge
+                                            variant={getStatusBadgeVariant(review.reviewStatus)}
+                                            className="text-xs"
+                                        >
+                                            {REVIEW_STATUS_LABELS[review.reviewStatus]}
+                                        </Badge>
+                                    </div>
+                                ))}
                             </div>
-                            <div className="text-center p-3 bg-green-50 rounded-lg">
-                                <p className="text-2xl font-bold text-green-600">{stats.totalFeedbacks}</p>
-                                <p className="text-sm text-muted-foreground">교정</p>
-                            </div>
-                            <div className="text-center p-3 bg-red-50 rounded-lg">
-                                <p className="text-2xl font-bold text-red-600">{stats.totalCorrections}</p>
-                                <p className="text-sm text-muted-foreground">오답</p>
-                            </div>
-                            <div className="text-center p-3 bg-purple-50 rounded-lg">
-                                <p className="text-2xl font-bold text-purple-600">{stats.totalVocabs}</p>
-                                <p className="text-sm text-muted-foreground">단어</p>
-                            </div>
-                            <div className="text-center p-3 bg-gray-50 rounded-lg">
-                                <p className="text-2xl font-bold text-gray-600">{stats.topicsCount}</p>
-                                <p className="text-sm text-muted-foreground">주제</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* 보고서 내용 */}
                 <div className="space-y-4">
