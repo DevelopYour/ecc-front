@@ -230,18 +230,6 @@ export default function AdminTeamDetailPage() {
         router.push(`/admin/members/${memberId}`);
     };
 
-    const getReportStats = (report: ReportDocument) => {
-        if (!report.topics) return { totalExpressions: 0, translationCount: 0, feedbackCount: 0 };
-
-        const translationCount = report.topics.reduce((acc, topic) =>
-            acc + (topic.translations?.length || 0), 0);
-        const feedbackCount = report.topics.reduce((acc, topic) =>
-            acc + (topic.feedbacks?.length || 0), 0);
-        const totalExpressions = translationCount + feedbackCount;
-
-        return { totalExpressions, translationCount, feedbackCount };
-    };
-
     // 필터링된 멤버 목록 생성 (이미 팀에 속한 멤버 제외)
     const filteredMembers = allMembers.filter(member => {
         const searchTerm = memberSearch.toLowerCase();
@@ -530,7 +518,6 @@ export default function AdminTeamDetailPage() {
                                 </TableHeader>
                                 <TableBody>
                                     {reports.slice(0, 5).map((report) => {
-                                        const stats = getReportStats(report);
                                         return (
                                             <TableRow key={report.id}>
                                                 <TableCell className="font-medium">

@@ -12,8 +12,21 @@ export function cn(...inputs: ClassValue[]) {
 
 // 날짜 포맷팅
 export function formatDate(date: string | Date, formatStr: string = "PPP"): string {
-  const dateObj = typeof date === "string" ? parseISO(date) : date;
-  return format(dateObj, formatStr, { locale: ko });
+  if (!date) return "-";
+  
+  try {
+    const dateObj = typeof date === "string" ? parseISO(date) : date;
+    
+    // 유효한 날짜인지 확인
+    if (isNaN(dateObj.getTime())) {
+      return "-";
+    }
+    
+    return format(dateObj, formatStr, { locale: ko });
+  } catch (error) {
+    console.warn("Date formatting error:", error, "for date:", date);
+    return "-";
+  }
 }
 
 export const getSemesterLabel = (semesterNumber: number): string => {
